@@ -24,7 +24,7 @@ class Card(ctk.CTkFrame):
 class DashboardTab(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent, fg_color="transparent")
-        ctk.CTkLabel(self, text="BILLS", font=ctk.CTkFont(size=24, weight="bold")).pack(pady='30')
+        ctk.CTkLabel(self, text="Have a nice day", font=ctk.CTkFont(size=24, weight="bold")).pack(pady='30')
         # hàng chứa 3 card
         row = ctk.CTkFrame(self, fg_color="transparent")
         row.pack(fill="x", padx=16, pady=16)

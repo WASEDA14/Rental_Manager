@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
-from models.room_service import RoomService
+from services.room_service import RoomService
 
 class RoomTab(ctk.CTkFrame):
     def __init__(self, parent):
@@ -17,10 +17,10 @@ class RoomTab(ctk.CTkFrame):
         self.active_var = ctk.BooleanVar(value=True)
         self.search_var = ctk.StringVar()
 
-        ctk.CTkLabel(form, text="Số phòng").grid(row=0, column=0, padx=6, pady=6, sticky="w")
+        ctk.CTkLabel(form, text="Room ID").grid(row=0, column=0, padx=6, pady=6, sticky="w")
         ctk.CTkEntry(form, textvariable=self.code_var, width=160).grid(row=0, column=1, padx=6, pady=6)
 
-        ctk.CTkLabel(form, text="Giá thuê (VND)").grid(row=0, column=2, padx=6, pady=6, sticky="w")
+        ctk.CTkLabel(form, text="Rent Amount (VND)").grid(row=0, column=2, padx=6, pady=6, sticky="w")
         # chỉ cho nhập số
         rent_entry = ctk.CTkEntry(form, textvariable=self.rent_var, width=160)
         rent_entry.grid(row=0, column=3, padx=6, pady=6)
@@ -29,17 +29,17 @@ class RoomTab(ctk.CTkFrame):
 
         ctk.CTkCheckBox(form, text="Hoạt động", variable=self.active_var).grid(row=0, column=4, padx=6, pady=6)
 
-        self.btn_add = ctk.CTkButton(form, text="Thêm", command=self.on_add, fg_color="#27ae60")
+        self.btn_add = ctk.CTkButton(form, text="Add", command=self.on_add, fg_color="#27ae60")
         self.btn_add.grid(row=0, column=5, padx=6, pady=6)
-        self.btn_update = ctk.CTkButton(form, text="Sửa", command=self.on_update, fg_color="#f39c12")
+        self.btn_update = ctk.CTkButton(form, text="Edit", command=self.on_update, fg_color="#f39c12")
         self.btn_update.grid(row=0, column=6, padx=6, pady=6)
 
         # Dòng tìm kiếm
-        ctk.CTkLabel(form, text="Tìm").grid(row=1, column=0, padx=6, pady=(0,6), sticky="w")
+        ctk.CTkLabel(form, text="Search").grid(row=1, column=0, padx=6, pady=(0,6), sticky="w")
         search_entry = ctk.CTkEntry(form, textvariable=self.search_var, width=160)
         search_entry.grid(row=1, column=1, padx=6, pady=(0,6))
-        ctk.CTkButton(form, text="Lọc", command=self.reload).grid(row=1, column=2, padx=6, pady=(0,6))
-        ctk.CTkButton(form, text="Làm mới", command=self.on_clear).grid(row=1, column=3, padx=6, pady=(0,6))
+        ctk.CTkButton(form, text="Filter", command=self.reload).grid(row=1, column=2, padx=6, pady=(0,6))
+        ctk.CTkButton(form, text="Clear", command=self.on_clear).grid(row=1, column=3, padx=6, pady=(0,6))
 
         for i in range(7):
             form.grid_columnconfigure(i, weight=0)
@@ -72,8 +72,8 @@ class RoomTab(ctk.CTkFrame):
         # ===== Nút dưới cùng =====
         bottom = ctk.CTkFrame(self, fg_color="transparent")
         bottom.pack(fill="x", padx=10, pady=(0,10))
-        ctk.CTkButton(bottom, text="Xóa phòng", command=self.on_delete, fg_color="#e74c3c").pack(side="right", padx=6)
-        ctk.CTkButton(bottom, text="Làm mới bảng", command=self.reload).pack(side="right", padx=6)
+        ctk.CTkButton(bottom, text="Delete", command=self.on_delete, fg_color="#e74c3c").pack(side="right", padx=6)
+        ctk.CTkButton(bottom, text="Refresh", command=self.reload).pack(side="right", padx=6)
 
         self.reload()  # lần đầu
 

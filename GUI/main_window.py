@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from GUI.room import RoomTab
-from GUI.tentant import TenantTab
+from GUI.teant import TenantTab
 from GUI.bill import BillTab
 from GUI.contract import ContractTab
 from GUI.dashboard import DashboardTab
