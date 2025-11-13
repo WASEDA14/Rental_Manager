@@ -2,7 +2,7 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 
-STATUSES = ["Draft", "Active", "Suspended", "Ended", "Canceled"]
+STATUSES = ["Draft", "Active", "Ended", "Canceled"]
 
 class ContractTab(ctk.CTkFrame):
     def __init__(self, parent,
@@ -41,20 +41,18 @@ class ContractTab(ctk.CTkFrame):
         ctk.CTkEntry(form, textvariable=self.contract_no, width=150, state="readonly").grid(row=r, column=1, padx=6, pady=6)
 
         ctk.CTkLabel(form, text="Tenant").grid(row=r, column=2, padx=6, pady=6, sticky="w")
-        self.cbo_tenant = ctk.CTkComboBox(form, values=load_tenants(), variable=self.tenant_var, width=220, state="readonly")
-        self.cbo_tenant.grid(row=r, column=3, padx=6, pady=6)
+        ctk.CTkEntry(form, textvariable=self.tenant_var, width=150).grid(row=0, column=3, padx=6, pady=6)
 
         ctk.CTkLabel(form, text="Room").grid(row=r, column=4, padx=6, pady=6, sticky="w")
-        self.cbo_room = ctk.CTkComboBox(form, values=load_rooms(), variable=self.room_var, width=120, state="readonly")
-        self.cbo_room.grid(row=r, column=5, padx=6, pady=6)
+        ctk.CTkEntry(form, textvariable=self.room_var, width=150).grid(row=0, column=5, padx=6, pady=6)
 
         r += 1
-        ctk.CTkLabel(form, text="Start (YYYY-MM-DD)").grid(row=r, column=0, padx=6, pady=6, sticky="w")
+        ctk.CTkLabel(form, text="Start").grid(row=r, column=0, padx=6, pady=6, sticky="w")
         ctk.CTkEntry(form, textvariable=self.start_var, width=150).grid(row=r, column=1, padx=6, pady=6)
         ctk.CTkLabel(form, text="End").grid(row=r, column=2, padx=6, pady=6, sticky="w")
         ctk.CTkEntry(form, textvariable=self.end_var, width=150).grid(row=r, column=3, padx=6, pady=6)
-        ctk.CTkLabel(form, text="Term (months)").grid(row=r, column=4, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.term_var, width=80,
+        ctk.CTkLabel(form, text="Term").grid(row=r, column=4, padx=6, pady=6, sticky="w")
+        ctk.CTkEntry(form, textvariable=self.term_var, width=150,
                      validate="key", validatecommand=(vcmd, "%P")).grid(row=r, column=5, padx=6, pady=6)
 
         r += 1
@@ -64,8 +62,8 @@ class ContractTab(ctk.CTkFrame):
         ctk.CTkLabel(form, text="Deposit (VND)").grid(row=r, column=2, padx=6, pady=6, sticky="w")
         ctk.CTkEntry(form, textvariable=self.deposit_var, width=150,
                      validate="key", validatecommand=(vcmd, "%P")).grid(row=r, column=3, padx=6, pady=6)
-        ctk.CTkLabel(form, text="Billing Day (1-28)").grid(row=r, column=4, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.billday_var, width=80,
+        ctk.CTkLabel(form, text="Billing Day").grid(row=r, column=4, padx=6, pady=6, sticky="w")
+        ctk.CTkEntry(form, textvariable=self.billday_var, width=150,
                      validate="key", validatecommand=(vcmd, "%P")).grid(row=r, column=5, padx=6, pady=6)
 
         r += 1
@@ -76,27 +74,26 @@ class ContractTab(ctk.CTkFrame):
         ctk.CTkEntry(form, textvariable=self.water_var, width=150,
                      validate="key", validatecommand=(vcmd, "%P")).grid(row=r, column=3, padx=6, pady=6)
         ctk.CTkLabel(form, text="Service Fee (VND)").grid(row=r, column=4, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.service_var, width=120,
+        ctk.CTkEntry(form, textvariable=self.service_var, width=150,
                      validate="key", validatecommand=(vcmd, "%P")).grid(row=r, column=5, padx=6, pady=6)
 
         r += 1
         ctk.CTkLabel(form, text="Status").grid(row=r, column=0, padx=6, pady=6, sticky="w")
-        ctk.CTkComboBox(form, values=STATUSES, variable=self.status_var, width=120, state="readonly").grid(row=r, column=1, padx=6, pady=6)
+        ctk.CTkComboBox(form, values=STATUSES, variable=self.status_var, width=150, state="readonly").grid(row=r, column=1, padx=6, pady=6)
 
         # Tool bar
         toolbar = ctk.CTkFrame(self, fg_color="transparent"); toolbar.pack(fill="x", padx=12, pady=(0,6))
-        ctk.CTkButton(toolbar, text="New",  command=self.on_new).pack(side="left", padx=4)
+        ctk.CTkButton(toolbar, text="Add",  command=self.on_new).pack(side="left", padx=4)
         ctk.CTkButton(toolbar, text="Save", command=self.on_save, fg_color="#27ae60").pack(side="left", padx=4)
-        ctk.CTkButton(toolbar, text="Activate", command=self.on_activate).pack(side="left", padx=4)
-        ctk.CTkButton(toolbar, text="Extend",   command=self.on_extend).pack(side="left", padx=4)
+        # ctk.CTkButton(toolbar, text="Activate", command=self.on_activate).pack(side="left", padx=4)
+        # ctk.CTkButton(toolbar, text="Extend",   command=self.on_extend).pack(side="left", padx=4)
         ctk.CTkButton(toolbar, text="End",      command=self.on_end, fg_color="#e67e22").pack(side="left", padx=4)
-        ctk.CTkButton(toolbar, text="Suspend/Resume", command=self.on_toggle_suspend).pack(side="left", padx=4)
-        ctk.CTkButton(toolbar, text="Delete",   command=self.on_delete, fg_color="#e74c3c").pack(side="right", padx=4)
+        # ctk.CTkButton(toolbar, text="Suspend/Resume", command=self.on_toggle_suspend).pack(side="left", padx=4)
+        ctk.CTkButton(toolbar, text="Delete",   command=self.on_delete, fg_color="#e74c3c").pack(side="left", padx=4)
 
         # Search
-        ctk.CTkLabel(toolbar, text="Search").pack(side="right", padx=(0,6))
+        ctk.CTkLabel(toolbar, text="").pack(side="right", padx=(0,6))
         ctk.CTkEntry(toolbar, textvariable=self.search_var, width=180).pack(side="right", padx=6)
-        ctk.CTkButton(toolbar, text="Filter", command=self.reload).pack(side="right", padx=4)
 
         # ========== TABLE ==========
         table = ctk.CTkFrame(self); table.pack(fill="both", expand=True, padx=12, pady=(6,12))

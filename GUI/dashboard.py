@@ -33,6 +33,6 @@ class DashboardTab(ctk.CTkFrame):
         for i in range(3):
             row.grid_columnconfigure(i, weight=1, uniform="cards")
 
-        Card(row, "Total Houses",  "1",   "#3498db").grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
-        Card(row, "Total Tenants", "1",   "#f1c40f").grid(row=0, column=1, padx=8, pady=8, sticky="nsew")
+        Card(row, "Room",  "10/20",   "#3498db").grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
+        Card(row, "Tenants", "10",   "#f1c40f").grid(row=0, column=1, padx=8, pady=8, sticky="nsew")
         Card(row, "Payments This Month", "0.0", "#27ae60").grid(row=0, column=2, padx=8, pady=8, sticky="nsew")

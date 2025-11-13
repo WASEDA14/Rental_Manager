@@ -17,7 +17,7 @@ class TenantTab(ctk.CTkFrame):
         self.email_var  = ctk.StringVar()
         self.idno_var   = ctk.StringVar()
         self.room_var   = ctk.StringVar()
-        self.in_var     = ctk.StringVar()   # YYYY-MM-DD
+        self.in_var     = ctk.StringVar()
         self.out_var    = ctk.StringVar()
         self.active_var = ctk.BooleanVar(value=True)
         self.search_var = ctk.StringVar()
