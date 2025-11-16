@@ -38,7 +38,7 @@ class RoomTab(ctk.CTkFrame):
         ctk.CTkLabel(form, text="Search").grid(row=1, column=0, padx=6, pady=(0,6), sticky="w")
         search_entry = ctk.CTkEntry(form, textvariable=self.search_var, width=160)
         search_entry.grid(row=1, column=1, padx=6, pady=(0,6))
-        ctk.CTkButton(form, text="Filter", command=self.reload).grid(row=1, column=2, padx=6, pady=(0,6))
+        ctk.CTkButton(form, text="Search", command=self.reload).grid(row=1, column=2, padx=6, pady=(0,6))
         ctk.CTkButton(form, text="Clear", command=self.on_clear).grid(row=1, column=3, padx=6, pady=(0,6))
 
         for i in range(7):
