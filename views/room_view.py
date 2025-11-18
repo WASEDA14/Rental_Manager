@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
-from services.room_service import RoomService
+from models.room_model import RoomService
 
 class RoomTab(ctk.CTkFrame):
     def __init__(self, parent):

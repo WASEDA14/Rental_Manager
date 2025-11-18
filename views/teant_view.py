@@ -1,7 +1,7 @@
-# GUI/tenant.py
+# views/tenant.py
 import customtkinter as ctk
 from tkinter import ttk, messagebox
-from services.tenant_service import TenantService, TenantDTO
+from models.tenant_service import TenantService, TenantDTO
 
 class TenantTab(ctk.CTkFrame):
     def __init__(self, parent, tenant_service: TenantService = None, room_loader=lambda: []):

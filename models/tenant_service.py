@@ -1,4 +1,4 @@
-# services/tenant_service.py
+# models/tenant_service.py
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import List, Optional, Callable

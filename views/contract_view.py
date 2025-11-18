@@ -1,4 +1,4 @@
-# GUI/contract.py
+# views/contract_view.py
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 

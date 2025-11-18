@@ -1,9 +1,9 @@
 import customtkinter as ctk
-from GUI.room import RoomTab
-from GUI.teant import TenantTab
-from GUI.bill import BillTab
-from GUI.contract import ContractTab
-from GUI.dashboard import DashboardTab
+from views.room_view import RoomTab
+from views.teant_view import TenantTab
+from views.bill_view import BillTab
+from views.contract_view import ContractTab
+from views.dashboard_view import DashboardTab
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")

@@ -1,7 +1,7 @@
-# GUI/bill.py
+# views/bill_view.py
 import customtkinter as ctk
 from tkinter import ttk, messagebox
-from services.bill_service import BillService
+from models.bill_model import BillService
 
 class BillTab(ctk.CTkFrame):
     def __init__(self, parent, bill_service: BillService = None):
