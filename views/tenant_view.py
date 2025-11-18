@@ -3,7 +3,7 @@ import customtkinter as ctk
 from tkinter import ttk, messagebox
 from models.tenant_service import TenantService, TenantDTO
 
-class TenantTab(ctk.CTkFrame):
+class tenantView(ctk.CTkFrame):
     def __init__(self, parent, tenant_service: TenantService = None, room_loader=lambda: []):
         super().__init__(parent)
         self.svc = tenant_service or TenantService(get_rooms=room_loader)

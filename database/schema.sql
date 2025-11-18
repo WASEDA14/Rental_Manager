@@ -1,14 +1,15 @@
 -- database/schema.sql
 
 CREATE TABLE IF NOT EXISTS room (
-    room_id             TEXT PRIMARY KEY,
+    room_id             INTEGER PRIMARY KEY AUTOINCREMENT,
     room_name           TEXT NOT NULL,
-    area_m2             REAL,
+    area_m2             INTEGER,
     floor               INTEGER,
     base_rent           INTEGER NOT NULL,
     electric_unit_price INTEGER NOT NULL,
     water_unit_price    INTEGER NOT NULL,
-    status              TEXT NOT NULL DEFAULT 'AVAILABLE',
+    status              TEXT NOT NULL DEFAULT 0
+             CHECK (status  IN (0, 1)),
     note                TEXT,
     is_deleted          INTEGER NOT NULL DEFAULT 0
         CHECK (is_deleted IN (0, 1))
@@ -29,7 +30,7 @@ CREATE TABLE IF NOT EXISTS tenant (
     move_in     TEXT,
     move_out    TEXT,
     is_deleted      INTEGER NOT NULL DEFAULT 1
-        CHECK (active IN (0, 1)),
+        CHECK (is_deleted IN (0, 1)),
     FOREIGN KEY (room_id) REFERENCES room(room_id)
 );
 
@@ -52,7 +53,7 @@ CREATE TABLE IF NOT EXISTS contract (
     is_deleted         INTEGER NOT NULL DEFAULT 0
         CHECK (is_deleted IN (0, 1)),
     FOREIGN KEY (room_id)   REFERENCES room(room_id),
-    FOREIGN KEY (tenant_id) REFERENCES tenant(id)
+    FOREIGN KEY (tenant_id) REFERENCES tenant(tenant_id)
 );
 
 

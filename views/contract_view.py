@@ -4,7 +4,7 @@ from tkinter import ttk, messagebox
 
 STATUSES = ["Draft", "Active", "Ended", "Canceled"]
 
-class ContractTab(ctk.CTkFrame):
+class contractView(ctk.CTkFrame):
     def __init__(self, parent,
                  service=None,                   # inject ContractService sau
                  load_tenants=lambda: [],        # -> ["Nguyễn A (#1)", ...]

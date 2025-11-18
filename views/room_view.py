@@ -1,12 +1,14 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
-from models.room_model import RoomService
+from models.room_model import RoomModel
 
-class RoomTab(ctk.CTkFrame):
+class roomView(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
-        self.svc = RoomService()
-        self._selected_id: int | None = None
+        self.on_pick = None
+        self.svc = RoomModel()
+        # room_id là TEXT nên để str, không phải int
+        self._selected_id: str | None = None
 
         # ===== Form trên cùng =====
         form = ctk.CTkFrame(self)
@@ -24,10 +26,14 @@ class RoomTab(ctk.CTkFrame):
         # chỉ cho nhập số
         rent_entry = ctk.CTkEntry(form, textvariable=self.rent_var, width=160)
         rent_entry.grid(row=0, column=3, padx=6, pady=6)
-        rent_entry.configure(validate="key",
-            validatecommand=(rent_entry.register(lambda s: s.isdigit() or s==""), "%P"))
+        rent_entry.configure(
+            validate="key",
+            validatecommand=(rent_entry.register(lambda s: s.isdigit() or s == ""), "%P")
+        )
 
-        ctk.CTkCheckBox(form, text="Hoạt động", variable=self.active_var).grid(row=0, column=4, padx=6, pady=6)
+        ctk.CTkCheckBox(form, text="Active", variable=self.active_var).grid(
+            row=0, column=4, padx=6, pady=6
+        )
 
         self.btn_add = ctk.CTkButton(form, text="Add", command=self.on_add, fg_color="#27ae60")
         self.btn_add.grid(row=0, column=5, padx=6, pady=6)
@@ -35,11 +41,15 @@ class RoomTab(ctk.CTkFrame):
         self.btn_update.grid(row=0, column=6, padx=6, pady=6)
 
         # Dòng tìm kiếm
-        ctk.CTkLabel(form, text="Search").grid(row=1, column=0, padx=6, pady=(0,6), sticky="w")
+        ctk.CTkLabel(form, text="Search").grid(row=1, column=0, padx=6, pady=(0, 6), sticky="w")
         search_entry = ctk.CTkEntry(form, textvariable=self.search_var, width=160)
-        search_entry.grid(row=1, column=1, padx=6, pady=(0,6))
-        ctk.CTkButton(form, text="Search", command=self.reload).grid(row=1, column=2, padx=6, pady=(0,6))
-        ctk.CTkButton(form, text="Clear", command=self.on_clear).grid(row=1, column=3, padx=6, pady=(0,6))
+        search_entry.grid(row=1, column=1, padx=6, pady=(0, 6))
+        ctk.CTkButton(form, text="Search", command=self.reload).grid(
+            row=1, column=2, padx=6, pady=(0, 6)
+        )
+        ctk.CTkButton(form, text="Clear", command=self.on_clear).grid(
+            row=1, column=3, padx=6, pady=(0, 6)
+        )
 
         for i in range(7):
             form.grid_columnconfigure(i, weight=0)
@@ -71,21 +81,27 @@ class RoomTab(ctk.CTkFrame):
 
         # ===== Nút dưới cùng =====
         bottom = ctk.CTkFrame(self, fg_color="transparent")
-        bottom.pack(fill="x", padx=10, pady=(0,10))
-        ctk.CTkButton(bottom, text="Delete", command=self.on_delete, fg_color="#e74c3c").pack(side="right", padx=6)
+        bottom.pack(fill="x", padx=10, pady=(0, 10))
+        ctk.CTkButton(
+            bottom, text="Delete", command=self.on_delete, fg_color="#e74c3c"
+        ).pack(side="right", padx=6)
         ctk.CTkButton(bottom, text="Refresh", command=self.reload).pack(side="right", padx=6)
 
         self.reload()  # lần đầu
 
     # ---------- helpers ----------
     def reload(self):
-        # load theo keyword
         kw = self.search_var.get().strip() or None
         rows = self.svc.list(keyword=kw)
         self.tree.delete(*self.tree.get_children())
         for r in rows:
-            status = "Đang dùng" if r.is_active else "Ngưng"
-            self.tree.insert("", "end", values=(r.id, r.code, f"{r.base_rent:,}", status))
+            active = (r.status != "INACTIVE") and (r.is_deleted == 0)
+            status_text = "Đang dùng" if active else "Ngưng"
+            self.tree.insert(
+                "",
+                "end",
+                values=(r.room_id, r.room_id, f"{r.base_rent:,}", status_text)
+            )
 
     def on_clear(self):
         self.code_var.set("")
@@ -95,43 +111,47 @@ class RoomTab(ctk.CTkFrame):
         self._selected_id = None
         self.reload()
 
-    def on_pick(self, _evt):
-        sel = self.tree.selection()
-        if not sel: return
-        vals = self.tree.item(sel[0], "values")
-        self._selected_id = int(vals[0])
-        self.code_var.set(vals[1])
-        self.rent_var.set(vals[2].replace(",", ""))
-        self.active_var.set(vals[3] == "Đang dùng")
-
-    # ---------- actions ----------
     def on_add(self):
         code = self.code_var.get().strip()
         rent = self.rent_var.get().strip()
+
         if not code or not rent:
-            messagebox.showwarning("Thiếu dữ liệu", "Nhập Số phòng và Giá thuê."); return
+            messagebox.showwarning("Thiếu dữ liệu", "Nhập Số phòng và Giá thuê.")
+            return
+
         try:
             self.svc.create(code=code, base_rent=int(rent), is_active=self.active_var.get())
         except ValueError as e:
-            messagebox.showerror("Lỗi", str(e)); return
+            messagebox.showerror("Lỗi", str(e))
+            return
+
         self.on_clear()
 
     def on_update(self):
         if self._selected_id is None:
-            messagebox.showinfo("Chọn dòng", "Chọn 1 phòng trong bảng để sửa."); return
+            messagebox.showinfo("Chọn dòng", "Chọn 1 phòng trong bảng để sửa.")
+            return
+
         code = self.code_var.get().strip()
         rent = self.rent_var.get().strip()
+
         if not code or not rent:
-            messagebox.showwarning("Thiếu dữ liệu", "Nhập Số phòng và Giá thuê."); return
+            messagebox.showwarning("Thiếu dữ liệu", "Nhập Số phòng và Giá thuê.")
+            return
+
         try:
             self.svc.update(self._selected_id, code=code, base_rent=int(rent), is_active=self.active_var.get())
         except ValueError as e:
-            messagebox.showerror("Lỗi", str(e)); return
+            messagebox.showerror("Lỗi", str(e))
+            return
+
         self.on_clear()
 
     def on_delete(self):
         if self._selected_id is None:
-            messagebox.showinfo("Chọn dòng", "Chọn 1 phòng để xóa."); return
+            messagebox.showinfo("Chọn dòng", "Chọn 1 phòng để xóa.")
+            return
+
         if messagebox.askyesno("Xóa phòng", f"Xóa phòng ID {self._selected_id}?"):
             self.svc.delete(self._selected_id)
             self.on_clear()

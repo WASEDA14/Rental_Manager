@@ -1,26 +1,31 @@
 import customtkinter as ctk
-from views.room_view import RoomTab
-from views.teant_view import TenantTab
-from views.bill_view import BillTab
-from views.contract_view import ContractTab
-from views.dashboard_view import DashboardTab
+
+from views.room_view import roomView
+from views.tenant_view import tenantView
+from views.bill_view import billView
+from views.contract_view import contractView
+from views.dashboard_view import dashboardView
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
+
 
 class MainWindow(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Rental Manager")
-        self.geometry("1100x650")
-        self.resizable(False, False)
+        self.geometry("1500x850")
+        self.resizable(True, True)
 
         # ===== Sidebar =====
         self.sidebar = ctk.CTkFrame(self, width=200, corner_radius=0)
         self.sidebar.pack(side="left", fill="y")
         self.sidebar.pack_propagate(False)  # giữ width cố định
-        ctk.CTkLabel(self.sidebar, text="Menu",
-                     font=ctk.CTkFont(size=20, weight="bold")).pack(pady=20)
+        ctk.CTkLabel(
+            self.sidebar,
+            text="Menu",
+            font=ctk.CTkFont(size=20, weight="bold")
+        ).pack(pady=20)
 
         # Menu buttons
         self.btn_dashboard = ctk.CTkButton(self.sidebar, text="Dashboard", command=self.show_dashboard)
@@ -37,24 +42,31 @@ class MainWindow(ctk.CTk):
         self.content.pack(side="right", fill="both", expand=True)
 
         # Child pages (frames)
-        self.dashboard_tab = DashboardTab(self.content)
-        self.room_tab      = RoomTab(self.content)
-        self.tenant_tab    = TenantTab(self.content)
-        self.bill_tab      = BillTab(self.content)
-        self.contract_tab  = ContractTab(self.content)
+        self.dashboard_view = dashboardView(self.content)
+        self.room_view      = roomView(self.content)
+        self.tenant_view    = tenantView(self.content)
+        self.bill_view      = billView(self.content)
+        self.contract_view  = contractView(self.content)
 
         # Chồng các page lên nhau
-        for frame in (self.dashboard_tab, self.room_tab, self.tenant_tab, self.bill_tab, self.contract_tab):
+        for frame in (
+            self.dashboard_view,
+            self.room_view,
+            self.tenant_view,
+            self.bill_view,
+            self.contract_view,
+        ):
             frame.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-        self.show_dashboard()  # trang mặc định
+        self.show_dashboard()
 
     # ===== Switchers =====
-    def show_dashboard(self): self.dashboard_tab.tkraise()
-    def show_room(self):      self.room_tab.tkraise()
-    def show_tenant(self):    self.tenant_tab.tkraise()
-    def show_bill(self):      self.bill_tab.tkraise()
-    def show_contract(self):  self.contract_tab.tkraise()
+    def show_dashboard(self): self.dashboard_view.tkraise()
+    def show_room(self):      self.room_view.tkraise()
+    def show_tenant(self):    self.tenant_view.tkraise()
+    def show_bill(self):      self.bill_view.tkraise()
+    def show_contract(self):  self.contract_view.tkraise()
+
 
 if __name__ == "__main__":
     MainWindow().mainloop()

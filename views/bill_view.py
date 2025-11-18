@@ -3,7 +3,7 @@ import customtkinter as ctk
 from tkinter import ttk, messagebox
 from models.bill_model import BillService
 
-class BillTab(ctk.CTkFrame):
+class billView(ctk.CTkFrame):
     def __init__(self, parent, bill_service: BillService = None):
         super().__init__(parent)
         self.svc = bill_service or BillService()

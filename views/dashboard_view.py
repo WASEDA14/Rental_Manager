@@ -21,7 +21,7 @@ class Card(ctk.CTkFrame):
                       hover_color="#e6e6e6").grid(row=3, column=0, padx=16, pady=16, sticky="w")
 
 
-class DashboardTab(ctk.CTkFrame):
+class dashboardView(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent, fg_color="transparent")
         ctk.CTkLabel(self, text="Have a nice day", font=ctk.CTkFont(size=24, weight="bold")).pack(pady='30')

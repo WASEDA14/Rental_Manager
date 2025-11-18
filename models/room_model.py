@@ -1,42 +1,135 @@
-# fake/in-memory, thay bằng DB sau
 from dataclasses import dataclass
+from typing import List, Optional
+from database.db import get_connection
+
 
 @dataclass
 class RoomDTO:
-    id: int | None
-    code: str
+    room_id: str               # TEXT trong DB
+    room_name: str
     base_rent: int
-    is_active: bool = True
+    area_m2: Optional[float] = None
+    floor: Optional[int] = None
+    electric_unit_price: Optional[int] = None
+    water_unit_price: Optional[int] = None
+    status: str = "AVAILABLE"  # AVAILABLE / INACTIVE ...
+    note: Optional[str] = None
+    is_deleted: int = 0
 
-class RoomService:
+
+class RoomModel:
     def __init__(self):
-        self._auto = 1
-        self._data: list[RoomDTO] = []
+        self.conn = get_connection()
 
-    def list(self, keyword: str|None=None) -> list[RoomDTO]:
-        data = self._data
+    # --- LIST ---
+    def list(self, keyword: str | None = None) -> List[RoomDTO]:
+        cur = self.conn.cursor()
+
+        sql = """
+            SELECT room_id, room_name, base_rent,
+                   area_m2, floor, electric_unit_price, water_unit_price,
+                   status, note, is_deleted
+            FROM room
+            WHERE is_deleted = 0
+        """
+        params: list = []
+
         if keyword:
-            kw = keyword.lower()
-            data = [r for r in data if kw in r.code.lower()]
-        return data
+            sql += " AND (room_id LIKE ? OR room_name LIKE ?)"
+            kw = f"%{keyword}%"
+            params.extend([kw, kw])
 
-    def create(self, code: str, base_rent: int, is_active: bool) -> RoomDTO:
-        if any(r.code == code for r in self._data):
-            raise ValueError("Số phòng đã tồn tại")
-        dto = RoomDTO(id=self._auto, code=code, base_rent=base_rent, is_active=is_active)
-        self._auto += 1
-        self._data.append(dto)
-        return dto
+        sql += " ORDER BY room_id"
 
-    def update(self, room_id: int, code: str, base_rent: int, is_active: bool) -> RoomDTO:
-        for r in self._data:
-            if r.id == room_id:
-                # chặn trùng code với phòng khác
-                if code != r.code and any(x.code == code for x in self._data):
-                    raise ValueError("Số phòng đã tồn tại")
-                r.code, r.base_rent, r.is_active = code, base_rent, is_active
-                return r
-        raise ValueError("Không tìm thấy phòng")
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        return [RoomDTO(*row) for row in rows]
 
-    def delete(self, room_id: int) -> None:
-        self._data = [r for r in self._data if r.id != room_id]
+    # --- GET nội bộ ---
+    def get(self, room_id: str) -> Optional[RoomDTO]:
+        cur = self.conn.cursor()
+        cur.execute("""
+            SELECT room_id, room_name, base_rent,
+                   area_m2, floor, electric_unit_price, water_unit_price,
+                   status, note, is_deleted
+            FROM room
+            WHERE room_id = ? AND is_deleted = 0
+        """, (room_id,))
+        row = cur.fetchone()
+        return RoomDTO(*row) if row else None
+
+    # --- CREATE ---
+    def create(self, code: str, base_rent: int, is_active: bool) -> None:
+        # check trùng
+        if self.get(code) is not None:
+            raise ValueError(f"Room ID '{code}' đã tồn tại.")
+
+        status = "AVAILABLE" if is_active else "INACTIVE"
+
+        self.conn.execute("""
+            INSERT INTO room (
+                room_id, 
+                room_name, 
+                area_m2, 
+                floor,
+                base_rent, 
+                electric_unit_price, 
+                water_unit_price,
+                status, 
+                note, 
+               is_deleted
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                          """,
+(
+            code,      # room_id
+            code,      # room_name
+            None,      # area_m2
+            None,      # floor
+            base_rent, # base_rent
+            0,         # electric_unit_price
+            0,         # water_unit_price
+            status,    # status
+            None,      # note
+            0,         # is_deleted
+        ))
+        self.conn.commit()
+
+    # --- UPDATE ---
+    def update(self, room_id: str, code: str, base_rent: int,electric_unit_price : int,water_unit_price: int, floor: int,is_active: bool, note: str,area_m2: float | None = None) -> None:
+        existing = self.get(room_id)
+        if existing is None:
+            raise ValueError("This room is not available")
+
+        status = "AVAILABLE" if is_active else "INACTIVE"
+
+        # Update infor room
+        existing.base_rent = base_rent
+        existing.electric_unit_price = electric_unit_price
+        existing.water_unit_price = water_unit_price
+        existing.status = status
+        existing.room_name = code
+        existing.area_m2= area_m2
+        existing.floor = floor
+        existing.note = note
+
+        self.conn.execute("""
+            UPDATE room
+            SET room_name = ?,
+                base_rent = ?,
+                status = ?
+            WHERE room_id = ? AND is_deleted = 0
+        """, (
+            existing.room_name,
+            existing.base_rent,
+            existing.status,
+            existing.room_id
+        ))
+        self.conn.commit()
+
+
+    def delete(self, room_id: str) -> None:
+        self.conn.execute(
+            "UPDATE room SET is_deleted = 1 WHERE room_id = ?",
+            (room_id,)
+        )
+        self.conn.commit()
