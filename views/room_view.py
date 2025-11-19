@@ -1,5 +1,8 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
+
+import self
+
 from models.room_model import RoomModel
 
 class roomView(ctk.CTkFrame):
@@ -19,7 +22,7 @@ class roomView(ctk.CTkFrame):
         self.active_var = ctk.BooleanVar(value=True)
         self.search_var = ctk.StringVar()
 
-        ctk.CTkLabel(form, text="Room ID").grid(row=0, column=0, padx=6, pady=6, sticky="w")
+        ctk.CTkLabel(form, text="Room Name").grid(row=0, column=0, padx=6, pady=6, sticky="w")
         ctk.CTkEntry(form, textvariable=self.code_var, width=160).grid(row=0, column=1, padx=6, pady=6)
 
         ctk.CTkLabel(form, text="Rent Amount (VND)").grid(row=0, column=2, padx=6, pady=6, sticky="w")
@@ -64,9 +67,9 @@ class roomView(ctk.CTkFrame):
         self.tree.pack(fill="both", expand=True, side="left")
 
         self.tree.heading("id", text="ID")
-        self.tree.heading("code", text="Số phòng")
-        self.tree.heading("rent", text="Giá thuê")
-        self.tree.heading("status", text="Trạng thái")
+        self.tree.heading("code", text="Room Name")
+        self.tree.heading("rent", text="Amount")
+        self.tree.heading("status", text="Status")
         self.tree.column("id", width=60, anchor="center")
         self.tree.column("code", width=120)
         self.tree.column("rent", width=120, anchor="e")
@@ -96,7 +99,7 @@ class roomView(ctk.CTkFrame):
         self.tree.delete(*self.tree.get_children())
         for r in rows:
             active = (r.status != "INACTIVE") and (r.is_deleted == 0)
-            status_text = "Đang dùng" if active else "Ngưng"
+            status_text = "Availbel" if active else "Unavailable"
             self.tree.insert(
                 "",
                 "end",
@@ -132,15 +135,15 @@ class roomView(ctk.CTkFrame):
             messagebox.showinfo("Chọn dòng", "Chọn 1 phòng trong bảng để sửa.")
             return
 
-        code = self.code_var.get().strip()
+        roomName = self.roomName_var.get().strip()
         rent = self.rent_var.get().strip()
 
-        if not code or not rent:
+        if not roomName or not rent:
             messagebox.showwarning("Thiếu dữ liệu", "Nhập Số phòng và Giá thuê.")
             return
 
         try:
-            self.svc.update(self._selected_id, code=code, base_rent=int(rent), is_active=self.active_var.get())
+            self.svc.update(self._selected_id, base_rent=int(rent), is_active=self.active_var.get())
         except ValueError as e:
             messagebox.showerror("Lỗi", str(e))
             return

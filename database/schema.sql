@@ -1,4 +1,3 @@
--- database/schema.sql
 
 CREATE TABLE IF NOT EXISTS room (
     room_id             INTEGER PRIMARY KEY AUTOINCREMENT,

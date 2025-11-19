@@ -68,7 +68,7 @@ class RoomModel:
 
         self.conn.execute("""
             INSERT INTO room (
-                room_id, 
+                /*room_id,*/ 
                 room_name, 
                 area_m2, 
                 floor,
@@ -78,10 +78,10 @@ class RoomModel:
                 status, 
                 note, 
                is_deleted
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                           """,
 (
-            code,      # room_id
+            # code,      # room_id
             code,      # room_name
             None,      # area_m2
             None,      # floor
