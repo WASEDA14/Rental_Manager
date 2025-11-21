@@ -5,7 +5,7 @@ from database.db import get_connection
 
 @dataclass
 class RoomDTO:
-    room_id: str               # TEXT trong DB
+    room_id: int              # TEXT trong DB
     room_name: str
     base_rent: int
     area_m2: Optional[float] = None

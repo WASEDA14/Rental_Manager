@@ -19,6 +19,8 @@ class roomView(ctk.CTkFrame):
 
         self.code_var = ctk.StringVar()
         self.rent_var = ctk.StringVar()
+        self.electric_var = ctk.StringVar()
+        self.water_var = ctk.StringVar()
         self.active_var = ctk.BooleanVar(value=True)
         self.search_var = ctk.StringVar()
 
@@ -34,14 +36,32 @@ class roomView(ctk.CTkFrame):
             validatecommand=(rent_entry.register(lambda s: s.isdigit() or s == ""), "%P")
         )
 
-        ctk.CTkCheckBox(form, text="Active", variable=self.active_var).grid(
-            row=0, column=4, padx=6, pady=6
+        ctk.CTkLabel(form, text="Electric Unit Price").grid(row=0, column=4, padx=6, pady=6, sticky="w")
+        # chỉ cho nhập số
+        electric_entry = ctk.CTkEntry(form, textvariable=self.electric_var, width=160)
+        electric_entry.grid(row=0, column=5, padx=6, pady=6)
+        electric_entry.configure(
+            validate="key",
+            validatecommand=(electric_entry.register(lambda s: s.isdigit() or s == ""), "%P")
         )
 
+
+        ctk.CTkLabel(form, text="Water Unit Price").grid(row=0, column=6, padx=6, pady=6, sticky="w")
+        # chỉ cho nhập số
+        water_entry = ctk.CTkEntry(form, textvariable=self.water_var, width=160)
+        water_entry.grid(row=0, column=7, padx=6, pady=6)
+        water_entry.configure(
+            validate="key",
+            validatecommand=(water_entry.register(lambda s: s.isdigit() or s == ""), "%P"))
+
+
+        ctk.CTkCheckBox(form, text="Active", variable=self.active_var).grid(
+            row=1, column=4, padx=6, pady=6)
+
         self.btn_add = ctk.CTkButton(form, text="Add", command=self.on_add, fg_color="#27ae60")
-        self.btn_add.grid(row=0, column=5, padx=6, pady=6)
+        self.btn_add.grid(row=1, column=5, padx=6, pady=6)
         self.btn_update = ctk.CTkButton(form, text="Edit", command=self.on_update, fg_color="#f39c12")
-        self.btn_update.grid(row=0, column=6, padx=6, pady=6)
+        self.btn_update.grid(row=1, column=6, padx=6, pady=6)
 
         # Dòng tìm kiếm
         ctk.CTkLabel(form, text="Search").grid(row=1, column=0, padx=6, pady=(0, 6), sticky="w")
@@ -54,9 +74,9 @@ class roomView(ctk.CTkFrame):
             row=1, column=3, padx=6, pady=(0, 6)
         )
 
-        for i in range(7):
+        for i in range(8):
             form.grid_columnconfigure(i, weight=0)
-        form.grid_columnconfigure(7, weight=1)
+        form.grid_columnconfigure(8, weight=1)
 
         # ===== Bảng danh sách =====
         table_frame = ctk.CTkFrame(self)
@@ -103,7 +123,7 @@ class roomView(ctk.CTkFrame):
             self.tree.insert(
                 "",
                 "end",
-                values=(r.room_id, r.room_id, f"{r.base_rent:,}", status_text)
+                values=(r.room_id, r.room_name, f"{r.base_rent:,}", status_text)
             )
 
     def on_clear(self):
