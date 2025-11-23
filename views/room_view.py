@@ -55,8 +55,8 @@ class roomView(ctk.CTkFrame):
             validate="key",
             validatecommand=(water_entry.register(lambda s: s.isdigit() or s == ""), "%P"))
 
-        ctk.CTkLabel(form, text="Note").grid(row=1, column=0, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.note_var, width=300).grid(row=1, column=1, padx=6, pady=6)
+        ctk.CTkLabel(form, text="Note").grid(row=1, column=0, padx=6, pady=6, sticky="ew")
+        ctk.CTkEntry(form, textvariable=self.note_var, width=300).grid(row=1, column=1, padx=6, pady=6, columnspan=7)
 
 
         ctk.CTkCheckBox(form, text="Active", variable=self.active_var).grid(
