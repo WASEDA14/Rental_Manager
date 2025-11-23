@@ -26,12 +26,12 @@ class roomView(ctk.CTkFrame):
         self.note_var = ctk.StringVar()
 
         ctk.CTkLabel(form, text="Room Name").grid(row=0, column=0, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.code_var, width=160).grid(row=0, column=1, padx=6, pady=6)
+        ctk.CTkEntry(form, textvariable=self.code_var, width=160).grid(row=0, column=1, padx=6, pady=6,sticky="w")
 
         ctk.CTkLabel(form, text="Rent Amount (VND)").grid(row=0, column=2, padx=6, pady=6, sticky="w")
         # chỉ cho nhập số
         rent_entry = ctk.CTkEntry(form, textvariable=self.rent_var, width=160)
-        rent_entry.grid(row=0, column=3, padx=6, pady=6)
+        rent_entry.grid(row=0, column=3, padx=6, pady=6,sticky="w")
         rent_entry.configure(
             validate="key",
             validatecommand=(rent_entry.register(lambda s: s.isdigit() or s == ""), "%P")
@@ -40,7 +40,7 @@ class roomView(ctk.CTkFrame):
         ctk.CTkLabel(form, text="Electric Unit Price").grid(row=0, column=4, padx=6, pady=6, sticky="w")
         # chỉ cho nhập số
         electric_entry = ctk.CTkEntry(form, textvariable=self.electric_var, width=160)
-        electric_entry.grid(row=0, column=5, padx=6, pady=6)
+        electric_entry.grid(row=0, column=5, padx=6, pady=6,sticky="w")
         electric_entry.configure(
             validate="key",
             validatecommand=(electric_entry.register(lambda s: s.isdigit() or s == ""), "%P")
@@ -50,37 +50,36 @@ class roomView(ctk.CTkFrame):
         ctk.CTkLabel(form, text="Water Unit Price").grid(row=0, column=6, padx=6, pady=6, sticky="w")
         # chỉ cho nhập số
         water_entry = ctk.CTkEntry(form, textvariable=self.water_var, width=160)
-        water_entry.grid(row=0, column=7, padx=6, pady=6)
+        water_entry.grid(row=0, column=7, padx=6, pady=6,sticky="w")
         water_entry.configure(
             validate="key",
             validatecommand=(water_entry.register(lambda s: s.isdigit() or s == ""), "%P"))
 
-        ctk.CTkLabel(form, text="Note").grid(row=1, column=0, padx=6, pady=6, sticky="ew")
-        ctk.CTkEntry(form, textvariable=self.note_var, width=300).grid(row=1, column=1, padx=6, pady=6, columnspan=7)
+        ctk.CTkLabel(form, text="Note").grid(row=1, column=0, padx=6, pady=6, sticky = "w" )
+        ctk.CTkEntry(form, textvariable=self.note_var, width=300).grid(row=1, column=1, padx=6, pady=6, columnspan=7,sticky="we")
 
 
         ctk.CTkCheckBox(form, text="Active", variable=self.active_var).grid(
             row=2, column=4, padx=6, pady=6)
 
         self.btn_add = ctk.CTkButton(form, text="Add", command=self.on_add, fg_color="#27ae60")
-        self.btn_add.grid(row=2, column=5, padx=6, pady=6)
+        self.btn_add.grid(row=2, column=5, padx=6, pady=(0, 6), sticky="we")
         self.btn_update = ctk.CTkButton(form, text="Edit", command=self.on_update, fg_color="#f39c12")
-        self.btn_update.grid(row=2, column=6, padx=6, pady=6)
+        self.btn_update.grid(row=2, column=6, padx=6, pady=(0, 6), sticky="we")
 
         # Dòng tìm kiếm
         ctk.CTkLabel(form, text="Search").grid(row=2, column=0, padx=6, pady=(0, 6), sticky="w")
         search_entry = ctk.CTkEntry(form, textvariable=self.search_var, width=160)
-        search_entry.grid(row=2, column=1, padx=6, pady=(0, 6))
+        search_entry.grid(row=2, column=1, padx=6, pady=(0, 6), sticky="we")
         ctk.CTkButton(form, text="Search", command=self.reload).grid(
-            row=2, column=2, padx=6, pady=(0, 6)
+            row=2, column=2, padx=6, pady=(0, 6), sticky="we"
         )
         ctk.CTkButton(form, text="Clear", command=self.on_clear).grid(
-            row=2, column=3, padx=6, pady=(0, 6)
+            row=2, column=3, padx=6, pady=(0, 6), sticky="we"
         )
 
-        for i in range(7):
-            form.grid_columnconfigure(i, weight=0)
-        form.grid_columnconfigure( weight=1)
+        for i in range(8):
+            form.grid_columnconfigure(i, weight=1)
 
         # ===== Bảng danh sách =====
         table_frame = ctk.CTkFrame(self)
