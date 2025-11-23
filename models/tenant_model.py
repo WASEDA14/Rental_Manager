@@ -1,10 +1,8 @@
-# models/tenant_service.py
+
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import List, Optional, Callable
 
-# callback để lấy danh sách phòng hợp lệ (vd: từ RoomService)
-# dạng: get_rooms() -> List[str]  (trả về list room_code, ví dụ ["R101","R102"])
 GetRoomsFn = Callable[[], List[str]]
 
 @dataclass
@@ -51,9 +49,15 @@ class TenantService:
         return active, total
 
     # ---------- Commands ----------
-    def create(self, *, name: str, phone: str | None, room_code: str,
-               move_in: str | None = None, email: str | None = None,
+    def create(self, *,
+               name: str,
+               phone: str | None,
+               room_code: str,
+               move_in: str | None = None,
+               move_out: str | None = None,  # 👈 thêm
+               email: str | None = None,
                id_no: str | None = None) -> TenantDTO:
+
         name = name.strip()
         if len(name) < 2:
             raise ValueError("Tên phải ≥ 2 ký tự")
@@ -61,13 +65,26 @@ class TenantService:
             raise ValueError("SĐT không hợp lệ (9–11 số)")
         if self._get_rooms() and room_code not in self._get_rooms():
             raise ValueError("Phòng không tồn tại")
-        # Rule mẫu: 1 phòng chỉ 1 tenant đang active
         if any(t.room_code == room_code and t.active for t in self._data):
             raise ValueError("Phòng đã có người ở")
 
+        mv_in = _parse_date(move_in)
+        mv_out = _parse_date(move_out)
+
+        # check logic ngày
+        if mv_in and mv_out and mv_out < mv_in:
+            raise ValueError("Ngày ra phải ≥ ngày vào")
+
         dto = TenantDTO(
-            id=self._auto, name=name, phone=phone, room_code=room_code,
-            move_in=_parse_date(move_in), email=email, id_no=id_no, active=True
+            id=self._auto,
+            name=name,
+            phone=phone,
+            room_code=room_code,
+            move_in=mv_in,
+            move_out=mv_out,
+            email=email,
+            id_no=id_no,
+            active=True,
         )
         self._auto += 1
         self._data.append(dto)

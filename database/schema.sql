@@ -18,10 +18,10 @@ CREATE TABLE IF NOT EXISTS room (
 CREATE TABLE IF NOT EXISTS tenant (
     tenant_id          INTEGER PRIMARY KEY AUTOINCREMENT,
     full_name   TEXT    NOT NULL,
-   sex         INTEGER NOT NULL
+   sex         INTEGER
         CHECK (sex IN (0, 1, 2)),
     phone       TEXT,
-    id_number   INTEGER,
+    id_number   INTEGER NOT NULL,
     address     TEXT,
     birth       TEXT,
     email       TEXT,
