@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS tenant (
     room_id     TEXT,
     move_in     TEXT,
     move_out    TEXT,
+    note        TEXT,
     is_deleted      INTEGER NOT NULL DEFAULT 1
         CHECK (is_deleted IN (0, 1)),
     FOREIGN KEY (room_id) REFERENCES room(room_id)
