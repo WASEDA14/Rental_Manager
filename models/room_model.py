@@ -12,7 +12,7 @@ class RoomDTO:
     floor: Optional[int] = None
     electric_unit_price: Optional[int] = None
     water_unit_price: Optional[int] = None
-    status: str = "AVAILABLE"  # AVAILABLE / INACTIVE ...
+    status: int = 1
     note: Optional[str] = None
     is_deleted: int = 0
 
@@ -46,25 +46,34 @@ class RoomModel:
         return [RoomDTO(*row) for row in rows]
 
     # --- GET nội bộ ---
-    def get(self, room_id: str) -> Optional[RoomDTO]:
+    def get(self, room_name: str) -> Optional[RoomDTO]:
         cur = self.conn.cursor()
         cur.execute("""
             SELECT room_id, room_name, base_rent,
                    area_m2, floor, electric_unit_price, water_unit_price,
                    status, note, is_deleted
             FROM room
-            WHERE room_id = ? AND is_deleted = 0
-        """, (room_id,))
+            WHERE room_name = ? AND is_deleted = 0
+        """, (room_name,))
         row = cur.fetchone()
         return RoomDTO(*row) if row else None
 
     # --- CREATE ---
-    def create(self, code: str, base_rent: int, is_active: bool) -> None:
-        # check trùng
-        if self.get(code) is not None:
-            raise ValueError(f"Room ID '{code}' đã tồn tại.")
 
-        status = "AVAILABLE" if is_active else "INACTIVE"
+    def create(
+        self,
+        room_name: str,
+        base_rent: int,
+        electric_unit_price: int | None = None,
+        water_unit_price: int | None = None,
+        note: str | None = None,
+        is_active: bool = True,
+    ):
+        # check trùng
+        if self.get(room_name) is not None:
+            raise ValueError(f"Room ID '{room_name}' đã tồn tại.")
+
+        status = 1 if is_active else 0
 
         self.conn.execute("""
             INSERT INTO room (
@@ -82,14 +91,14 @@ class RoomModel:
                           """,
 (
             # code,      # room_id
-            code,      # room_name
+            room_name,      # room_name
             None,      # area_m2
             None,      # floor
             base_rent, # base_rent
-            0,         # electric_unit_price
-            0,         # water_unit_price
-            status,    # status
-            None,      # note
+            electric_unit_price,         # electric_unit_price
+            water_unit_price,         # water_unit_price
+            1 if is_active else 0,
+            note,      # note
             0,         # is_deleted
         ))
         self.conn.commit()

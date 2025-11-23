@@ -5,8 +5,8 @@ CREATE TABLE IF NOT EXISTS room (
     area_m2             INTEGER,
     floor               INTEGER,
     base_rent           INTEGER NOT NULL,
-    electric_unit_price INTEGER NOT NULL,
-    water_unit_price    INTEGER NOT NULL,
+    electric_unit_price INTEGER ,
+    water_unit_price    INTEGER ,
     status              TEXT NOT NULL DEFAULT 0
              CHECK (status  IN (0, 1)),
     note                TEXT,

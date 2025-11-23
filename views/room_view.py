@@ -129,15 +129,27 @@ class roomView(ctk.CTkFrame):
         self.tree.delete(*self.tree.get_children())
         for r in rows:
             active = (r.status != "INACTIVE") and (r.is_deleted == 0)
-            status_text = "Availbel" if active else "Unavailable"
+            status_text = "Available" if active else "Unavailable"
             self.tree.insert(
                 "",
                 "end",
-                values=(r.room_id, r.room_name, f"{r.base_rent:,}", status_text)
+                values=(
+                    r.room_id,
+                    r.room_name,
+                    f"{r.base_rent:,}",
+                    status_text,
+                    r.electric_unit_price,
+                    r.water_unit_price,
+                    r.note,
+                ),
             )
 
     def on_clear(self):
         self.code_var.set("")
+        self.rent_var.set("")
+        self.electric_var.set("")
+        self.water_var.set("")
+        self.note_var.set("")
         self.rent_var.set("")
         self.active_var.set(True)
         self.search_var.set("")
@@ -145,24 +157,42 @@ class roomView(ctk.CTkFrame):
         self.reload()
 
     def on_add(self):
-        code = self.code_var.get().strip()
-        rent = self.rent_var.get().strip()
+            roomName = self.code_var.get().strip()
+            rent = self.rent_var.get().strip()
+            electric = self.electric_var.get().strip()
+            water = self.water_var.get().strip()
+            note = self.note_var.get().strip()
 
-        if not code:
-            messagebox.showwarning("Room Name is required", "Please input the Room Name.")
-            return
+            if not roomName:
+                messagebox.showwarning("Room Name is required", "Please input the Room Name.")
+                return
+            if not rent:
+                messagebox.showwarning("Rent Amount is required", "Please input the Rent Amount.")
+                return
 
-        elif not rent:
-            messagebox.showwarning("Rent Amount is required", "Please input the Rent Amount.")
-            return
+            try:
+                base_rent = int(rent)
+                electric_unit = int(electric) if electric else None
+                water_unit = int(water) if water else None
+            except ValueError:
+                messagebox.showerror("Lỗi", "Rent / Electric / Water phải là số.")
+                return
 
-        try:
-            self.svc.create(code=code, base_rent=int(rent), is_active=self.active_var.get())
-        except ValueError as e:
-            messagebox.showerror("Lỗi", str(e))
-            return
+            try:
+                self.svc.create(
+                    room_name=roomName,
+                    base_rent=base_rent,
+                    electric_unit_price=electric_unit,
+                    water_unit_price=water_unit,
+                    note=note,
+                    is_active=self.active_var.get(),
+                )
+            except ValueError as e:
+                messagebox.showerror("Lỗi", str(e))
+                return
 
-        self.on_clear()
+            self.on_clear()
+
 
     def on_update(self):
         if self._selected_id is None:
