@@ -1,3 +1,4 @@
+import sqlite3
 from dataclasses import dataclass
 from typing import List, Optional
 from database.db import get_connection
@@ -20,6 +21,8 @@ class RoomDTO:
 class RoomModel:
     def __init__(self):
         self.conn = get_connection()
+        self.conn.row_factory = sqlite3.Row
+
 
     # --- LIST ---
     def list(self, keyword: str | None = None) -> List[RoomDTO]:
@@ -35,7 +38,7 @@ class RoomModel:
         params: list = []
 
         if keyword:
-            sql += " AND (room_id LIKE ? OR room_name LIKE ?)"
+            sql += " AND (CAST(room_id AS TEXT) LIKE ? OR room_name LIKE ?)"
             kw = f"%{keyword}%"
             params.extend([kw, kw])
 
@@ -46,7 +49,7 @@ class RoomModel:
         return [RoomDTO(*row) for row in rows]
 
     # --- GET nội bộ ---
-    def get_by_id(self, room_id: str) -> Optional[RoomDTO]:
+    def get_by_id(self, room_id: int) -> Optional[RoomDTO]:
         cur = self.conn.cursor()
         cur.execute("""
                     SELECT room_id,
