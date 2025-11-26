@@ -2,12 +2,12 @@
 import customtkinter as ctk
 from tkcalendar import DateEntry
 from tkinter import ttk, messagebox
-from models.tenant_model import TenantService, TenantDTO
+from models.tenant_model import TenantModel, TenantDTO
 
 class tenantView(ctk.CTkFrame):
-    def __init__(self, parent, tenant_service: TenantService = None, room_loader=lambda: []):
+    def __init__(self, parent, tenant_service: TenantModel = None, room_loader=lambda: []):
         super().__init__(parent)
-        self.svc = tenant_service or TenantService(get_rooms=room_loader)
+        self.svc = tenant_service or TenantModel()
         self._selected_id: int | None = None
 
         # ===== Form =====

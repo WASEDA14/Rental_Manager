@@ -2,13 +2,13 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
-from models.bill_model import BillService
+from models.bill_model import BillModel
 
 
 class billView(ctk.CTkFrame):
-    def __init__(self, parent, bill_service: BillService | None = None):
+    def __init__(self, parent, bill_service: BillModel | None = None):
         super().__init__(parent)
-        self.svc = bill_service or BillService()
+        self.svc = bill_service or BillModel()
         self._selected_id: int | None = None
 
         # ====== FORM TRÊN CÙNG – INFO CHUNG ======

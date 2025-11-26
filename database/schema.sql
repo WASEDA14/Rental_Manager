@@ -46,7 +46,6 @@ CREATE TABLE IF NOT EXISTS contract (
     water_meter_start  INTEGER,
     contract_status    INTEGER NOT NULL DEFAULT 0
         CHECK (contract_status IN (0, 1, 2)),
---     0=Draft/Chuẩn bị, 1=Đang hiệu lực, 2=Đã kết thúc/Huỷ
     deposit_ymd        TEXT,
     note               TEXT,
     contract_name      TEXT,
@@ -73,7 +72,7 @@ CREATE TABLE IF NOT EXISTS bill (
     paid_amount        INTEGER,
     paid_status        INTEGER NOT NULL DEFAULT 0
         CHECK (paid_status IN (0, 1, 2)),
-        -- gợi ý: 0=Chưa trả, 1=Trả một phần, 2=Đã trả đủ
+        --  0=Chưa trả, 1=Trả một phần, 2=Đã trả đủ
     paid_ymd           TEXT,
     pdf_path           TEXT,
     note               TEXT,

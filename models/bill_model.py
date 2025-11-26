@@ -1,15 +1,17 @@
+from __future__ import annotations
 
-# models/bill_model.py
+import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 
+from database.db import get_connection
 
-@dataclass
+
 @dataclass
 class BillDTO:
     id: int | None
@@ -31,35 +33,60 @@ class BillDTO:
     note: str | None
 
 
-
-
-class BillService:
-    """
-    Service in-memory, giống Room/Tenant Service.
-    Sau này đổi sang SQLite cũng giữ nguyên interface này.
-    """
+class BillModel:
     def __init__(self):
-        self._data: list[BillDTO] = []
-        self._auto = 1
+        self.conn = get_connection()
+        self.conn.row_factory = sqlite3.Row
+
         root = Path(__file__).resolve().parent.parent  # models/ -> project root
         self._export_dir = root / "exports"
         self._export_dir.mkdir(exist_ok=True)
 
-    # -------------------- LIST --------------------
-    def list(self, keyword: str | None = None) -> list[BillDTO]:
-        if not keyword:
-            return list(self._data)
+    # ---------- mapping ----------
+    def _row_to_dto(self, row: sqlite3.Row) -> BillDTO:
+        d = dict(row)
+        return BillDTO(
+            id=d["bill_id"],                     # map từ bill_id trong DB
+            tenant_name=d["tenant_name"],
+            room_code=d["room_code"],
+            month=d["month"],
+            elec_prev=d["elec_prev"],
+            elec_current=d["elec_current"],
+            water_prev=d["water_prev"],
+            water_current=d["water_current"],
+            water_unit_price=d["water_unit_price"],
+            electric_unit_price=d["electric_unit_price"],
+            room_rent_amount=d["room_rent_amount"],
+            other_fee=d["other_fee"],
+            total_amount=d["total_amount"],
+            paid_amount=d["paid_amount"],
+            paid_status=d["paid_status"],
+            paid_ymd=d["paid_ymd"],
+            note=d["note"],
+        )
 
-        kw = keyword.lower()
-        return [
-            b for b in self._data
-            if kw in b.tenant_name.lower()
-            or kw in b.room_code.lower()
-            or kw in b.month.lower()
-            or (b.note and kw in b.note.lower())
-        ]
+    # ---------- Query ----------
+    def list(self, keyword: str | None = None) -> List[BillDTO]:
+        sql = "SELECT * FROM bill"
+        params: list = []
 
-    # -------------------- CREATE --------------------
+        if keyword:
+            sql += " WHERE tenant_name LIKE ? OR room_code LIKE ? OR month LIKE ? OR note LIKE ?"
+            kw = f"%{keyword}%"
+            params = [kw, kw, kw, kw]
+
+        sql += " ORDER BY bill_id DESC"
+        cur = self.conn.execute(sql, params)
+        return [self._row_to_dto(r) for r in cur.fetchall()]
+
+    def get(self, bill_id: int) -> BillDTO:
+        cur = self.conn.execute("SELECT * FROM bill WHERE bill_id = ?", (bill_id,))
+        row = cur.fetchone()
+        if not row:
+            raise ValueError("Không tìm thấy hóa đơn")
+        return self._row_to_dto(row)
+
+    # ---------- Commands ----------
     def create(self, **fields) -> BillDTO:
         tenant_name = fields.get("tenant_name", "").strip()
         month = fields.get("month", "")
@@ -69,83 +96,116 @@ class BillService:
         if not month or len(month) != 7:
             raise ValueError("Tháng phải dạng YYYY-MM")
 
-        # Tính tiền điện, nước, tổng
         total = self._recalc_total(fields)
 
-        dto = BillDTO(
-            id=self._auto,
-            tenant_name=tenant_name,
-            room_code=fields.get("room_code", "").strip(),
-            month=month,
-
-            elec_prev=fields.get("elec_prev"),
-            elec_current=fields.get("elec_current"),
-
-            water_prev=fields.get("water_prev"),
-            water_current=fields.get("water_current"),
-
-            water_unit_price=fields.get("water_unit_price"),
-            electric_unit_price=fields.get("electric_unit_price"),
-
-            room_rent_amount=fields.get("room_rent_amount"),
-            other_fee=fields.get("other_fee"),
-
-            total_amount=total,
-
-            paid_amount=fields.get("paid_amount", 0),
-            paid_status=fields.get("paid_status", 0),
-            paid_ymd=fields.get("paid_ymd"),
-
-            note=fields.get("note"),
+        cur = self.conn.execute(
+            """
+            INSERT INTO bill (
+                tenant_name, room_code, month,
+                elec_prev, elec_current,
+                water_prev, water_current,
+                water_unit_price, electric_unit_price,
+                room_rent_amount, other_fee,
+                total_amount,
+                paid_amount, paid_status, paid_ymd,
+                note
+            ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                tenant_name,
+                fields.get("room_code", "").strip(),
+                month,
+                fields.get("elec_prev"),
+                fields.get("elec_current"),
+                fields.get("water_prev"),
+                fields.get("water_current"),
+                fields.get("water_unit_price"),
+                fields.get("electric_unit_price"),
+                fields.get("room_rent_amount"),
+                fields.get("other_fee"),
+                total,
+                fields.get("paid_amount", 0),
+                fields.get("paid_status", 0),
+                fields.get("paid_ymd"),
+                fields.get("note"),
+            ),
         )
-        self._auto += 1
-        self._data.append(dto)
-        return dto
+        self.conn.commit()
+        new_id = cur.lastrowid
+        return self.get(new_id)
 
-    # -------------------- UPDATE --------------------
     def update(self, bill_id: int, **fields) -> BillDTO:
-        b = self._get(bill_id)
+        b = self.get(bill_id)
 
-        # Cập nhật từng field nếu được truyền vào
-        for key, value in fields.items():
-            if hasattr(b, key):
-                setattr(b, key, value)
+        # merge dto -> dict
+        data = b.__dict__ | fields
 
-        # Nếu các field dùng để tính tổng thay đổi → tính lại total
-        if any(k in fields for k in (
-            "elec_prev", "elec_current",
-            "water_prev", "water_current",
-            "water_unit_price", "electric_unit_price",
-            "room_rent_amount", "other_fee",
-        )):
-            b.total_amount = self._recalc_total(b.__dict__)
+        # nếu có field ảnh hưởng tới tổng → tính lại
+        if any(
+            k in fields
+            for k in (
+                "elec_prev",
+                "elec_current",
+                "water_prev",
+                "water_current",
+                "water_unit_price",
+                "electric_unit_price",
+                "room_rent_amount",
+                "other_fee",
+            )
+        ):
+            data["total_amount"] = self._recalc_total(data)
 
-        # Nếu cập nhật paid_amount → tự tính paid_status
+        # nếu có paid_amount → cập nhật paid_status
         if "paid_amount" in fields:
-            if b.paid_amount >= b.total_amount:
-                b.paid_status = 2
-            elif b.paid_amount > 0:
-                b.paid_status = 1
+            if data["paid_amount"] >= data["total_amount"]:
+                data["paid_status"] = 2
+            elif data["paid_amount"] > 0:
+                data["paid_status"] = 1
             else:
-                b.paid_status = 0
+                data["paid_status"] = 0
 
-        return b
+        self.conn.execute(
+            """
+            UPDATE bill
+            SET tenant_name = ?, room_code = ?, month = ?,
+                elec_prev = ?, elec_current = ?,
+                water_prev = ?, water_current = ?,
+                water_unit_price = ?, electric_unit_price = ?,
+                room_rent_amount = ?, other_fee = ?,
+                total_amount = ?, paid_amount = ?, paid_status = ?,
+                paid_ymd = ?, note = ?
+            WHERE bill_id = ?
+            """,
+            (
+                data["tenant_name"],
+                data["room_code"],
+                data["month"],
+                data["elec_prev"],
+                data["elec_current"],
+                data["water_prev"],
+                data["water_current"],
+                data["water_unit_price"],
+                data["electric_unit_price"],
+                data["room_rent_amount"],
+                data["other_fee"],
+                data["total_amount"],
+                data["paid_amount"],
+                data["paid_status"],
+                data["paid_ymd"],
+                data["note"],
+                bill_id,
+            ),
+        )
+        self.conn.commit()
+        return self.get(bill_id)
 
-    # -------------------- DELETE --------------------
-    def delete(self, bill_id: int):
-        self._data = [x for x in self._data if x.id != bill_id]
+    def delete(self, bill_id: int) -> None:
+        self.conn.execute("DELETE FROM bill WHERE bill_id = ?", (bill_id,))
+        self.conn.commit()
 
-    # -------------------- INTERNAL --------------------
-    def _get(self, bill_id: int) -> BillDTO:
-        for b in self._data:
-            if b.id == bill_id:
-                return b
-        raise ValueError("Không tìm thấy hóa đơn")
-
+    # ---------- internal calc ----------
     def _recalc_total(self, f) -> int:
-        """
-        f có thể là dict hoặc BillDTO.__dict__
-        """
         # Điện
         if f.get("elec_prev") is not None and f.get("elec_current") is not None:
             elec_amount = (f["elec_current"] - f["elec_prev"]) * (f.get("electric_unit_price") or 0)
@@ -159,19 +219,18 @@ class BillService:
             water_amount = 0
 
         total = (
-            (f.get("room_rent_amount") or 0) +
-            (f.get("other_fee") or 0) +
-            elec_amount +
-            water_amount
+            (f.get("room_rent_amount") or 0)
+            + (f.get("other_fee") or 0)
+            + elec_amount
+            + water_amount
         )
         return total
 
-
+    # ---------- export ----------
     def export_pdf(self, bill_id: int) -> Path:
         """Tạo file PDF cho 1 bill, trả về đường dẫn file."""
-        b = self._get(bill_id)
+        b = self.get(bill_id)
 
-        # tên file: exports/bill_0001_2025-01.pdf
         safe_month = (b.month or "").replace("/", "-")
         filename = self._export_dir / f"bill_{b.id:04d}_{safe_month}.pdf"
 
@@ -179,7 +238,7 @@ class BillService:
         width, height = A4
         y = height - 40
 
-        # ===== Header =====
+        # Header
         c.setFont("Helvetica-Bold", 16)
         c.drawString(40, y, "RENTAL BILL")
         y -= 25
@@ -189,7 +248,7 @@ class BillService:
         c.drawString(40, y, f"Created: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         y -= 25
 
-        # ===== Thông tin khách / phòng =====
+        # Customer / Room
         c.setFont("Helvetica-Bold", 12)
         c.drawString(40, y, "Customer / Room")
         y -= 18
@@ -201,7 +260,7 @@ class BillService:
         c.drawString(60, y, f"Month    : {b.month}")
         y -= 25
 
-        # ===== Điện =====
+        # Electricity
         c.setFont("Helvetica-Bold", 12)
         c.drawString(40, y, "Electricity")
         y -= 18
@@ -213,7 +272,7 @@ class BillService:
         c.drawString(60, y, f"Unit price: {b.electric_unit_price or 0} VND")
         y -= 25
 
-        # ===== Nước =====
+        # Water
         c.setFont("Helvetica-Bold", 12)
         c.drawString(40, y, "Water")
         y -= 18
@@ -225,7 +284,7 @@ class BillService:
         c.drawString(60, y, f"Unit price: {b.water_unit_price or 0} VND")
         y -= 25
 
-        # ===== Tiền phòng + fee khác =====
+        # Room / Other
         c.setFont("Helvetica-Bold", 12)
         c.drawString(40, y, "Room / Other")
         y -= 18
@@ -235,7 +294,7 @@ class BillService:
         c.drawString(60, y, f"Other fee : {b.other_fee or 0:,.0f} VND")
         y -= 25
 
-        # ===== Tổng & thanh toán =====
+        # Payment
         c.setFont("Helvetica-Bold", 12)
         c.drawString(40, y, "Payment")
         y -= 18
@@ -251,16 +310,15 @@ class BillService:
         c.drawString(60, y, f"Paid date    : {b.paid_ymd or '-'}")
         y -= 25
 
-        # ===== Ghi chú =====
+        # Note
         if b.note:
             c.setFont("Helvetica-Bold", 12)
             c.drawString(40, y, "Note")
             y -= 18
             c.setFont("Helvetica", 10)
-            c.drawString(60, y, b.note[:100])  # cắt cho chắc, khỏi tràn
+            c.drawString(60, y, b.note[:100])
             y -= 20
 
-        # Footer
         c.setFont("Helvetica-Oblique", 9)
         c.drawString(40, 40, "Generated by Rental Manager")
 
