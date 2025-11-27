@@ -131,16 +131,13 @@ class BillModel:
             ),
         )
         self.conn.commit()
-        new_id = cur.lastrowid
-        return self.get(new_id)
+        return cur.lastrowid
 
     def update(self, bill_id: int, **fields) -> BillDTO:
         b = self.get(bill_id)
 
-        # merge dto -> dict
         data = b.__dict__ | fields
 
-        # nếu có field ảnh hưởng tới tổng → tính lại
         if any(
             k in fields
             for k in (
