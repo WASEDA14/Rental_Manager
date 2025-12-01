@@ -59,6 +59,7 @@ CREATE TABLE IF NOT EXISTS contract (
 CREATE TABLE IF NOT EXISTS bill (
     bill_id            INTEGER PRIMARY KEY AUTOINCREMENT,
     contract_id        INTEGER NOT NULL,
+    tenant_name TEXT NOT NULL,
     bill_month         TEXT    NOT NULL,
     elec_prev          INTEGER,
     elec_current       INTEGER,
@@ -80,6 +81,7 @@ CREATE TABLE IF NOT EXISTS bill (
     is_deleted         INTEGER NOT NULL DEFAULT 0
         CHECK (is_deleted IN (0, 1)),
     FOREIGN KEY (contract_id) REFERENCES contract(contract_id)
+    FOREIGN KEY (tenant_name) REFERENCES tenant (full_name)
 );
 
 CREATE TABLE IF NOT EXISTS user (

@@ -97,13 +97,13 @@ class billView(ctk.CTkFrame):
         ctk.CTkLabel(detail, text="Electric prev").grid(row=0, column=0, padx=6, pady=4, sticky="w")
         ctk.CTkEntry(detail, textvariable=self.elec_prev_var, width=80) \
             .grid(row=0, column=1, padx=4, pady=4)
-        ctk.CTkLabel(detail, text="current").grid(row=0, column=2, padx=4, pady=4, sticky="w")
+        ctk.CTkLabel(detail, text="Electric current").grid(row=0, column=2, padx=4, pady=4, sticky="w")
         ctk.CTkEntry(detail, textvariable=self.elec_curr_var, width=80) \
             .grid(row=0, column=3, padx=4, pady=4)
-        ctk.CTkLabel(detail, text="unit").grid(row=0, column=4, padx=4, pady=4, sticky="w")
+        ctk.CTkLabel(detail, text="VND/kWh").grid(row=0, column=4, padx=(0, 4), pady=4, sticky="w")
         ctk.CTkEntry(detail, textvariable=self.elec_price_var, width=80) \
-            .grid(row=0, column=5, padx=4, pady=4)
-        ctk.CTkLabel(detail, text="Elec amount").grid(row=0, column=6, padx=4, pady=4, sticky="e")
+            .grid(row=0, column=5, padx=(0,10), pady=4)
+        ctk.CTkLabel(detail, text="Electric amount").grid(row=0, column=6, padx=4, pady=4, sticky="e")
         ctk.CTkEntry(detail, textvariable=self.elec_amount_var, width=100, state="disabled") \
             .grid(row=0, column=7, padx=4, pady=4)
 
@@ -111,12 +111,13 @@ class billView(ctk.CTkFrame):
         ctk.CTkLabel(detail, text="Water prev").grid(row=1, column=0, padx=6, pady=4, sticky="w")
         ctk.CTkEntry(detail, textvariable=self.water_prev_var, width=80) \
             .grid(row=1, column=1, padx=4, pady=4)
-        ctk.CTkLabel(detail, text="current").grid(row=1, column=2, padx=4, pady=4, sticky="w")
+        ctk.CTkLabel(detail, text="Water current").grid(row=1, column=2, padx=4, pady=4, sticky="w")
         ctk.CTkEntry(detail, textvariable=self.water_curr_var, width=80) \
             .grid(row=1, column=3, padx=4, pady=4)
-        ctk.CTkLabel(detail, text="unit").grid(row=1, column=4, padx=4, pady=4, sticky="w")
+        ctk.CTkLabel(detail, text="VND/m³") \
+            .grid(row=1, column=4, padx=(0, 10), pady=4, sticky="w")
         ctk.CTkEntry(detail, textvariable=self.water_price_var, width=80) \
-            .grid(row=1, column=5, padx=4, pady=4)
+            .grid(row=1, column=5, padx=(0, 4), pady=4, sticky="w")
         ctk.CTkLabel(detail, text="Water amount").grid(row=1, column=6, padx=4, pady=4, sticky="e")
         ctk.CTkEntry(detail, textvariable=self.water_amount_var, width=100, state="disabled") \
             .grid(row=1, column=7, padx=4, pady=4)
@@ -149,9 +150,9 @@ class billView(ctk.CTkFrame):
         ctk.CTkButton(form, text="Export PDF", fg_color="#3498db", command=self.on_export) \
             .grid(row=3, column=6, padx=6, pady=(4, 6))
 
-        for i in range(10):
+        for i in range(0,8):
             form.grid_columnconfigure(i, weight=0)
-        form.grid_columnconfigure(1, weight=1)
+        form.grid_columnconfigure(8, weight=1)
 
         # ====== BẢNG LIST BILL ======
         table = ctk.CTkFrame(self)

@@ -112,7 +112,7 @@ class BillModel:
             ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
             (
-                tenant_name,
+                fields.get("tenant_name"),
                 fields.get("room_code", "").strip(),
                 month,
                 fields.get("elec_prev"),
