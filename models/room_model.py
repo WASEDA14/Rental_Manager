@@ -22,13 +22,25 @@ class RoomModel:
         self.conn = get_connection()
         self.conn.row_factory = sqlite3.Row
 
+    def _room_has_active_tenant(self, room_no: str) -> bool:
+            cur = self.conn.cursor()
+            cur.execute("""
+                SELECT 1
+                FROM tenant
+                WHERE room_no = ?
+                  AND active = 1
+                  AND is_deleted = 0
+                LIMIT 1
+            """, (room_no,))
+            return cur.fetchone() is not None
+
 
     # --- LIST ---
     def list(self, keyword: str | None = None) -> List[RoomDTO]:
         cur = self.conn.cursor()
 
         sql = """
-            SELECT  room_no base_rent,
+            SELECT  room_no, base_rent,
                    area_m2, floor, electric_unit_price, water_unit_price,
                    status, note, is_deleted
             FROM room
@@ -154,7 +166,6 @@ class RoomModel:
                           WHERE room_no = ?
                             AND is_deleted = 0
                           """, (
-                              room_no,
                               area_m2,
                               floor,
                               base_rent,
@@ -162,12 +173,16 @@ class RoomModel:
                               water_unit_price,
                               status,
                               note,
+                              room_no
 
                           ))
         self.conn.commit()
 
 
     def delete(self, room_no: str) -> None:
+        if self._room_has_active_tenant(room_no):
+            raise ValueError("This room is using")
+
         self.conn.execute(
             "UPDATE room SET is_deleted = 1 WHERE room_no = ?",
             (room_no,)

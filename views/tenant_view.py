@@ -21,7 +21,7 @@ class tenantView(ctk.CTkFrame):
         self.in_var     = ctk.StringVar()
         self.out_var    = ctk.StringVar()
         self.note_var = ctk.StringVar()
-        self.active_var = ctk.BooleanVar(value=True)
+        self.isDeleted_var = ctk.BooleanVar(value=True)
         self.search_var = ctk.StringVar()
 
         # Hàng 1
@@ -72,7 +72,7 @@ class tenantView(ctk.CTkFrame):
         )
         out_date.grid(row=1, column=7, padx=6, pady=6, sticky="w")
 
-        ctk.CTkCheckBox(form, text="Đang ở", variable=self.active_var).grid(row=1, column=8, padx=6, pady=6 )
+        ctk.CTkCheckBox(form, text="Đang ở", variable=self.isDeleted_var).grid(row=1, column=8, padx=6, pady=6 )
 
         ctk.CTkLabel(form, text="Note").grid(row=2, column=0, padx=6, pady=6, sticky="w")
         ctk.CTkEntry(form, textvariable=self.note_var, width=300).grid(row=2, column=1, padx=6, pady=6, columnspan=7,
@@ -134,7 +134,7 @@ class tenantView(ctk.CTkFrame):
         self._selected_id = None
         for v in (self.tenantName_var, self.phone_var, self.email_var, self.idNumber_var, self.in_var, self.out_var, self.search_var, self.room_var, self.note_var):
             v.set("")
-        self.active_var.set(True)
+        self.isDeleted_var.set(True)
         # refresh danh sách phòng nếu cần
         try:
             self.room.configure(values=self.svc._get_rooms())
@@ -156,7 +156,7 @@ class tenantView(ctk.CTkFrame):
         self.room_var.set(dto.room_no)
         self.in_var.set(dto.move_in.isoformat() if dto.move_in else "")
         self.out_var.set(dto.move_out.isoformat() if dto.move_out else "")
-        self.active_var.set(dto.is_deleted == 0)
+        self.isDeleted_var.set(dto.is_deleted == 0)
 
     # ===== Actions =====
     def on_add(self):
@@ -176,9 +176,10 @@ class tenantView(ctk.CTkFrame):
                 phone=self.phone_var.get().strip() or None,
                 room_no=self.room_var.get().strip(),
                 move_in=move_in,
-                move_out=move_out,  # 👈 thêm
+                move_out=move_out,
                 email=self.email_var.get().strip() or None,
                 id_number=self.idNumber_var.get().strip() or None,
+                is_deleted=self.isDeleted_var.get(),
             )
         except Exception as e:
             messagebox.showerror("Lỗi", str(e))
@@ -227,7 +228,7 @@ class tenantView(ctk.CTkFrame):
                 move_out=self.out_var.get().strip() or None,
                 email=self.email_var.get().strip() or None,
                 id_number=self.idNumber_var.get().strip() or None,
-                active=self.active_var.get(),
+                isDeleted=self.isDeleted_var.get(),
             )
         except Exception as e:
             messagebox.showerror("Lỗi", str(e))

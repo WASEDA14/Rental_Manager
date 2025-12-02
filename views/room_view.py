@@ -179,7 +179,7 @@ class roomView(ctk.CTkFrame):
              # CHECK TRÙNG ROOM NAME
             for item_id in self.tree.get_children():
                 values = self.tree.item(item_id, "values")
-                existing_name = values[1]  # cột 1 = roomNo
+                existing_name = values[0]  # cột 1 = roomNo
                 if existing_name == roomNo:
                     messagebox.showwarning(
                         "Duplicate Room Name",

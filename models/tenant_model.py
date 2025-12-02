@@ -64,11 +64,20 @@ class TenantModel:
         return cur.fetchone() is not None
 
     def _room_has_active_tenant(self, room_no: str, exclude_id: int | None = None) -> bool:
-        sql = "SELECT 1 FROM tenant WHERE room_no = ? AND is_deleted = 1"
+        sql = """
+            SELECT 1
+            FROM tenant
+            WHERE room_no = ?
+              AND is_deleted = 0
+        """
         params: list = [room_no]
+
         if exclude_id is not None:
-            sql += " AND id <> ?"
+            sql += " AND tenant_id <> ?"
             params.append(exclude_id)
+
+        sql += " LIMIT 1"
+
         cur = self.conn.execute(sql, params)
         return cur.fetchone() is not None
 
@@ -102,6 +111,7 @@ class TenantModel:
         move_out: str | None = None,
         email: str | None = None,
         id_number: str | None = None,
+        is_deleted: int = 0
     ) -> TenantDTO:
 
         full_name = full_name.strip()
@@ -137,8 +147,7 @@ class TenantModel:
                 _date_to_str(mv_out),
                 email,
                 id_number,
-                1,  # active
-            ),
+                is_deleted,             ),
         )
         self.conn.commit()
         new_id = cur.lastrowid
@@ -186,12 +195,14 @@ class TenantModel:
         if "active" in fields:
             data["active"] = bool(fields["is_deleted"])
 
+        is_deleted = 0 if data["active"] else 1  # 0 = đang ở, 1 = đã rời (tuỳ nghiệp vụ m)
+
         self.conn.execute(
             """
             UPDATE tenant
             SET full_name = ?, phone = ?, room_no = ?,
                 move_in = ?, move_out = ?,
-                email = ?, is_deleted = ?
+                email = ?,id_number = ?, is_deleted = ?
             WHERE id = ?
             """,
             (
@@ -201,8 +212,8 @@ class TenantModel:
                 _date_to_str(data["move_in"]),
                 _date_to_str(data["move_out"]),
                 data["email"],
-                # data["id_number"],
-                1 if data["active"] else 0,
+                data["id_number"],
+                is_deleted,
                 tenant_id,
             ),
         )
