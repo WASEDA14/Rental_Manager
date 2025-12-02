@@ -121,11 +121,13 @@ class tenantView(ctk.CTkFrame):
         rows = self.svc.list(kw)
         self.tree.delete(*self.tree.get_children())
         for t in rows:
+            status_text = "Đang ở" if t.is_deleted == 0 else "Đã rời"
             self.tree.insert("", "end", values=(
-                t.id, t.name, t.phone or "", t.room_code,
+                t.id, t.name, t.phone or "", t.room_no,
                 t.move_in.isoformat() if t.move_in else "",
                 t.move_out.isoformat() if t.move_out else "",
-                "Đang ở" if t.active else "Đã rời"
+                status_text,
+
             ))
 
     def on_clear(self):
@@ -150,11 +152,11 @@ class tenantView(ctk.CTkFrame):
         self.tenantName_var.set(dto.name)
         self.phone_var.set(dto.phone or "")
         self.email_var.set(dto.email or "")
-        self.idNumber_var.set(dto.id_no or "")
-        self.room_var.set(dto.room_code)
+        self.idNumber_var.set(dto.id_number or "")
+        self.room_var.set(dto.room_no)
         self.in_var.set(dto.move_in.isoformat() if dto.move_in else "")
         self.out_var.set(dto.move_out.isoformat() if dto.move_out else "")
-        self.active_var.set(dto.active)
+        self.active_var.set(dto.is_deleted == 0)
 
     # ===== Actions =====
     def on_add(self):
@@ -170,13 +172,13 @@ class tenantView(ctk.CTkFrame):
 
         try:
             self.svc.create(
-                name=self.tenantName_var.get().strip(),
+                full_name=self.tenantName_var.get().strip(),
                 phone=self.phone_var.get().strip() or None,
-                room_code=self.room_var.get().strip(),
+                room_no=self.room_var.get().strip(),
                 move_in=move_in,
                 move_out=move_out,  # 👈 thêm
                 email=self.email_var.get().strip() or None,
-                id_no=self.idNumber_var.get().strip() or None,
+                id_number=self.idNumber_var.get().strip() or None,
             )
         except Exception as e:
             messagebox.showerror("Lỗi", str(e))
@@ -218,13 +220,13 @@ class tenantView(ctk.CTkFrame):
         try:
             self.svc.update(
                 self._selected_id,
-                name=self.tenantName_var.get().strip(),
+                full_name=self.tenantName_var.get().strip(),
                 phone=self.phone_var.get().strip() or None,
-                room_code=self.room_var.get().strip(),
+                room_no=self.room_var.get().strip(),
                 move_in=self.in_var.get().strip() or None,
                 move_out=self.out_var.get().strip() or None,
                 email=self.email_var.get().strip() or None,
-                id_no=self.idNumber_var.get().strip() or None,
+                id_number=self.idNumber_var.get().strip() or None,
                 active=self.active_var.get(),
             )
         except Exception as e:

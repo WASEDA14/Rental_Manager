@@ -1,6 +1,8 @@
 import sqlite3
 from pathlib import Path
 
+# import UPDATE
+
 DB_PATH = Path(__file__).resolve().parent / "rental_manager.db"
 SCHEMA_PATH = Path(__file__).resolve().parent / "schema.sql"
 
@@ -15,6 +17,7 @@ def get_connection() -> sqlite3.Connection:
         conn.commit()
 
     return conn
+
 
 if __name__ == "__main__":
     conn = get_connection()

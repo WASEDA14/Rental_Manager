@@ -6,8 +6,7 @@ from database.db import get_connection
 
 @dataclass
 class RoomDTO:
-    room_id: int
-    room_name: str
+    room_no: str
     base_rent: int
     area_m2: Optional[float] = None
     floor: Optional[int] = None
@@ -29,7 +28,7 @@ class RoomModel:
         cur = self.conn.cursor()
 
         sql = """
-            SELECT room_id, room_name, base_rent,
+            SELECT  room_no base_rent,
                    area_m2, floor, electric_unit_price, water_unit_price,
                    status, note, is_deleted
             FROM room
@@ -38,22 +37,22 @@ class RoomModel:
         params: list = []
 
         if keyword:
-            sql += " AND (CAST(room_id AS TEXT) LIKE ? OR room_name LIKE ?)"
+            sql += " AND (CAST(room_no AS TEXT) LIKE ? OR room_no LIKE ?)"
             kw = f"%{keyword}%"
             params.extend([kw, kw])
 
-        sql += " ORDER BY room_id"
+        sql += " ORDER BY room_no"
 
         cur.execute(sql, params)
         rows = cur.fetchall()
         return [RoomDTO(*row) for row in rows]
 
     # --- GET nội bộ ---
-    def get_by_id(self, room_id: int) -> Optional[RoomDTO]:
+    def get_by_id(self, room_no: str) -> Optional[RoomDTO]:
         cur = self.conn.cursor()
         cur.execute("""
-                    SELECT room_id,
-                           room_name,
+                    SELECT 
+                           room_no,
                            base_rent,
                            area_m2,
                            floor,
@@ -63,9 +62,9 @@ class RoomModel:
                            note,
                            is_deleted
                     FROM room
-                    WHERE room_id = ?
+                    WHERE room_no = ?
                       AND is_deleted = 0
-                    """, (room_id,))
+                    """, (room_no,))
         row = cur.fetchone()
         return RoomDTO(*row) if row else None
 
@@ -73,7 +72,7 @@ class RoomModel:
 
     def create(
         self,
-        room_name: str,
+        room_no: str,
         base_rent: int,
         electric_unit_price: int | None = None,
         water_unit_price: int | None = None,
@@ -84,7 +83,7 @@ class RoomModel:
 
         self.conn.execute("""
             INSERT INTO room (
-                room_name,
+                room_no,
                 area_m2,
                 floor,
                 base_rent,
@@ -95,7 +94,7 @@ class RoomModel:
                 is_deleted
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
-            room_name,
+            room_no,
             None,
             None,
             base_rent,
@@ -111,8 +110,7 @@ class RoomModel:
     # --- UPDATE ---
     def update(
             self,
-            room_id: str,
-            room_name: str,
+            room_no: str,
             base_rent: int,
             electric_unit_price: int | None,
             water_unit_price: int | None,
@@ -121,11 +119,10 @@ class RoomModel:
             note: str | None,
             area_m2: float | None = None,
     ) -> None:
-        # lấy theo room_id, không dùng room_name
         cur = self.conn.cursor()
         cur.execute("""
-                    SELECT room_id,
-                           room_name,
+                    SELECT 
+                           room_no,
                            base_rent,
                            area_m2,
                            floor,
@@ -135,9 +132,9 @@ class RoomModel:
                            note,
                            is_deleted
                     FROM room
-                    WHERE room_id = ?
+                    WHERE room_no = ?
                       AND is_deleted = 0
-                    """, (room_id,))
+                    """, (room_no,))
         row = cur.fetchone()
         if row is None:
             raise ValueError("This room is not available")
@@ -146,7 +143,7 @@ class RoomModel:
 
         self.conn.execute("""
                           UPDATE room
-                          SET room_name           = ?,
+                          SET 
                               area_m2             = ?,
                               floor               = ?,
                               base_rent           = ?,
@@ -154,10 +151,10 @@ class RoomModel:
                               water_unit_price    = ?,
                               status              = ?,
                               note                = ?
-                          WHERE room_id = ?
+                          WHERE room_no = ?
                             AND is_deleted = 0
                           """, (
-                              room_name,
+                              room_no,
                               area_m2,
                               floor,
                               base_rent,
@@ -165,15 +162,15 @@ class RoomModel:
                               water_unit_price,
                               status,
                               note,
-                              room_id,  # điều kiện WHERE
+
                           ))
         self.conn.commit()
 
 
-    def delete(self, room_id: str) -> None:
+    def delete(self, room_no: str) -> None:
         self.conn.execute(
-            "UPDATE room SET is_deleted = 1 WHERE room_id = ?",
-            (room_id,)
+            "UPDATE room SET is_deleted = 1 WHERE room_no = ?",
+            (room_no,)
         )
         self.conn.commit()
 

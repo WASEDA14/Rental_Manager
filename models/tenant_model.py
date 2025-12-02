@@ -11,12 +11,12 @@ class TenantDTO:
     id: int | None
     name: str
     phone: str | None
-    room_code: str
+    room_no: str
     move_in: Optional[date] = None
     move_out: Optional[date] = None
     email: Optional[str] = None
-    id_no: Optional[str] = None
-    active: bool = True
+    id_number: Optional[str] = None
+    is_deleted: bool = True
 
 
 def _parse_date(s: str | None) -> Optional[date]:
@@ -45,27 +45,27 @@ class TenantModel:
         d = dict(row)
         return TenantDTO(
             id=d["tenant_id"],
-            name=d["name"],
+            name=d["full_name"],
             phone=d["phone"],
-            room_code=d["room_code"],
+            room_no=d["room_no"],
             move_in=_parse_date(d["move_in"]),
             move_out=_parse_date(d["move_out"]),
             email=d["email"],
-            id_no=d["id_no"],
-            active=bool(d["active"]),
+            id_number=d["id_number"],
+            is_deleted=bool(d["is_deleted"]),
         )
 
     # ---------- helpers ----------
-    def _room_exists(self, room_code: str) -> bool:
+    def _room_exists(self, room_no: str) -> bool:
         cur = self.conn.execute(
-            "SELECT 1 FROM room WHERE room_code = ? AND is_deleted = 0",
-            (room_code,),
+            "SELECT 1 FROM room WHERE room_no = ? AND is_deleted = 0",
+            (room_no,),
         )
         return cur.fetchone() is not None
 
-    def _room_has_active_tenant(self, room_code: str, exclude_id: int | None = None) -> bool:
-        sql = "SELECT 1 FROM tenant WHERE room_code = ? AND active = 1"
-        params: list = [room_code]
+    def _room_has_active_tenant(self, room_no: str, exclude_id: int | None = None) -> bool:
+        sql = "SELECT 1 FROM tenant WHERE room_no = ? AND is_deleted = 1"
+        params: list = [room_no]
         if exclude_id is not None:
             sql += " AND id <> ?"
             params.append(exclude_id)
@@ -77,7 +77,7 @@ class TenantModel:
         sql = "SELECT * FROM tenant"
         params: list = []
         if keyword:
-            sql += " WHERE name LIKE ? OR phone LIKE ? OR room_code LIKE ?"
+            sql += " WHERE full_name LIKE ? OR phone LIKE ? OR room_no LIKE ?"
             kw = f"%{keyword}%"
             params.extend([kw, kw, kw])
         sql += " ORDER BY tenant_id DESC"
@@ -95,27 +95,27 @@ class TenantModel:
     def create(
         self,
         *,
-        name: str,
+        full_name: str,
         phone: str | None,
-        room_code: str,
+        room_no: str,
         move_in: str | None = None,
         move_out: str | None = None,
         email: str | None = None,
-        id_no: str | None = None,
+        id_number: str | None = None,
     ) -> TenantDTO:
 
-        name = name.strip()
-        if len(name) < 2:
+        full_name = full_name.strip()
+        if len(full_name) < 2:
             raise ValueError("Tên phải ≥ 2 ký tự")
         if not _phone_ok(phone):
             raise ValueError("SĐT không hợp lệ (9–11 số)")
 
-        room_code = room_code.strip()
-        if not self._room_exists(room_code):
+        room_no = room_no.strip()
+        if not self._room_exists(room_no):
             raise ValueError("Phòng không tồn tại")
 
         # check phòng đã có người ở chưa
-        if self._room_has_active_tenant(room_code):
+        if self._room_has_active_tenant(room_no):
             raise ValueError("Phòng đã có người ở")
 
         mv_in = _parse_date(move_in)
@@ -126,17 +126,17 @@ class TenantModel:
         cur = self.conn.execute(
             """
             INSERT INTO tenant
-                (name, phone, room_code, move_in, move_out, email, id_no, active)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (full_name, phone, room_no, move_in, move_out, email,id_number, is_deleted)
+            VALUES (?, ?, ?, ?, ?, ?, ?,?)
             """,
             (
-                name,
+                full_name,
                 phone,
-                room_code,
+                room_no,
                 _date_to_str(mv_in),
                 _date_to_str(mv_out),
                 email,
-                id_no,
+                id_number,
                 1,  # active
             ),
         )
@@ -150,11 +150,11 @@ class TenantModel:
         # làm việc trên dict tạm, rồi UPDATE 1 lần
         data = t.__dict__.copy()
 
-        if "name" in fields:
-            nm = str(fields["name"]).strip()
+        if "full_name" in fields:
+            nm = str(fields["full_name"]).strip()
             if len(nm) < 2:
                 raise ValueError("Tên phải ≥ 2 ký tự")
-            data["name"] = nm
+            data["full_name"] = nm
 
         if "phone" in fields:
             ph = fields["phone"]
@@ -162,14 +162,14 @@ class TenantModel:
                 raise ValueError("SĐT không hợp lệ")
             data["phone"] = ph
 
-        if "room_code" in fields:
-            new_room = str(fields["room_code"]).strip()
+        if "room_no" in fields:
+            new_room = str(fields["room_no"]).strip()
             if not self._room_exists(new_room):
                 raise ValueError("Phòng không tồn tại")
             # nếu đổi phòng, check phòng mới rảnh
-            if new_room != t.room_code and self._room_has_active_tenant(new_room, exclude_id=tenant_id):
+            if new_room != t.room_no and self._room_has_active_tenant(new_room, exclude_id=tenant_id):
                 raise ValueError("Phòng mới đã có người")
-            data["room_code"] = new_room
+            data["room_no"] = new_room
 
         if "move_in" in fields:
             data["move_in"] = _parse_date(fields["move_in"])
@@ -181,27 +181,27 @@ class TenantModel:
 
         if "email" in fields:
             data["email"] = fields["email"]
-        if "id_no" in fields:
-            data["id_no"] = fields["id_no"]
+        if "id_number" in fields:
+            data["id_number"] = fields["id_number"]
         if "active" in fields:
-            data["active"] = bool(fields["active"])
+            data["active"] = bool(fields["is_deleted"])
 
         self.conn.execute(
             """
             UPDATE tenant
-            SET name = ?, phone = ?, room_code = ?,
+            SET full_name = ?, phone = ?, room_no = ?,
                 move_in = ?, move_out = ?,
-                email = ?, id_no = ?, active = ?
+                email = ?, is_deleted = ?
             WHERE id = ?
             """,
             (
-                data["name"],
+                data["full_name"],
                 data["phone"],
-                data["room_code"],
+                data["room_no"],
                 _date_to_str(data["move_in"]),
                 _date_to_str(data["move_out"]),
                 data["email"],
-                data["id_no"],
+                # data["id_number"],
                 1 if data["active"] else 0,
                 tenant_id,
             ),
@@ -215,8 +215,8 @@ class TenantModel:
         self.conn.commit()
 
     # ---------- Business helpers ----------
-    def move_room(self, tenant_id: int, new_room_code: str) -> TenantDTO:
-        return self.update(tenant_id, room_code=new_room_code)
+    def move_room(self, tenant_id: int, new_room_no: str) -> TenantDTO:
+        return self.update(tenant_id, room_no=new_room_no)
 
     def checkout(self, tenant_id: int, move_out: str) -> TenantDTO:
         return self.update(tenant_id, active=False, move_out=move_out)

@@ -15,7 +15,7 @@ class roomView(ctk.CTkFrame):
         form = ctk.CTkFrame(self)
         form.pack(fill="x", padx=10, pady=(10, 6))
 
-        self.roomName_var = ctk.StringVar()
+        self.roomNo_var = ctk.StringVar()
         self.rent_var = ctk.StringVar()
         self.electric_var = ctk.StringVar()
         self.water_var = ctk.StringVar()
@@ -23,8 +23,8 @@ class roomView(ctk.CTkFrame):
         self.search_var = ctk.StringVar()
         self.note_var = ctk.StringVar()
 
-        ctk.CTkLabel(form, text="Room Name").grid(row=0, column=0, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.roomName_var, width=160).grid(row=0, column=1, padx=6, pady=6,sticky="w")
+        ctk.CTkLabel(form, text="Room No").grid(row=0, column=0, padx=6, pady=6, sticky="w")
+        ctk.CTkEntry(form, textvariable=self.roomNo_var, width=160).grid(row=0, column=1, padx=6, pady=6,sticky="w")
 
         ctk.CTkLabel(form, text="Rent Amount (VND)").grid(row=0, column=2, padx=6, pady=6, sticky="w")
         # chỉ cho nhập số
@@ -83,19 +83,17 @@ class roomView(ctk.CTkFrame):
         table_frame = ctk.CTkFrame(self)
         table_frame.pack(fill="both", expand=True, padx=10, pady=6)
 
-        columns = ("id", "roomName", "rent", "status","electricUnitPrice","waterUnitPrice","note")
+        columns = ("roomNo", "rent", "status","electricUnitPrice","waterUnitPrice","note")
         self.tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=12)
         self.tree.pack(fill="both", expand=True, side="left")
 
-        self.tree.heading("id", text="ID")
-        self.tree.heading("roomName", text="Room Name")
+        self.tree.heading("roomNo", text="Room No")
         self.tree.heading("rent", text="Rent Amount")
         self.tree.heading("electricUnitPrice", text="Electric Unit Price")
         self.tree.heading("waterUnitPrice", text="Water Unit Price")
         self.tree.heading("status", text="Status")
         self.tree.heading("note", text="Note")
-        self.tree.column("id", width=5, anchor="center")
-        self.tree.column("roomName", width=50)
+        self.tree.column("roomNo", width=50)
         self.tree.column("rent", width=90, anchor="e")
         self.tree.column("electricUnitPrice", width=65, anchor="e")
         self.tree.column("waterUnitPrice", width=65, anchor="e")
@@ -121,30 +119,39 @@ class roomView(ctk.CTkFrame):
 
         self.reload()  # lần đầu
 
+        # ---------- helpers ----------
+
+    def _fmt_int(self, v):
+        if v is None or v == "":
+            return ""
+        return f"{int(v):,}"
+
     # ---------- helpers ----------
     def reload(self):
         kw = self.search_var.get().strip() or None
         rows = self.svc.list(keyword=kw)
+
         self.tree.delete(*self.tree.get_children())
+
         for r in rows:
             active = (r.status == 1) and (r.is_deleted == 0)
             status_text = "Available" if active else "Unavailable"
+
             self.tree.insert(
                 "",
                 "end",
                 values=(
-                    r.room_id,
-                    r.room_name,
-                    f"{r.base_rent:,}",
-                    status_text,
-                    r.electric_unit_price,
-                    r.water_unit_price,
-                    r.note,
+                    r.room_no,  # roomNo
+                    self._fmt_int(r.base_rent),  # rent
+                    status_text,  # status
+                    self._fmt_int(r.electric_unit_price),  # electric
+                    self._fmt_int(r.water_unit_price),  # water
+                    r.note or "",  # note
                 ),
             )
 
     def on_clear(self):
-        self.roomName_var.set("")
+        self.roomNo_var.set("")
         self.rent_var.set("")
         self.electric_var.set("")
         self.water_var.set("")
@@ -156,14 +163,14 @@ class roomView(ctk.CTkFrame):
         self.reload()
 
     def on_add(self):
-            roomName = self.roomName_var.get().strip()
+            roomNo = self.roomNo_var.get().strip()
             rent = self.rent_var.get().strip()
             electric = self.electric_var.get().strip()
             water = self.water_var.get().strip()
             note = self.note_var.get().strip()
 
-            if not roomName:
-                messagebox.showwarning("Room Name is required", "Please input the Room Name.")
+            if not roomNo:
+                messagebox.showwarning("Room No is required", "Please input the Room Name.")
                 return
             if not rent:
                 messagebox.showwarning("Rent Amount is required", "Please input the Rent Amount.")
@@ -172,11 +179,11 @@ class roomView(ctk.CTkFrame):
              # CHECK TRÙNG ROOM NAME
             for item_id in self.tree.get_children():
                 values = self.tree.item(item_id, "values")
-                existing_name = values[1]  # cột 1 = roomName
-                if existing_name == roomName:
+                existing_name = values[1]  # cột 1 = roomNo
+                if existing_name == roomNo:
                     messagebox.showwarning(
                         "Duplicate Room Name",
-                        f"Room name '{roomName}' already exists."
+                        f"Room name '{roomNo}' already exists."
                     )
                     return
             # --------------------------------------
@@ -190,7 +197,7 @@ class roomView(ctk.CTkFrame):
                 return
 
             self.svc.create(
-                room_name=roomName,
+                room_no=roomNo,
                 base_rent=base_rent,
                 electric_unit_price=electric_unit,
                 water_unit_price=water_unit,
@@ -205,13 +212,13 @@ class roomView(ctk.CTkFrame):
             messagebox.showinfo("Chọn dòng", "Chọn 1 phòng trong bảng để sửa.")
             return
 
-        roomName = self.roomName_var.get().strip()
+        roomNo = self.roomNo_var.get().strip()
         rent = self.rent_var.get().strip()
         electric = self.electric_var.get().strip()
         water = self.water_var.get().strip()
         note = self.note_var.get().strip()
 
-        if not roomName or not rent:
+        if not roomNo or not rent:
             messagebox.showwarning("Thiếu dữ liệu", "Nhập Room Name và Rent Amount.")
             return
 
@@ -225,8 +232,7 @@ class roomView(ctk.CTkFrame):
 
         try:
             self.svc.update(
-                room_id=self._selected_id,
-                room_name=roomName,
+                room_no=roomNo,
                 base_rent=base_rent,
                 electric_unit_price=electric_unit,
                 water_unit_price=water_unit,
@@ -264,15 +270,13 @@ class roomView(ctk.CTkFrame):
         item_id = selected[0]
         values = self.tree.item(item_id, "values")
 
-        # cột 0 là ID
-        self._selected_id = values[0]
 
-        # fill form nếu muốn
-        self.roomName_var.set(values[1])  # roomName
-        self.rent_var.set(str(values[2]).replace(",", ""))  # rent
-        self.electric_var.set("" if values[4] is None else str(values[4]))
-        self.water_var.set("" if values[5] is None else str(values[5]))
-        self.note_var.set("" if values[6] is None else str(values[6]))
+        self._selected_id = values[0]              # roomNo = PK
 
+        self.roomNo_var.set(values[0])
+        self.rent_var.set(values[1].replace(",", "") if values[1] else "")
+        self.electric_var.set("" if not values[3] else str(values[3]).replace(",", ""))
+        self.water_var.set("" if not values[4] else str(values[4]).replace(",", ""))
+        self.note_var.set(values[5] or "")
 
 
