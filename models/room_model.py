@@ -28,7 +28,7 @@ class RoomModel:
         cur = self.conn.cursor()
 
         sql = """
-            SELECT  room_no base_rent,
+            SELECT  room_no, base_rent,
                    area_m2, floor, electric_unit_price, water_unit_price,
                    status, note, is_deleted
             FROM room
