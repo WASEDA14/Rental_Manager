@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Optional, List
 
 from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 
 from database.db import get_connection
@@ -16,7 +17,7 @@ from database.db import get_connection
 class BillDTO:
     id: int | None
     tenant_name: str
-    room_code: str
+    room_no: str
     month: str
     elec_prev: int | None
     elec_current: int | None
@@ -48,7 +49,7 @@ class BillModel:
         return BillDTO(
             id=d["bill_id"],                     # map từ bill_id trong DB
             tenant_name=d["tenant_name"],
-            room_code=d["room_code"],
+            room_no=d["room_no"],
             month=d["month"],
             elec_prev=d["elec_prev"],
             elec_current=d["elec_current"],
@@ -71,7 +72,7 @@ class BillModel:
         params: list = []
 
         if keyword:
-            sql += " WHERE tenant_name LIKE ? OR room_code LIKE ? OR month LIKE ? OR note LIKE ?"
+            sql += " WHERE tenant_name LIKE ? OR room_no LIKE ? OR month LIKE ? OR note LIKE ?"
             kw = f"%{keyword}%"
             params = [kw, kw, kw, kw]
 
@@ -93,15 +94,15 @@ class BillModel:
 
         if not tenant_name:
             raise ValueError("Tên khách không được trống")
-        if not month or len(month) != 7:
-            raise ValueError("Tháng phải dạng YYYY-MM")
+        if not month or len(month) != 6:
+            raise ValueError("Tháng phải dạng YYYYMM")
 
         total = self._recalc_total(fields)
 
         cur = self.conn.execute(
             """
             INSERT INTO bill (
-                tenant_name, room_code, month,
+                tenant_name, room_no, month,
                 elec_prev, elec_current,
                 water_prev, water_current,
                 water_unit_price, electric_unit_price,
@@ -113,7 +114,7 @@ class BillModel:
             """,
             (
                 fields.get("tenant_name"),
-                fields.get("room_code", "").strip(),
+                fields.get("room_no", "").strip(),
                 month,
                 fields.get("elec_prev"),
                 fields.get("elec_current"),
@@ -165,7 +166,7 @@ class BillModel:
         self.conn.execute(
             """
             UPDATE bill
-            SET tenant_name = ?, room_code = ?, month = ?,
+            SET tenant_name = ?, room_no = ?, month = ?,
                 elec_prev = ?, elec_current = ?,
                 water_prev = ?, water_current = ?,
                 water_unit_price = ?, electric_unit_price = ?,
@@ -176,7 +177,7 @@ class BillModel:
             """,
             (
                 data["tenant_name"],
-                data["room_code"],
+                data["room_no"],
                 data["month"],
                 data["elec_prev"],
                 data["elec_current"],
@@ -233,91 +234,87 @@ class BillModel:
 
         c = canvas.Canvas(str(filename), pagesize=A4)
         width, height = A4
-        y = height - 40
 
-        # Header
+        margin_x = 25 * mm
+        content_w = width - 2 * margin_x
+        y = height - 30 * mm
+
+        # ===== Header ngoài cùng =====
+        c.setLineWidth(1)
+        c.roundRect(margin_x, y - 20 * mm, content_w, 18 * mm, 5, stroke=1, fill=0)
+
         c.setFont("Helvetica-Bold", 16)
-        c.drawString(40, y, "RENTAL BILL")
-        y -= 25
-        c.setFont("Helvetica", 10)
-        c.drawString(40, y, f"Bill ID: {b.id}")
-        y -= 15
-        c.drawString(40, y, f"Created: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-        y -= 25
+        c.drawString(margin_x + 8, y, "RENTAL BILL")
 
-        # Customer / Room
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "Customer / Room")
-        y -= 18
         c.setFont("Helvetica", 10)
-        c.drawString(60, y, f"Customer : {b.tenant_name}")
-        y -= 15
-        c.drawString(60, y, f"Room     : {b.room_code}")
-        y -= 15
-        c.drawString(60, y, f"Month    : {b.month}")
-        y -= 25
+        c.drawRightString(margin_x + content_w - 8, y,
+                          f"Bill ID: {b.id}   Created: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
 
-        # Electricity
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "Electricity")
-        y -= 18
+        y -= 25 * mm
+
+        # helper vẽ box + title
+        def section_box(title: str, box_height_mm: float) -> float:
+            nonlocal y
+            box_h = box_height_mm * mm
+            # khung
+            c.roundRect(margin_x, y - box_h, content_w, box_h, 4, stroke=1, fill=0)
+            # title
+            c.setFont("Helvetica-Bold", 11)
+            c.drawString(margin_x + 6, y - 6, title)
+            # trả về y_text (bên trong box, trừ title)
+            return y - 16
+
+        # ===== Customer / Room =====
+        y_text = section_box("Customer / Room", box_height_mm=22)
         c.setFont("Helvetica", 10)
-        c.drawString(60, y, f"Prev      : {b.elec_prev or 0}")
-        y -= 15
-        c.drawString(60, y, f"Current   : {b.elec_current or 0}")
-        y -= 15
-        c.drawString(60, y, f"Unit price: {b.electric_unit_price or 0} VND")
-        y -= 25
+        c.drawString(margin_x + 12, y_text, f"Customer : {b.tenant_name}")
+        c.drawString(margin_x + 12, y_text - 12, f"Room     : {b.room_no}")
+        c.drawString(margin_x + 12, y_text - 24, f"Month    : {b.month}")
+        y -= 22 * mm + 4  # xuống dưới box + thêm khoảng cách
 
-        # Water
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "Water")
-        y -= 18
+        # ===== Electricity =====
+        y_text = section_box("Electricity", box_height_mm=22)
         c.setFont("Helvetica", 10)
-        c.drawString(60, y, f"Prev      : {b.water_prev or 0}")
-        y -= 15
-        c.drawString(60, y, f"Current   : {b.water_current or 0}")
-        y -= 15
-        c.drawString(60, y, f"Unit price: {b.water_unit_price or 0} VND")
-        y -= 25
+        c.drawString(margin_x + 12, y_text, f"Prev      : {b.elec_prev or 0}")
+        c.drawString(margin_x + 12, y_text - 12, f"Current   : {b.elec_current or 0}")
+        c.drawString(margin_x + 12, y_text - 24, f"Unit price: {b.electric_unit_price or 0} VND")
+        y -= 22 * mm + 4
 
-        # Room / Other
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "Room / Other")
-        y -= 18
+        # ===== Water =====
+        y_text = section_box("Water", box_height_mm=22)
         c.setFont("Helvetica", 10)
-        c.drawString(60, y, f"Room rent : {b.room_rent_amount or 0:,.0f} VND")
-        y -= 15
-        c.drawString(60, y, f"Other fee : {b.other_fee or 0:,.0f} VND")
-        y -= 25
+        c.drawString(margin_x + 12, y_text, f"Prev      : {b.water_prev or 0}")
+        c.drawString(margin_x + 12, y_text - 12, f"Current   : {b.water_current or 0}")
+        c.drawString(margin_x + 12, y_text - 24, f"Unit price: {b.water_unit_price or 0} VND")
+        y -= 22 * mm + 4
 
-        # Payment
-        c.setFont("Helvetica-Bold", 12)
-        c.drawString(40, y, "Payment")
-        y -= 18
+        # ===== Room / Other =====
+        y_text = section_box("Room / Other", box_height_mm=18)
         c.setFont("Helvetica", 10)
-        c.drawString(60, y, f"Total amount : {b.total_amount:,.0f} VND")
-        y -= 15
-        c.drawString(60, y, f"Paid amount  : {b.paid_amount:,.0f} VND")
-        y -= 15
+        c.drawString(margin_x + 12, y_text, f"Room rent : {b.room_rent_amount or 0:,.0f} VND")
+        c.drawString(margin_x + 12, y_text - 12, f"Other fee : {b.other_fee or 0:,.0f} VND")
+        y -= 18 * mm + 4
 
+        # ===== Payment =====
+        y_text = section_box("Payment", box_height_mm=24)
+        c.setFont("Helvetica", 10)
+        c.drawString(margin_x + 12, y_text, f"Total amount : {b.total_amount:,.0f} VND")
+        c.drawString(margin_x + 12, y_text - 12, f"Paid amount  : {b.paid_amount:,.0f} VND")
         status_text = {0: "Unpaid", 1: "Partial", 2: "Paid"}.get(b.paid_status, "Unpaid")
-        c.drawString(60, y, f"Status       : {status_text}")
-        y -= 15
-        c.drawString(60, y, f"Paid date    : {b.paid_ymd or '-'}")
-        y -= 25
+        c.drawString(margin_x + 12, y_text - 24, f"Status       : {status_text}")
+        c.drawString(margin_x + 12, y_text - 36, f"Paid date    : {b.paid_ymd or '-'}")
+        y -= 24 * mm + 4
 
-        # Note
+        # ===== Note (nếu có) =====
         if b.note:
-            c.setFont("Helvetica-Bold", 12)
-            c.drawString(40, y, "Note")
-            y -= 18
+            y_text = section_box("Note", box_height_mm=18)
             c.setFont("Helvetica", 10)
-            c.drawString(60, y, b.note[:100])
-            y -= 20
+            c.drawString(margin_x + 12, y_text, b.note[:100])
+            y -= 18 * mm + 4
 
-        c.setFont("Helvetica-Oblique", 9)
-        c.drawString(40, 40, "Generated by Rental Manager")
+        # footer
+        c.setFont("Helvetica-Oblique", 8)
+        c.drawString(margin_x, 15 * mm, "Generated by Rental Manager")
 
         c.showPage()
         c.save()

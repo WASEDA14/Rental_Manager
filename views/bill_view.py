@@ -1,6 +1,10 @@
 # views/bill_view.py
+from calendar import month
+
 import customtkinter as ctk
 from tkinter import ttk, messagebox
+
+from reportlab.lib.units import mm
 from tkcalendar import DateEntry
 from models.bill_model import BillModel
 
@@ -37,7 +41,7 @@ class billView(ctk.CTkFrame):
             .grid(row=0, column=3, padx=6, pady=4, sticky="w")
 
         ctk.CTkLabel(form, text="Month").grid(row=0, column=4, padx=6, pady=4, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.month_var, width=80, placeholder_text="YYYY-MM") \
+        ctk.CTkEntry(form, textvariable=self.month_var, width=80, placeholder_text="YYYYMM") \
             .grid(row=0, column=5, padx=6, pady=4, sticky="w")
 
         ctk.CTkLabel(form, text="Total (VND)").grid(row=0, column=6, padx=6, pady=4, sticky="w")
@@ -330,11 +334,22 @@ class billView(ctk.CTkFrame):
         if not self.roomName_var.get().strip():
             messagebox.showwarning("Thiếu", "Room Name is required.")
             return
+
+        # Validate for yyyyMM
+        # Check null
         if not self.month_var.get().strip():
-            messagebox.showwarning("Thiếu", "Month is required.")
+            messagebox.showwarning("Error", "Month is required.")
             return
 
-        # nếu total đang trống thì tính lại
+        #Check format
+        if not month:
+            messagebox.showwarning("Month must be in YYYYMM")
+        #Check moth 01->12
+        if not (1 <= mm <= 12):
+            messagebox.showwarning("Month must be in from 01 to 12")
+            return
+
+         # nếu total đang trống thì tính lại
         if not self.total_var.get().strip():
             self.on_recalc()
 
@@ -347,7 +362,7 @@ class billView(ctk.CTkFrame):
         try:
             self.svc.create(
                 tenant_name=self.tenantName_var.get().strip(),
-                room_code=self.roomName_var.get().strip(),
+                room_no=self.roomName_var.get().strip(),
                 month=self.month_var.get().strip(),
                 elec_prev=self._to_int(self.elec_prev_var.get()),
                 elec_current=self._to_int(self.elec_curr_var.get()),
