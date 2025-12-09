@@ -7,7 +7,7 @@ DB_PATH = Path(__file__).resolve().parent / "rental_manager.db"
 SCHEMA_PATH = Path(__file__).resolve().parent / "schema.sql"
 
 
-def get_connection() -> sqlite3.Connection:
+def get_db() -> sqlite3.Connection:
 
     conn = sqlite3.connect(DB_PATH)
 
@@ -20,7 +20,7 @@ def get_connection() -> sqlite3.Connection:
 
 
 if __name__ == "__main__":
-    conn = get_connection()
+    conn = get_db()
     cur = conn.cursor()
     cur.execute("SELECT name FROM sqlite_master WHERE type='table'")
     print("Tables:", cur.fetchall())

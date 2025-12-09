@@ -1,6 +1,7 @@
 
 CREATE TABLE IF NOT EXISTS room (
-    room_no             TEXT NOT NULL PRIMARY KEY,
+   room_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name_room TEXT NOT NULL,
     area_m2             INTEGER,
     floor               INTEGER,
     base_rent INTEGER,
@@ -9,8 +10,7 @@ CREATE TABLE IF NOT EXISTS room (
     status              TEXT NOT NULL DEFAULT 0
              CHECK (status  IN (0, 1)),
     note                TEXT,
-    is_deleted          INTEGER NOT NULL DEFAULT 0
-        CHECK (is_deleted IN (0, 1))
+    is_deleted INTEGER DEFAULT 0
 );
 
 
@@ -28,14 +28,12 @@ CREATE TABLE IF NOT EXISTS tenant (
     move_in     TEXT,
     move_out    TEXT,
     note        TEXT,
-    is_deleted      INTEGER NOT NULL DEFAULT 1
-        CHECK (is_deleted IN (0, 1)),
-    FOREIGN KEY (room_no) REFERENCES room(room_no)
+    is_deleted INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS contract (
     contract_id        INTEGER PRIMARY KEY AUTOINCREMENT,
-    room_no            TEXT    NOT NULL,
+    room_id           INTEGER,
     tenant_id          INTEGER NOT NULL,
     start_ymd          TEXT    NOT NULL,
     end_ymd            TEXT,
@@ -43,16 +41,14 @@ CREATE TABLE IF NOT EXISTS contract (
     deposit_amount     INTEGER,
     electric_meter_start INTEGER,
     water_meter_start  INTEGER,
-    contract_status    INTEGER NOT NULL DEFAULT 0
-        CHECK (contract_status IN (0, 1, 2)),
+    contract_status TEXT DEFAULT 'active',
     deposit_ymd        TEXT,
     note               TEXT,
     contract_name      TEXT,
-    is_deleted         INTEGER NOT NULL DEFAULT 0
-        CHECK (is_deleted IN (0, 1)),
+    is_deleted         INTEGER DEFAULT 0
     FOREIGN KEY (room_no)   REFERENCES room(room_no),
     FOREIGN KEY (tenant_id) REFERENCES tenant(tenant_id)
-);
+    );
 
 
 CREATE TABLE IF NOT EXISTS bill (
@@ -71,15 +67,12 @@ CREATE TABLE IF NOT EXISTS bill (
     other_fee          INTEGER,
     total_amount       INTEGER,
     paid_amount        INTEGER,
-    paid_status        INTEGER NOT NULL DEFAULT 0
-        CHECK (paid_status IN (0, 1, 2)),
-        --  0=Chưa trả, 1=Trả một phần, 2=Đã trả đủ
+   paid_status TEXT DEFAULT 'unpaid',
     paid_ymd           TEXT,
     pdf_path           TEXT,
     note               TEXT,
     invoice_name       TEXT,
-    is_deleted         INTEGER NOT NULL DEFAULT 0
-        CHECK (is_deleted IN (0, 1)),
+   is_deleted INTEGER DEFAULT 0,
     FOREIGN KEY (contract_id) REFERENCES contract(contract_id),
     FOREIGN KEY (room_no) REFERENCES room(room_no)
 );
@@ -89,5 +82,8 @@ CREATE TABLE IF NOT EXISTS user (
     login_password TEXT NOT NULL,
     user_name      TEXT NOT NULL,
     email          TEXT
+
+--TEXTINSERT INTO user (username, password, email)
+--VALUES ('admin', '123456', 'admin@gmail.com');
 );
 

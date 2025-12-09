@@ -2,7 +2,7 @@ import customtkinter as ctk
 from tkinter import ttk, messagebox
 
 
-from models.room_model import RoomModel
+from models.room_service import RoomModel
 
 class roomView(ctk.CTkFrame):
     def __init__(self, parent):

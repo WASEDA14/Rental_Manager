@@ -16,8 +16,8 @@ from database.db import get_connection
 class BillDTO:
     id: int | None
     tenant_name: str
-    room_code: str
-    month: str
+    room_no: str
+    bill_month: str
     elec_prev: int | None
     elec_current: int | None
     water_prev: int | None
@@ -48,8 +48,8 @@ class BillModel:
         return BillDTO(
             id=d["bill_id"],                     # map từ bill_id trong DB
             tenant_name=d["tenant_name"],
-            room_code=d["room_code"],
-            month=d["month"],
+            room_no=d["room_no"],
+            bill_month=d["bill_month"],
             elec_prev=d["elec_prev"],
             elec_current=d["elec_current"],
             water_prev=d["water_prev"],
@@ -71,7 +71,7 @@ class BillModel:
         params: list = []
 
         if keyword:
-            sql += " WHERE tenant_name LIKE ? OR room_code LIKE ? OR month LIKE ? OR note LIKE ?"
+            sql += " WHERE tenant_name LIKE ? OR room_no LIKE ? OR bill_month LIKE ? OR note LIKE ?"
             kw = f"%{keyword}%"
             params = [kw, kw, kw, kw]
 
@@ -89,19 +89,19 @@ class BillModel:
     # ---------- Commands ----------
     def create(self, **fields) -> BillDTO:
         tenant_name = fields.get("tenant_name", "").strip()
-        month = fields.get("month", "")
+        bill_month = fields.get("bill_month", "")
 
         if not tenant_name:
             raise ValueError("Tên khách không được trống")
-        if not month or len(month) != 7:
-            raise ValueError("Tháng phải dạng YYYY-MM")
+        if not bill_month or len(bill_month) != 6:
+            raise ValueError("Tháng phải dạng YYYYMM")
 
         total = self._recalc_total(fields)
 
         cur = self.conn.execute(
             """
             INSERT INTO bill (
-                tenant_name, room_code, month,
+                tenant_name, room_no, bill_month,
                 elec_prev, elec_current,
                 water_prev, water_current,
                 water_unit_price, electric_unit_price,
@@ -113,8 +113,8 @@ class BillModel:
             """,
             (
                 fields.get("tenant_name"),
-                fields.get("room_code", "").strip(),
-                month,
+                fields.get("room_no", "").strip(),
+                bill_month,
                 fields.get("elec_prev"),
                 fields.get("elec_current"),
                 fields.get("water_prev"),
@@ -165,7 +165,7 @@ class BillModel:
         self.conn.execute(
             """
             UPDATE bill
-            SET tenant_name = ?, room_code = ?, month = ?,
+            SET tenant_name = ?, room_no = ?, bill_month = ?,
                 elec_prev = ?, elec_current = ?,
                 water_prev = ?, water_current = ?,
                 water_unit_price = ?, electric_unit_price = ?,
@@ -176,8 +176,8 @@ class BillModel:
             """,
             (
                 data["tenant_name"],
-                data["room_code"],
-                data["month"],
+                data["room_no"],
+                data["bill_month"],
                 data["elec_prev"],
                 data["elec_current"],
                 data["water_prev"],
@@ -228,8 +228,8 @@ class BillModel:
         """Tạo file PDF cho 1 bill, trả về đường dẫn file."""
         b = self.get(bill_id)
 
-        safe_month = (b.month or "").replace("/", "-")
-        filename = self._export_dir / f"bill_{b.id:04d}_{safe_month}.pdf"
+        safe_bill_month = (b.bill_month or "").replace("/", "-")
+        filename = self._export_dir / f"bill_{b.id:04d}_{safe_bill_month}.pdf"
 
         c = canvas.Canvas(str(filename), pagesize=A4)
         width, height = A4
@@ -252,9 +252,9 @@ class BillModel:
         c.setFont("Helvetica", 10)
         c.drawString(60, y, f"Customer : {b.tenant_name}")
         y -= 15
-        c.drawString(60, y, f"Room     : {b.room_code}")
+        c.drawString(60, y, f"Room     : {b.room_no}")
         y -= 15
-        c.drawString(60, y, f"Month    : {b.month}")
+        c.drawString(60, y, f"bill_month    : {b.bill_month}")
         y -= 25
 
         # Electricity

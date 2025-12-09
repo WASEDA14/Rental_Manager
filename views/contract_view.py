@@ -1,19 +1,16 @@
 # views/contract_view.py
 import customtkinter as ctk
 from tkinter import ttk, messagebox
-
+from models.contract_service import contractModel
 STATUSES = ["Draft", "Active", "Ended", "Canceled"]
 
-class contractView(ctk.CTkFrame):
-    def __init__(self, parent,
-                 service=None,                   # inject ContractService sau
-                 load_tenants=lambda: [],        # -> ["Nguyễn A (#1)", ...]
-                 load_rooms=lambda: []):         # -> ["R101", "R102", ...]
+class contractView(ttk.Frame):
+    def __init__(self, parent):
         super().__init__(parent)
-        self.svc = service
-        self._selected_id = None
 
-        # ========== FORM ==========
+        self.svc = contractModel()
+        self._selected_id: int | None = None
+
         form = ctk.CTkFrame(self); form.pack(fill="x", padx=12, pady=(12,6))
 
         self.contract_no = ctk.StringVar()
@@ -88,7 +85,6 @@ class contractView(ctk.CTkFrame):
         # ctk.CTkButton(toolbar, text="Activate", command=self.on_activate).pack(side="left", padx=4)
         # ctk.CTkButton(toolbar, text="Extend",   command=self.on_extend).pack(side="left", padx=4)
         ctk.CTkButton(toolbar, text="End",      command=self.on_end, fg_color="#e67e22").pack(side="left", padx=4)
-        # ctk.CTkButton(toolbar, text="Suspend/Resume", command=self.on_toggle_suspend).pack(side="left", padx=4)
         ctk.CTkButton(toolbar, text="Delete",   command=self.on_delete, fg_color="#e74c3c").pack(side="left", padx=4)
 
         # Search
@@ -181,14 +177,54 @@ class contractView(ctk.CTkFrame):
     # ===== Actions (nối service sau) =====
     def on_save(self):
         if not self.svc:
-            messagebox.showinfo("Demo", "Chưa gắn ContractService."); return
-        data = self._form_data()
+            messagebox.showinfo("Demo", "Chưa gắn ContractService.");
+            return
+
+        form = self._form_data()
+        # form keys: contract_no, tenant, room, start, end, term, base_rent, deposit, billing_day, elec, water, service, status
+
+        try:
+            # Giả sử tenant và room ở form là ID số. Nếu là tên, phải lookup ID từ DB trước.
+            tenant_id = int(form["tenant"])
+            # room in your DB might be room_no or room_no; contract.create expects room_no
+            room_no = int(form["room"])
+        except Exception:
+            messagebox.showerror("Lỗi",
+                                 "Tenant và Room phải là ID số. Nếu bạn nhập tên, cần ánh xạ sang ID trước khi lưu.")
+            return
+
+        # map trạng thái string -> int (theo model của bạn). Điều chỉnh nếu DB khác.
+        status_map = {"Draft": 1, "Active": 2, "Ended": 3, "Canceled": 4}
+        status_int = status_map.get(form.get("status", "Draft"), 1)
+
+        create_kwargs = dict(
+            room_no=room_no,
+            tenant_id=tenant_id,
+            start_ymd=form.get("start") or "",  # validate thêm nếu cần
+            end_ymd=form.get("end") or None,
+            deposit_amount=int(form.get("deposit") or 0),
+            electric_meter_start=int(form.get("elec") or 0),
+            water_meter_start=int(form.get("water") or 0),
+            contract_name=form.get("contract_no") or "",  # dùng contract_no làm contract_name
+            contract_status=status_int,
+            deposit_ymd=None,
+            electric_meter_ymd=None,
+            note=None,
+        )
+
         try:
             if self._selected_id is None:
-                self.svc.create(**data)
+                new_id = self.svc.create(**create_kwargs)
+                messagebox.showinfo("OK", f"Tạo hợp đồng id={new_id}")
             else:
-                self.svc.update(self._selected_id, **data)
-            self.reload(); self.on_new()
+                # nếu model có update(id, **kwargs) thì gọi tương tự (kiểm tra signature model.update)
+                try:
+                    self.svc.update(self._selected_id, **create_kwargs)
+                except TypeError:
+                    # fallback: nếu update signature khác, bạn phải điều chỉnh tương ứng
+                    raise
+            self.reload()
+            self.on_new()
         except Exception as e:
             messagebox.showerror("Lỗi", str(e))
 

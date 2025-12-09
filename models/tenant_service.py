@@ -195,7 +195,7 @@ class TenantModel:
         if "active" in fields:
             data["active"] = bool(fields["is_deleted"])
 
-        is_deleted = 0 if data["active"] else 1  # 0 = đang ở, 1 = đã rời (tuỳ nghiệp vụ m)
+        is_deleted = 0 if data["active"] else 1
 
         self.conn.execute(
             """
