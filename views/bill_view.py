@@ -2,7 +2,7 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
-from models.bill_service import BillModel
+from models.bill_model import BillModel
 
 
 class billView(ctk.CTkFrame):
@@ -17,7 +17,7 @@ class billView(ctk.CTkFrame):
 
         self.tenantName_var = ctk.StringVar()
         self.roomName_var   = ctk.StringVar()
-        self.bill_month_var      = ctk.StringVar()
+        self.month_var      = ctk.StringVar()
         self.total_var      = ctk.StringVar()
         self.note_var       = ctk.StringVar()
         self.search_var     = ctk.StringVar()
@@ -37,7 +37,7 @@ class billView(ctk.CTkFrame):
             .grid(row=0, column=3, padx=6, pady=4, sticky="w")
 
         ctk.CTkLabel(form, text="Month").grid(row=0, column=4, padx=6, pady=4, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.bill_month_var, width=80, placeholder_text="YYYY-MM") \
+        ctk.CTkEntry(form, textvariable=self.month_var, width=80, placeholder_text="YYYY-MM") \
             .grid(row=0, column=5, padx=6, pady=4, sticky="w")
 
         ctk.CTkLabel(form, text="Total (VND)").grid(row=0, column=6, padx=6, pady=4, sticky="w")
@@ -158,14 +158,14 @@ class billView(ctk.CTkFrame):
         table = ctk.CTkFrame(self)
         table.pack(fill="both", expand=True, padx=12, pady=4)
 
-        cols = ("id", "tenant", "room", "bill_month", "total", "status", "paid_ymd", "note")
+        cols = ("id", "tenant", "room", "month", "total", "status", "paid_ymd", "note")
         self.tree = ttk.Treeview(table, columns=cols, show="headings", height=14)
 
         headings = {
             "id": "ID",
             "tenant": "Customer Name",
             "room": "Room Name",
-            "bill_month": "bill_month",
+            "month": "Month",
             "total": "Total (VND)",
             "status": "Status",
             "paid_ymd": "Paid Date",
@@ -175,7 +175,7 @@ class billView(ctk.CTkFrame):
             "id": 50,
             "tenant": 140,
             "room": 80,
-            "bill_month": 80,
+            "month": 80,
             "total": 110,
             "status": 80,
             "paid_ymd": 100,
@@ -186,7 +186,7 @@ class billView(ctk.CTkFrame):
             self.tree.column(
                 c,
                 width=widths[c],
-                anchor=("center" if c in ("id", "room", "bill_month", "status") else "w"),
+                anchor=("center" if c in ("id", "room", "month", "status") else "w"),
             )
         self.tree.pack(side="left", fill="both", expand=True)
 
@@ -256,8 +256,8 @@ class billView(ctk.CTkFrame):
                 values=(
                     b.id,
                     b.tenant_name,
-                    b.room_no,
-                    b.bill_month,
+                    b.room_code,
+                    b.month,
                     f"{b.total_amount:,}",
                     self._status_from_int(b.paid_status),
                     b.paid_ymd or "",
@@ -269,7 +269,7 @@ class billView(ctk.CTkFrame):
         for v in (
             self.tenantName_var,
             self.roomName_var,
-            self.bill_month_var,
+            self.month_var,
             self.total_var,
             self.note_var,
             self.search_var,
@@ -302,8 +302,8 @@ class billView(ctk.CTkFrame):
         bill = self.svc._get(self._selected_id)
 
         self.tenantName_var.set(bill.tenant_name)
-        self.roomName_var.set(bill.room_no)
-        self.bill_month_var.set(bill.bill_month)
+        self.roomName_var.set(bill.room_code)
+        self.month_var.set(bill.month)
         self.total_var.set(str(bill.total_amount))
         self.note_var.set(bill.note or "")
 
@@ -325,13 +325,13 @@ class billView(ctk.CTkFrame):
 
     def on_add(self):
         if not self.tenantName_var.get().strip():
-            messagebox.showwarning("Error", "Customer Name is required.")
+            messagebox.showwarning("Thiếu", "Customer Name is required.")
             return
         if not self.roomName_var.get().strip():
-            messagebox.showwarning("Error", "Room Name is required.")
+            messagebox.showwarning("Thiếu", "Room Name is required.")
             return
-        if not self.bill_month_var.get().strip():
-            messagebox.showwarning("Error", "Month is required.")
+        if not self.month_var.get().strip():
+            messagebox.showwarning("Thiếu", "Month is required.")
             return
 
         # nếu total đang trống thì tính lại
@@ -347,8 +347,8 @@ class billView(ctk.CTkFrame):
         try:
             self.svc.create(
                 tenant_name=self.tenantName_var.get().strip(),
-                room_no=self.roomName_var.get().strip(),
-                bill_month=self.bill_month_var.get().strip(),
+                room_code=self.roomName_var.get().strip(),
+                month=self.month_var.get().strip(),
                 elec_prev=self._to_int(self.elec_prev_var.get()),
                 elec_current=self._to_int(self.elec_curr_var.get()),
                 electric_unit_price=self._to_int(self.elec_price_var.get()),
@@ -364,7 +364,7 @@ class billView(ctk.CTkFrame):
             )
             self.on_clear()
         except Exception as e:
-            messagebox.showerror("Error", str(e))
+            messagebox.showerror("Lỗi", str(e))
 
     def on_update(self):
         if not self._selected_id:
@@ -381,8 +381,8 @@ class billView(ctk.CTkFrame):
             self.svc.update(
                 self._selected_id,
                 tenant_name=self.tenantName_var.get().strip(),
-                room_no=self.roomName_var.get().strip(),
-                bill_month=self.bill_month_var.get().strip(),
+                room_code=self.roomName_var.get().strip(),
+                month=self.month_var.get().strip(),
                 elec_prev=self._to_int(self.elec_prev_var.get()),
                 elec_current=self._to_int(self.elec_curr_var.get()),
                 electric_unit_price=self._to_int(self.elec_price_var.get()),
