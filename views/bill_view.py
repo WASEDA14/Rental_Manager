@@ -5,7 +5,7 @@ from datetime import datetime
 import os
 import random
 import string
-from service.bill_service  import (
+from services.bill_service  import (
     get_all_bills,
     create_bill,
     update_bill,
@@ -312,7 +312,7 @@ class billView(ctk.CTkFrame):
         values = self.tree.item(sel[0], "values")
         self._selected_id = int(values[0])
 
-        # lấy DTO đầy đủ từ service
+        # lấy DTO đầy đủ từ services
         bill = self.svc._get(self._selected_id)
 
         self.tenantName_var.set(bill.tenant_name)

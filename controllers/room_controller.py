@@ -1,4 +1,4 @@
-from service.room_service import RoomModel, RoomDTO
+from services.room_service import RoomModel, RoomDTO
 from tkinter import messagebox
 
 

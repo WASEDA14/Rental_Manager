@@ -1,7 +1,7 @@
 # views/contract_view.py
 import customtkinter as ctk
 from tkinter import ttk, messagebox
-from service.contract_service import contractModel
+from services.contract_service import contractModel
 STATUSES = ["Draft", "Active", "Ended", "Canceled"]
 
 class contractView(ttk.Frame):
@@ -140,7 +140,7 @@ class contractView(ttk.Frame):
         self.billday_var.set(str(row.get("billing_day",5)))
         self.elec_var.set(str(row.get("elec",0)))
         self.water_var.set(str(row.get("water",0)))
-        self.service_var.set(str(row.get("service",0)))
+        self.service_var.set(str(row.get("services",0)))
         self.status_var.set(row.get("status","Draft"))
 
     def on_new(self):
@@ -164,7 +164,7 @@ class contractView(ttk.Frame):
         sel = self.tree.selection()
         if not sel: return
         vals = self.tree.item(sel[0], "values")
-        # giả định self.svc.get(id) trả dict; nếu chưa có service, bạn map từ vals:
+        # giả định self.svc.get(id) trả dict; nếu chưa có services, bạn map từ vals:
         if self.svc and hasattr(self.svc, "get"):
             self._fill_form(self.svc.get(int(vals[0])))
         else:
@@ -174,14 +174,14 @@ class contractView(ttk.Frame):
                 deposit=int(vals[7].replace(",","")), status=vals[8]
             ))
 
-    # ===== Actions (nối service sau) =====
+    # ===== Actions (nối services sau) =====
     def on_save(self):
         if not self.svc:
             messagebox.showinfo("Demo", "Chưa gắn ContractService.");
             return
 
         form = self._form_data()
-        # form keys: contract_no, tenant, room, start, end, term, base_rent, deposit, billing_day, elec, water, service, status
+        # form keys: contract_no, tenant, room, start, end, term, base_rent, deposit, billing_day, elec, water, services, status
 
         try:
             # Giả sử tenant và room ở form là ID số. Nếu là tên, phải lookup ID từ DB trước.
@@ -248,7 +248,7 @@ class contractView(ttk.Frame):
     def on_end(self):
         if not self._selected_id or not self.svc: return
         try:
-            self.svc.end(self._selected_id)   # hoặc truyền end_date nếu service yêu cầu
+            self.svc.end(self._selected_id)   # hoặc truyền end_date nếu services yêu cầu
             self.reload()
         except Exception as e:
             messagebox.showerror("Lỗi", str(e))
@@ -256,7 +256,7 @@ class contractView(ttk.Frame):
     def on_toggle_suspend(self):
         if not self._selected_id or not self.svc: return
         try:
-            self.svc.toggle_suspend(self._selected_id)  # implement trong service
+            self.svc.toggle_suspend(self._selected_id)  # implement trong services
             self.reload()
         except Exception as e:
             messagebox.showerror("Lỗi", str(e))

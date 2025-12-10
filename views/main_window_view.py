@@ -1,6 +1,6 @@
 import customtkinter as ctk
 
-from views.room_view import roomView
+from views.room_tab import roomTab
 from views.tenant_view import tenantView
 from views.bill_view import billView
 from views.contract_view import contractView
@@ -43,7 +43,7 @@ class MainWindow(ctk.CTk):
 
         # Child pages (frames)
         self.dashboard_view = dashboardView(self.content)
-        self.room_view      = roomView(self.content)
+        self.room_tab      = roomTab(self.content)
         self.tenant_view    = tenantView(self.content)
         self.bill_view      = billView(self.content)
         self.contract_view  = contractView(self.content)
@@ -51,7 +51,7 @@ class MainWindow(ctk.CTk):
         # Chồng các page lên nhau
         for frame in (
             self.dashboard_view,
-            self.room_view,
+            self.room_tab,
             self.tenant_view,
             self.bill_view,
             self.contract_view,
@@ -62,7 +62,7 @@ class MainWindow(ctk.CTk):
 
     # ===== Switchers =====
     def show_dashboard(self): self.dashboard_view.tkraise()
-    def show_room(self):      self.room_view.tkraise()
+    def show_room(self):      self.room_tab.tkraise()
     def show_tenant(self):    self.tenant_view.tkraise()
     def show_bill(self):      self.bill_view.tkraise()
     def show_contract(self):  self.contract_view.tkraise()

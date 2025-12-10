@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS user;
 
 CREATE TABLE IF NOT EXISTS room (
     room_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name_room TEXT NOT NULL,
+    room_name TEXT NOT NULL,
     area_m2 INTEGER,
     floor INTEGER,
     base_rent INTEGER,

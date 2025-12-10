@@ -1,4 +1,6 @@
 from database.db import get_db
+# from utils.formatter import format_currency
+
 
 # --- LIST ---
 def get_all_rooms():
@@ -6,17 +8,18 @@ def get_all_rooms():
     return conn.execute(
         """
       SELECT  
-      room_no, 
+      room_id,
+      room_name, 
       base_rent,
       area_m2, 
       floor, 
       electric_unit_price, 
       water_unit_price,
       status, 
-      note, 
+      note
       FROM room
       WHERE is_deleted = 0
-    ORDER BY room_no
+    ORDER BY room_id
     """
     ).fetchall()
 
@@ -32,6 +35,32 @@ def get_available_rooms():
     return conn.execute(
         "SELECT * FROM room WHERE status = 'available' AND is_deleted = 0"
     ).fetchall()
+
+
+def create_room(data: dict):
+    conn = get_db()
+    conn.execute(
+        """
+                 INSERT INTO room (
+                     name_room,
+                     area_m2, floor, base_rent, electric_unit_price,
+                     water_unit_price, status, note
+                 )
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                 """,
+        (
+            data["name_room"],
+            data["area_m2"],
+            data["floor"],
+            data["base_rent"],
+            data["electric_unit_price"],
+            data["water_unit_price"],
+            data["status"],
+            data["note"],
+        ),
+    )
+    conn.commit()
+
 
 
 
