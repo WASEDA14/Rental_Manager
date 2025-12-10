@@ -1,7 +1,7 @@
 # views/contract_view.py
 import customtkinter as ctk
 from tkinter import ttk, messagebox
-from models.contract_service import contractModel
+from service.contract_service import contractModel
 STATUSES = ["Draft", "Active", "Ended", "Canceled"]
 
 class contractView(ttk.Frame):

@@ -1,8 +1,22 @@
 # views/bill_view.py
 import customtkinter as ctk
-from tkinter import ttk, messagebox
-from tkcalendar import DateEntry
-from models.bill_model import BillModel
+from tkinter import messagebox, ttk
+from datetime import datetime
+import os
+import random
+import string
+from service.bill_service  import (
+    get_all_bills,
+    create_bill,
+    update_bill,
+    delete_bill,
+    mark_bill_paid,
+    get_active_contracts_with_last_bill,
+    get_next_bill_month,
+    bill_exists,
+)
+from utils.bill_pdf import generate_bill_pdf
+from utils.formatter import format_currency, parse_currency
 
 
 class billView(ctk.CTkFrame):
