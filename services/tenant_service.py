@@ -1,6 +1,7 @@
 from database.db import get_db
 import re
 from datetime import datetime
+
 def get_all_tenant():
         conn = get_db()
         return conn.execute(

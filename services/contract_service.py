@@ -6,7 +6,7 @@ def get_all_contracts():
     conn = get_db()
     return conn.execute(
         """
-        SELECT c.*, r.name_room, t.full_name
+        SELECT c.*, r.room_name, t.full_name
         FROM contract c
         JOIN room r ON c.room_id = r.room_id AND r.is_deleted = 0
         JOIN tenant t ON c.tenant_id = t.tenant_id AND t.is_deleted = 0
@@ -127,7 +127,7 @@ def get_available_rooms():
     conn = get_db()
     return conn.execute(
         """
-        SELECT room_id, name_room, base_rent 
+        SELECT room_id, room_name, base_rent 
         FROM room 
         WHERE status = 'available' AND is_deleted = 0 
         ORDER BY room_id

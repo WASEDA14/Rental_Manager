@@ -1,9 +1,9 @@
 import customtkinter as ctk
 
 from views.room_tab import roomTab
-from views.tenant_view import tenantView
-from views.bill_view import billView
-from views.contract_view import contractView
+from views.tenant_tab import tenantTab
+from views.bill_tab import billTab
+from views.contract_tab import contractView
 from views.dashboard_view import dashboardView
 
 ctk.set_appearance_mode("light")
@@ -44,8 +44,8 @@ class MainWindow(ctk.CTk):
         # Child pages (frames)
         self.dashboard_view = dashboardView(self.content)
         self.room_tab      = roomTab(self.content)
-        self.tenant_view    = tenantView(self.content)
-        self.bill_view      = billView(self.content)
+        self.tenant_view    = tenantTab(self.content)
+        self.bill_view      = billTab(self.content)
         self.contract_view  = contractView(self.content)
 
         # Chồng các page lên nhau

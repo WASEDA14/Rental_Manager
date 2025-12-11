@@ -5,7 +5,7 @@ def get_all_bills():
     conn = get_db()
     return conn.execute(
         """
-        SELECT b.*, r.name_room, t.full_name, c.rent as contract_rent
+        SELECT b.*, r.room_name, t.full_name, c.rent as contract_rent
         FROM bill b
         JOIN contract c ON b.contract_id = c.contract_id
         JOIN room r ON c.room_id = r.room_id
@@ -22,7 +22,7 @@ def get_active_contracts_with_last_bill():
         """
         SELECT 
             c.contract_id,
-            r.name_room,
+            r.room_name,
             t.full_name,
             c.rent,
             r.electric_unit_price,
@@ -41,7 +41,7 @@ def get_active_contracts_with_last_bill():
             FROM bill WHERE is_deleted = 0
         ) lb ON c.contract_id = lb.contract_id AND lb.rn = 1
         WHERE c.contract_status = 'active' AND c.is_deleted = 0
-        ORDER BY r.name_room
+        ORDER BY r.room_name
     """
     ).fetchall()
 

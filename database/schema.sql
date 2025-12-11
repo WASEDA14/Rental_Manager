@@ -38,7 +38,7 @@ CREATE TABLE IF NOT EXISTS contract (
     tenant_id INTEGER NOT NULL,
     start_ymd TEXT NOT NULL,
     end_ymd TEXT,
-    rent_amount INTEGER NOT NULL,
+    rent INTEGER NOT NULL,
     deposit_amount INTEGER,
     electric_meter_start INTEGER,
     water_meter_start INTEGER,

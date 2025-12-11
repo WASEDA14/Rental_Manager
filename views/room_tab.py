@@ -14,9 +14,9 @@ STATUS_MAP_REV = {v: k for k, v in STATUS_MAP.items()}
 
 
 class roomTab(ctk.CTkFrame):
-    def __init__(self, master, user_id):
+    def __init__(self, master):
         super().__init__(master, fg_color="transparent")
-        self.user_id = user_id
+        # self.user_id = None
         self.current_room_id = None
 
         # Biến cache để lưu danh sách phòng (giúp check trùng tên nhanh hơn)
