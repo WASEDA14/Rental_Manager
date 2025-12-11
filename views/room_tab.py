@@ -1,8 +1,9 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from services.room_service import get_all_rooms, create_room, update_room, delete_room
-# from utils.formatter import format_currency, parse_currency
+from views.bill_tab import format_currency
 
+from utils.format import parse_currency
 # Định nghĩa hằng số trạng thái để đồng bộ giữa Tiếng Việt (UI) và Tiếng Anh (Database)
 STATUS_MAP = {
     "Trống": "available",
@@ -166,7 +167,7 @@ class roomTab(ctk.CTkFrame):
         for i in self.tree.get_children():
             self.tree.delete(i)
 
-        # Lấy dữ liệu mới từ BE (Giả sử BE đã sửa câu SELECT có trả về room_id và name_room)
+        # Lấy dữ liệu mới từ BE (Giả sử BE đã sửa câu SELECT có trả về room_id và room_name)
         self.rooms_cache = get_all_rooms()
 
         for r in self.rooms_cache:
@@ -179,7 +180,7 @@ class roomTab(ctk.CTkFrame):
 
             self.tree.insert("", "end", values=(
                 r["room_id"],  # Cần BE trả về room_id
-                r["name_room"],  # Cần BE trả về name_room
+                r["room_name"],  # Cần BE trả về room_name
                 floor_val,
                 area_val,
                 format_currency(r["base_rent"]),
@@ -216,7 +217,7 @@ class roomTab(ctk.CTkFrame):
             return None
 
         return {
-            "name_room": name,
+            "room_name": name,
             "area_m2": area,
             "floor": floor,
             "base_rent": rent,
@@ -283,8 +284,8 @@ class roomTab(ctk.CTkFrame):
         if not data: return
 
         # Check trùng tên (dùng danh sách cache)
-        if any(r["name_room"].upper() == data["name_room"].upper() for r in self.rooms_cache):
-            messagebox.showwarning("Trùng lặp", f"Phòng '{data['name_room']}' đã tồn tại!")
+        if any(r["room_name"].upper() == data["room_name"].upper() for r in self.rooms_cache):
+            messagebox.showwarning("Trùng lặp", f"Phòng '{data['room_name']}' đã tồn tại!")
             return
 
         try:
@@ -303,7 +304,7 @@ class roomTab(ctk.CTkFrame):
 
         # Check trùng tên (trừ chính phòng đang sửa)
         for r in self.rooms_cache:
-            if (r["name_room"].upper() == data["name_room"].upper() and
+            if (r["room_name"].upper() == data["room_name"].upper() and
                     str(r["room_id"]) != str(self.current_room_id)):
                 messagebox.showwarning("Trùng lặp", "Tên phòng này đang được sử dụng bởi phòng khác!")
                 return

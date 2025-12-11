@@ -42,14 +42,14 @@ def create_room(data: dict):
     conn.execute(
         """
                  INSERT INTO room (
-                     name_room,
+                     room_name,
                      area_m2, floor, base_rent, electric_unit_price,
                      water_unit_price, status, note
                  )
                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                  """,
         (
-            data["name_room"],
+            data["room_name"],
             data["area_m2"],
             data["floor"],
             data["base_rent"],
@@ -69,7 +69,7 @@ def update_room(room_id: int, data: dict):
     conn.execute(
         """
                  UPDATE room
-                 SET name_room = ?,
+                 SET room_name = ?,
                      area_m2 = ?,
                      floor = ?,
                      base_rent = ?,
@@ -80,7 +80,7 @@ def update_room(room_id: int, data: dict):
                  WHERE room_id = ?
                  """,
         (
-            data["name_room"],
+            data["room_name"],
             data["area_m2"],
             data["floor"],
             data["base_rent"],
