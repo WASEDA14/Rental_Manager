@@ -118,14 +118,80 @@ class roomTab(ctk.CTkFrame):
                                         font=("Inter", 15, "bold"), fg_color="#0067F7", hover_color="#225CD8",
                                         command=self.update_room)
 
+        self.btn_update.configure(state="disabled")
+        self.btn_update.pack(side="right", padx=8)
+
         self.btn_delete = ctk.CTkButton(btn_right, text="Xóa Phòng", height=44, corner_radius=7,
                                         font=("Inter", 15, "bold"), fg_color="#F50002", hover_color="#C91D1D",
                                         command=self.delete_room)
+
+        self.btn_delete.configure(state="disabled")
+        self.btn_delete.pack(side="right", padx=8)
 
         self.btn_reset = ctk.CTkButton(btn_right, text="Làm Mới", height=44, corner_radius=7,
                                        font=("Inter", 15, "bold"), fg_color="#282D33", hover_color="#1F2327",
                                        command=self.reset_form)
         self.btn_reset.pack(side="right", padx=8)
+
+        search_frame = ctk.CTkFrame(self, fg_color="white", corner_radius=12)
+        search_frame.pack(fill="x", padx=50, pady=(0, 10))
+        search_frame.grid_columnconfigure(0, weight=1)
+
+        self.search_entry = ctk.CTkEntry(search_frame, height=38, corner_radius=7,
+                                         font=("Inter", 14), placeholder_text="Tìm kiếm...")
+        self.search_entry.grid(row=0, column=0, sticky="ew", padx=(20, 10), pady=12)
+
+        self.search_mode = ctk.CTkComboBox(
+            search_frame,
+            values=["Tên phòng", "Tên + Trạng thái", "Tất cả"],
+            height=38,
+            corner_radius=7,
+            font=("Inter", 14),
+            state="readonly",
+            width=170,
+        )
+        self.search_mode.set("Tên phòng")
+        self.search_mode.grid(row=0, column=1, sticky="e", padx=(0, 10), pady=12)
+
+        self.search_status = ctk.CTkComboBox(
+            search_frame,
+            values=["Tất cả"] + list(STATUS_MAP.keys()),
+            height=38,
+            corner_radius=7,
+            font=("Inter", 14),
+            state="readonly",
+            width=140,
+        )
+        self.search_status.set("Tất cả")
+        self.search_status.grid(row=0, column=2, sticky="e", padx=(0, 10), pady=12)
+
+        self.btn_search = ctk.CTkButton(
+            search_frame,
+            text="Tìm",
+            height=38,
+            corner_radius=7,
+            font=("Inter", 14, "bold"),
+            fg_color="#0067F7",
+            hover_color="#225CD8",
+            command=self.apply_search,
+            width=80,
+        )
+        self.btn_search.grid(row=0, column=3, sticky="e", padx=(0, 10), pady=12)
+
+        self.btn_clear_search = ctk.CTkButton(
+            search_frame,
+            text="Xóa",
+            height=38,
+            corner_radius=7,
+            font=("Inter", 14, "bold"),
+            fg_color="#282D33",
+            hover_color="#1F2327",
+            command=self.clear_search,
+            width=80,
+        )
+        self.btn_clear_search.grid(row=0, column=4, sticky="e", padx=(0, 20), pady=12)
+
+        self.search_entry.bind("<Return>", lambda _e: self.apply_search())
 
         # --- TABLE (Treeview) ---
         table_frame = ctk.CTkFrame(self)
@@ -156,31 +222,59 @@ class roomTab(ctk.CTkFrame):
     def _format_money(self, event):
         """Format số tiền có dấu chấm phân cách khi nhập"""
         w = event.widget
-        val = w.get().replace(".", "")
-        if val.isdigit():
-            w.delete(0, "end")
-            w.insert(0, format_currency(int(val)))
+        current = w.get()
+        
+        # Allow backspace and delete
+        if event.keysym in ('BackSpace', 'Delete', 'Left', 'Right', 'Home', 'End'):
+            return
+            
+        # Allow only digits and control characters
+        if event.char and not event.char.isdigit() and event.char not in ('\b', '\t'):
+            return 'break'
+            
+        # Get current cursor position
+        cursor_pos = w.index('insert')
+        
+        # Format the number
+        try:
+            # Get the raw value (remove all non-digit characters)
+            raw = ''.join(c for c in current if c.isdigit())
+            if not raw:  # If empty, allow it
+                return
+                
+            # Format the number with thousand separators
+            num = int(raw)
+            formatted = format_currency(num)
+            
+            # Update the entry
+            w.delete(0, 'end')
+            w.insert(0, formatted)
+            
+            # Set cursor position
+            w.icursor(cursor_pos + (len(formatted) - len(current)))
+        except ValueError:
+            # If conversion fails, revert to empty
+            w.delete(0, 'end')
+            
+        return 'break'
 
     def _load_data(self):
         """Tải dữ liệu từ DB lên bảng"""
-        # Xóa dữ liệu cũ trên bảng
+        self.rooms_cache = get_all_rooms()
+        self.render_table(self.rooms_cache)
+
+    def render_table(self, rooms):
         for i in self.tree.get_children():
             self.tree.delete(i)
 
-        # Lấy dữ liệu mới từ BE (Giả sử BE đã sửa câu SELECT có trả về room_id và room_name)
-        self.rooms_cache = get_all_rooms()
-
-        for r in self.rooms_cache:
-            # Chuyển đổi trạng thái từ Anh sang Việt
+        for r in rooms:
             status_vn = STATUS_MAP_REV.get(r["status"], r["status"])
-
-            # Xử lý các trường có thể bị None từ DB
             floor_val = r["floor"] if r["floor"] is not None else "-"
             area_val = r["area_m2"] if r["area_m2"] is not None else "-"
 
             self.tree.insert("", "end", values=(
-                r["room_id"],  # Cần BE trả về room_id
-                r["room_name"],  # Cần BE trả về room_name
+                r["room_id"],
+                r["room_name"],
                 floor_val,
                 area_val,
                 format_currency(r["base_rent"]),
@@ -190,30 +284,110 @@ class roomTab(ctk.CTkFrame):
                 r["note"] or ""
             ))
 
+    def apply_search(self):
+        query = (self.search_entry.get() or "").strip().lower()
+        mode = self.search_mode.get()
+        status_sel = self.search_status.get()
+        status_db = None if status_sel == "Tất cả" else STATUS_MAP.get(status_sel)
+
+        def match_room(r):
+            if status_db and r.get("status") != status_db:
+                return False
+
+            if not query:
+                return True
+
+            room_name = (r.get("room_name") or "").lower()
+            if mode == "Tên phòng":
+                return query in room_name
+
+            if mode == "Tên + Trạng thái":
+                status_en = (r.get("status") or "").lower()
+                status_vn = STATUS_MAP_REV.get(r.get("status"), r.get("status") or "")
+                status_vn = (status_vn or "").lower()
+                return (query in room_name) or (query in status_en) or (query in status_vn)
+
+            haystack = " ".join([
+                str(r.get("room_name") or ""),
+                str(r.get("floor") or ""),
+                str(r.get("area_m2") or ""),
+                str(r.get("base_rent") or ""),
+                str(r.get("electric_unit_price") or ""),
+                str(r.get("water_unit_price") or ""),
+                str(r.get("status") or ""),
+                str(r.get("note") or ""),
+            ]).lower()
+            return query in haystack
+
+        filtered = [r for r in self.rooms_cache if match_room(r)]
+        self.render_table(filtered)
+
+    def clear_search(self):
+        if hasattr(self, "search_entry"):
+            self.search_entry.delete(0, "end")
+        if hasattr(self, "search_mode"):
+            self.search_mode.set("Tên phòng")
+        if hasattr(self, "search_status"):
+            self.search_status.set("Tất cả")
+        self.render_table(self.rooms_cache)
+
     def _get_form_data(self):
         """Hàm lấy dữ liệu từ form và kiểm tra lỗi nhập liệu"""
+        # Validate room name
         name = self.entry_name.get().strip()
         if not name:
             messagebox.showwarning("Thiếu thông tin", "Vui lòng nhập tên phòng!")
+            self.entry_name.focus_set()
+            return None
+            
+        if len(name) > 50:
+            messagebox.showwarning("Lỗi nhập liệu", "Tên phòng không được vượt quá 50 ký tự!")
+            self.entry_name.focus_set()
             return None
 
         try:
-            # Xử lý diện tích và tầng (nếu để trống thì là None hoặc 0)
+            # Validate area
             area_str = self.entry_area.get().strip()
             area = float(area_str) if area_str else 0.0
+            if area < 0:
+                messagebox.showwarning("Lỗi nhập liệu", "Diện tích không được âm!")
+                self.entry_area.focus_set()
+                return None
+            if area > 1000:  # Giả sử diện tích tối đa là 1000m2
+                messagebox.showwarning("Lỗi nhập liệu", "Diện tích quá lớn! Vui lòng kiểm tra lại.")
+                self.entry_area.focus_set()
+                return None
 
+            # Validate floor
             floor_str = self.entry_floor.get().strip()
             floor = int(floor_str) if floor_str else None
+            if floor is not None and floor < 0:
+                messagebox.showwarning("Lỗi nhập liệu", "Số tầng không hợp lệ!")
+                self.entry_floor.focus_set()
+                return None
 
-            # Xử lý tiền tệ (Parse từ chuỗi "2.500.000" -> số int)
-            # Nếu để trống thì lấy giá trị mặc định
-            rent = parse_currency(self.entry_rent.get() or "0")
-            elec = parse_currency(self.entry_elec.get() or "3500")
-            water = parse_currency(self.entry_water.get() or "10000")
+            # Validate money values
+            def validate_money(value, field_name, default):
+                try:
+                    val = parse_currency(value or str(default))
+                    if val < 0:
+                        messagebox.showwarning("Lỗi nhập liệu", f"{field_name} không được âm!")
+                        return None
+                    return val
+                except ValueError:
+                    messagebox.showwarning("Lỗi nhập liệu", f"Giá trị {field_name} không hợp lệ!")
+                    return None
 
-        except ValueError:
+            rent = validate_money(self.entry_rent.get(), "Giá thuê", 0)
+            elec = validate_money(self.entry_elec.get(), "Giá điện", 3500)
+            water = validate_money(self.entry_water.get(), "Giá nước", 10000)
+            
+            if None in (rent, elec, water):
+                return None
+
+        except ValueError as e:
             messagebox.showerror("Lỗi nhập liệu",
-                                 "Diện tích và Số tầng phải là số hợp lệ!\nVí dụ: 25.5 (Diện tích), 1 (Tầng)")
+                               f"Dữ liệu nhập vào không hợp lệ!\n{str(e)}")
             return None
 
         return {
@@ -235,10 +409,9 @@ class roomTab(ctk.CTkFrame):
 
         self.combo_status.set("Trống")
 
-        # Reset nút bấm
-        self.btn_add.pack(side="right", padx=8)
-        self.btn_update.pack_forget()
-        self.btn_delete.pack_forget()
+        self.btn_add.configure(state="normal")
+        self.btn_update.configure(state="disabled")
+        self.btn_delete.configure(state="disabled")
 
         # Bỏ chọn trên bảng
         if self.tree.selection():
@@ -274,10 +447,9 @@ class roomTab(ctk.CTkFrame):
         self.entry_note.delete(0, "end")
         self.entry_note.insert(0, v[8])
 
-        # Đổi nút bấm
-        self.btn_add.pack_forget()
-        self.btn_update.pack(side="right", padx=8)
-        self.btn_delete.pack(side="right", padx=8)
+        self.btn_add.configure(state="disabled")
+        self.btn_update.configure(state="normal")
+        self.btn_delete.configure(state="normal")
 
     def add_room(self):
         data = self._get_form_data()
@@ -318,14 +490,40 @@ class roomTab(ctk.CTkFrame):
             messagebox.showerror("Lỗi hệ thống", f"Cập nhật thất bại:\n{str(e)}")
 
     def delete_room(self):
-        if not self.current_room_id: return
+        if not self.current_room_id:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn phòng cần xóa!")
+            return
 
-        if messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn xóa phòng này không?"):
-            try:
-                delete_room(self.current_room_id)
-                messagebox.showinfo("Thành công", "Đã xóa phòng!")
-                self._load_data()
-                self.reset_form()
-            except Exception as e:
-                # Lỗi này thường do BE ném ra (khi phòng đang có hợp đồng active)
-                messagebox.showerror("Không thể xóa", str(e))
+        # Lấy tên phòng để hiển thị trong thông báo xác nhận
+        room_name = ""
+        for room in self.rooms_cache:
+            if room["room_id"] == self.current_room_id:
+                room_name = room["room_name"]
+                break
+
+        confirm = messagebox.askyesno(
+            "Xác nhận xóa",
+            f"Bạn có chắc chắn muốn xóa phòng '{room_name}'?\n"
+            "Hành động này không thể hoàn tác!"
+        )
+        
+        if not confirm:
+            return
+
+        try:
+            delete_room(self.current_room_id)
+            messagebox.showinfo(
+                "Thành công",
+                f"Đã xóa phòng '{room_name}' thành công!"
+            )
+            self._load_data()
+            self.reset_form()
+        except ValueError as e:
+            # Lỗi từ service (ví dụ: phòng đang có hợp đồng active)
+            messagebox.showerror("Không thể xóa", str(e))
+        except Exception as e:
+            # Lỗi hệ thống không mong muốn
+            messagebox.showerror(
+                "Lỗi hệ thống",
+                f"Đã xảy ra lỗi khi xóa phòng.\nLỗi: {str(e)}"
+            )
