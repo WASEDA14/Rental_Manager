@@ -501,11 +501,49 @@ class billTab(ctk.CTkFrame):
         # hoặc gọi 1 hàm get_bill_by_id từ BE để lấy chi tiết số điện nước fill vào form.
         # Tạm thời bạn có thể code thêm hàm get_bill_by_id ở BE để hỗ trợ tính năng này tốt nhất.
 
+    def _on_export_pdf(self):
+        """Xuất hóa đơn ra file PDF"""
+        if not self._selected_bill_id:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn hóa đơn cần xuất!")
+            return
+            
+        try:
+            # Gọi service để xuất PDF
+            pdf_path = export_bill_to_pdf(self._selected_bill_id)
+            if pdf_path and os.path.exists(pdf_path):
+                messagebox.showinfo("Thành công", f"Đã xuất hóa đơn ra file:\n{pdf_path}")
+                # Mở thư mục chứa file
+                os.startfile(os.path.dirname(pdf_path))
+            else:
+                messagebox.showerror("Lỗi", "Không thể xuất hóa đơn. Vui lòng thử lại!")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Có lỗi xảy ra khi xuất hóa đơn: {str(e)}")
+
     def on_clear(self):
+        """Xóa form"""
         self._selected_bill_id = None
         self._current_contract_id = None
         self.contract_select_var.set("")
-
+        self.tenant_name_var.set("")
+        self.room_name_var.set("")
+        self.bill_month_var.set("")
+        self.note_var.set("")
+        
+        # Reset các trường số
+        self.elec_prev_var.set("0")
+        self.elec_curr_var.set("")
+        self.elec_price_var.set("0")
+        self.elec_total_var.set("0")
+        
+        self.water_prev_var.set("0")
+        self.water_curr_var.set("")
+        self.water_price_var.set("0")
+        self.water_total_var.set("0")
+        
+        self.room_rent_var.set("0")
+        self.other_fee_var.set("0")
+        self.total_amount_var.set("0")
+        
         vars_to_clear = [
             self.tenant_name_var, self.bill_month_var, self.note_var,
             self.elec_prev_var, self.elec_curr_var, self.elec_price_var, self.elec_total_var,
