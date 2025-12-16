@@ -229,7 +229,7 @@ def get_bill_for_export(bill_id: int) -> dict:
         bill = conn.execute(
             """
             SELECT b.*, r.room_name, t.full_name as tenant_name, t.phone, 
-                   r.address, c.rent as room_rent_amount
+                   t.address, c.rent as room_rent_amount
             FROM bill b
             JOIN contract c ON b.contract_id = c.contract_id
             JOIN room r ON c.room_id = r.room_id
