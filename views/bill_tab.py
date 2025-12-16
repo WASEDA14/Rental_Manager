@@ -3,8 +3,8 @@ from tkinter import messagebox, ttk
 from tkcalendar import DateEntry
 from datetime import datetime
 import time
+import os
 
-# Import các hàm từ Backend
 from services.bill_service import (
     get_all_bills,
     get_active_contracts_with_last_bill,
@@ -13,7 +13,8 @@ from services.bill_service import (
     create_bill,
     update_bill,
     delete_bill,
-    mark_bill_paid
+    mark_bill_paid,
+    export_bill_to_pdf
 )
 
 
@@ -183,6 +184,8 @@ class billTab(ctk.CTkFrame):
                                                                                                         padx=5)
         ctk.CTkButton(btn_frame, text="Đã thanh toán", command=self.on_mark_paid, fg_color="#007bff", width=100).pack(
             side="left", padx=5)
+        ctk.CTkButton(btn_frame, text="Xuất hóa đơn", command=self._on_export_pdf, fg_color="#3498db", width=80).pack(
+            side="left", padx=5)
 
         # === 2. BẢNG DANH SÁCH HÓA ĐƠN ===
         table_frame = ctk.CTkFrame(self)
@@ -274,17 +277,11 @@ class billTab(ctk.CTkFrame):
         # SQL: SELECT b.* (13 cột), r.name_room, t.full_name, c.rent
         # Index giả định: 0:bill_id, 1:code, 2:contract_id, 3:month, ..., 12:note, 13:room, 14:tenant...
         # Để an toàn, nên debug print(bills[0]) nếu có dữ liệu để xem index.
-        # Tạm thời giả định structure:
+        # Tạm thởi giả định structure:
 
         filter_kw = self.search_var.get().lower()
 
         for b in bills:
-            # b là tuple.
-            # b[0]: bill_id, b[1]: bill_code, b[3]: month, b[11]: total, b[14]: status(cần check DB schema nếu có cột status trong bill ko, nếu ko có thì bỏ qua)
-            # Theo hàm create_bill, bảng bill có các cột theo thứ tự insert.
-            # Hãy mapping cẩn thận.
-            # b[0]=id, b[1]=code, b[2]=contract_id, b[3]=month, b[11]=total, b[12]=note
-            # Các cột join nằm ở cuối: b[-3]=name_room, b[-2]=full_name
 
             b_id = b[0]
             b_code = b[1]
@@ -296,17 +293,7 @@ class billTab(ctk.CTkFrame):
             b_room = b[-3]
             b_tenant = b[-2]
 
-            # Giả sử bảng bill có cột paid_status (thường update sau).
-            # Nếu BE chưa select cột paid_status trong b.* thì cần check lại schema.
-            # Tạm thời để trống hoặc check logic.
-            # Lưu ý: Hàm mark_bill_paid update 'paid_status', nên chắc chắn trong b.* có nó.
-            # Giả sử paid_status nằm ở index nào đó, ta sẽ lấy text hiển thị.
-            # Tạm thời giả định status ở b[13] nếu schema có, hoặc check data.
-            # Để an toàn, hiển thị "---" nếu không rõ index.
-
             status_display = "---"
-            # Tìm status trong tuple (thường là text 'paid' hoặc null)
-            # Bạn có thể cần điều chỉnh index này dựa trên DB thực tế
 
             if filter_kw and (filter_kw not in str(
                     b_code).lower() and filter_kw not in b_room.lower() and filter_kw not in b_tenant.lower()):
@@ -408,10 +395,10 @@ class billTab(ctk.CTkFrame):
                 return
 
             # Tạo mã bill tự động: B_{ContractID}_{Timestamp}
-            bill_code = f"B{self._current_contract_id}_{int(time.time())}"
+            bill_id = f"B{self._current_contract_id}_{int(time.time())}"
 
             data = {
-                "bill_code": bill_code,
+                "bill_id": bill_id,
                 "contract_id": self._current_contract_id,
                 "bill_month": month,
                 "elec_prev": e_prev,

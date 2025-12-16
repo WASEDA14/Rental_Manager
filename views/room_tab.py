@@ -6,11 +6,11 @@ from views.bill_tab import format_currency
 from utils.format import parse_currency
 # Định nghĩa hằng số trạng thái để đồng bộ giữa Tiếng Việt (UI) và Tiếng Anh (Database)
 STATUS_MAP = {
-    "Trống": "available",
-    "Đang thuê": "occupied",
-    "Bảo trì": "maintenance"
+    "Trống": 0,
+    "Đang thuê": 1,
+    "Bảo trì": 2
 }
-# Map ngược để hiển thị lên bảng: {"available": "Trống", ...}
+# Map ngược để hiển thị lên bảng: {0: "Trống", ...}
 STATUS_MAP_REV = {v: k for k, v in STATUS_MAP.items()}
 
 
@@ -268,7 +268,7 @@ class roomTab(ctk.CTkFrame):
             self.tree.delete(i)
 
         for r in rooms:
-            status_vn = STATUS_MAP_REV.get(r["status"], r["status"])
+            status_vn = STATUS_MAP_REV.get(r["status"], str(r["status"]))
             floor_val = r["floor"] if r["floor"] is not None else "-"
             area_val = r["area_m2"] if r["area_m2"] is not None else "-"
 
@@ -291,31 +291,32 @@ class roomTab(ctk.CTkFrame):
         status_db = None if status_sel == "Tất cả" else STATUS_MAP.get(status_sel)
 
         def match_room(r):
-            if status_db and r.get("status") != status_db:
+            # Use dictionary-style access for sqlite3.Row objects
+            if status_db and r["status"] != status_db:
                 return False
 
             if not query:
                 return True
 
-            room_name = (r.get("room_name") or "").lower()
+            room_name = (r["room_name"] if r["room_name"] is not None else "").lower()
             if mode == "Tên phòng":
                 return query in room_name
 
             if mode == "Tên + Trạng thái":
-                status_en = (r.get("status") or "").lower()
-                status_vn = STATUS_MAP_REV.get(r.get("status"), r.get("status") or "")
-                status_vn = (status_vn or "").lower()
-                return (query in room_name) or (query in status_en) or (query in status_vn)
+                status_code = str(r["status"] if r["status"] is not None else "").lower()
+                status_vn = (STATUS_MAP_REV.get(r["status"], "") or "").lower()
+                return (query in room_name) or (query in status_code) or (query in status_vn)
 
             haystack = " ".join([
-                str(r.get("room_name") or ""),
-                str(r.get("floor") or ""),
-                str(r.get("area_m2") or ""),
-                str(r.get("base_rent") or ""),
-                str(r.get("electric_unit_price") or ""),
-                str(r.get("water_unit_price") or ""),
-                str(r.get("status") or ""),
-                str(r.get("note") or ""),
+                str(r["room_name"] if r["room_name"] is not None else ""),
+                str(r["floor"] if r["floor"] is not None else ""),
+                str(r["area_m2"] if r["area_m2"] is not None else ""),
+                str(r["base_rent"] if r["base_rent"] is not None else ""),
+                str(r["electric_unit_price"] if r["electric_unit_price"] is not None else ""),
+                str(r["water_unit_price"] if r["water_unit_price"] is not None else ""),
+                str(r["status"] if r["status"] is not None else ""),
+                str(STATUS_MAP_REV.get(r["status"], "") or ""),
+                str(r["note"] if r["note"] is not None else ""),
             ]).lower()
             return query in haystack
 

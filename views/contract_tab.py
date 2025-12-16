@@ -2,6 +2,7 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
+import os
 from services.contract_service import (
     get_all_contracts,
     create_contract,
@@ -9,7 +10,9 @@ from services.contract_service import (
     delete_contract,
     end_contract,
     get_available_rooms,
-    get_tenants_without_active_contract
+    get_tenants_without_active_contract, 
+    get_contract_by_id,
+    export_contract_to_pdf
 )
 
 
@@ -115,6 +118,7 @@ class contractView(ctk.CTkFrame):
         ctk.CTkButton(toolbar, text="Tải lại", command=self._full_reload, width=60, fg_color="gray").pack(side="left",
                                                                                                           padx=6)
 
+        ctk.CTkButton(toolbar, text="Xuất hợp đồng", command=self.on_export_pdf, fg_color="#3498db").pack(side="right", padx=6)
         ctk.CTkButton(toolbar, text="Tạo Mới", command=self.on_create, fg_color="#27ae60").pack(side="right", padx=6)
         ctk.CTkButton(toolbar, text="Cập Nhật", command=self.on_update, fg_color="#f39c12").pack(side="right", padx=6)
         ctk.CTkButton(toolbar, text="Xóa", command=self.on_delete, fg_color="#e74c3c").pack(side="right", padx=6)
@@ -179,12 +183,12 @@ class contractView(ctk.CTkFrame):
 
         for r in rows:
             # r index: 0:id, ..., -2: room_name, -1: tenant_name (check lại BE SQL)
-            # BE: SELECT c.*, r.name_room, t.full_name
-            # c.* giả sử có 14 cột. r.name_room là cột kế cuối, t.full_name là cột cuối.
+            # BE: SELECT c.*, r.room_name, t.full_name
+            # c.* giả sử có 14 cột. r.room_name là cột kế cuối, t.full_name là cột cuối.
 
             # Để an toàn, truy cập bằng index âm hoặc key nếu trả về dict-like row
             c_id = r[0]
-            room_name = r['name_room']  # Nếu dùng sqlite3.Row
+            room_name = r['room_name']  # Nếu dùng sqlite3.Row
             tenant_name = r['full_name']
             start_date = r['start_ymd']
             end_date = r['end_ymd']
@@ -236,13 +240,13 @@ class contractView(ctk.CTkFrame):
 
         if contract:
             # Mapping dữ liệu (cần khớp thứ tự cột trong DB table 'contract')
-            # 0:id, 1:room_id, 2:tenant_id, 3:name_contact, 4:start, 5:end,
+            # 0:id, 1:room_id, 2:tenant_id, 3:contract_name, 4:start, 5:end,
             # 6:rent, 7:deposit, 8:elec_start, 9:water_start, 10:deposit_date, 11:status, 12:note, 13:deleted
-            # + name_room, full_name
+            # + room_name, full_name
 
-            self.room_var.set(contract['name_room'])
+            self.room_var.set(contract['room_name'])
             self.tenant_var.set(contract['full_name'])
-            self.contact_name_var.set(contract['name_contact'])
+            self.contact_name_var.set(contract['contract_name'])
             self.rent_var.set(str(int(contract['rent'])))
             self.deposit_var.set(str(int(contract['deposit_amount'])))
             self.start_date_var.set(contract['start_ymd'])
@@ -316,7 +320,7 @@ class contractView(ctk.CTkFrame):
         return {
             "room_id": room_id,
             "tenant_id": tenant_id,
-            "name_contact": self.contact_name_var.get(),
+            "contract_name": self.contact_name_var.get(),
             "start_ymd": self.start_date_var.get(),
             "end_ymd": self.end_date_var.get(),
             "rent": rent,
@@ -372,12 +376,37 @@ class contractView(ctk.CTkFrame):
             except Exception as e:
                 messagebox.showerror("Lỗi", str(e))
 
+    def on_export_pdf(self):
+        if not self._selected_id:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn hợp đồng để xuất PDF!")
+            return
+
+        try:
+            # Get the path to the generated PDF
+            pdf_path = export_contract_to_pdf(self._selected_id)
+            
+            # Open the PDF file with the default application
+            if os.name == 'nt':  # Windows
+                os.startfile(pdf_path)
+            elif os.name == 'posix':  # macOS and Linux
+                if os.uname().sysname == 'Darwin':
+                    os.system(f'open "{pdf_path}"')
+                else:
+                    os.system(f'xdg-open "{pdf_path}"')
+                    
+            messagebox.showinfo("Thành công", f"Đã xuất file PDF thành công!\n\nĐường dẫn: {pdf_path}")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Lỗi khi xuất file PDF: {str(e)}")
+
     def on_end_contract(self):
-        if not self._selected_id: return
-        if messagebox.askyesno("Kết thúc",
-                               "Kết thúc hợp đồng sớm/đúng hạn?\nTrạng thái sẽ chuyển thành 'Ended' và phòng sẽ 'Available'."):
+        if not self._selected_id:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn hợp đồng để kết thúc!")
+            return
+
+        if messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn kết thúc hợp đồng này?"):
             try:
                 end_contract(self._selected_id)
+                messagebox.showinfo("Thành công", "Đã kết thúc hợp đồng!")
                 self._full_reload()
             except Exception as e:
-                messagebox.showerror("Lỗi", str(e))
+                messagebox.showerror("Lỗi", f"Lỗi khi kết thúc hợp đồng: {str(e)}")

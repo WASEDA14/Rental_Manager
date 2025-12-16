@@ -8,148 +8,152 @@ def get_all_rooms():
         return conn.execute(
             """
             SELECT
-                room_id,
-                room_name,
-                base_rent,
-                area_m2,
-                floor,
-                electric_unit_price,
-                water_unit_price,
-                status,
-                note
-            FROM room
-            WHERE is_deleted = 0
-            ORDER BY room_id
+                r.room_id,
+                r.room_name,
+                r.floor,
+                r.area_m2,
+                r.base_rent,
+                r.electric_unit_price,
+                r.water_unit_price,
+                r.status,
+                r.note,
+                COUNT(c.contract_id) as active_contracts
+            FROM room r
+            LEFT JOIN contract c ON r.room_id = c.room_id 
+                AND c.contract_status = 'active' 
+                AND c.is_deleted = 0
+            WHERE r.is_deleted = 0
+            GROUP BY r.room_id
+            ORDER BY r.room_name
             """
         ).fetchall()
 
 # --- GET = room_id
-def get_room_by_id (room_id :int):
+def get_room_by_id(room_id: int):
     with get_db() as conn:
         return conn.execute(
-            "SELECT * FROM room WHERE room_id = ? AND is_deleted = 0",
+            """
+            SELECT * FROM room 
+            WHERE room_id = ? AND is_deleted = 0
+            """,
             (room_id,),
         ).fetchone()
 
 # --- CREATE ---
-
 def get_available_rooms():
     with get_db() as conn:
         return conn.execute(
-            "SELECT * FROM room WHERE status = 'available' AND is_deleted = 0"
+            """
+            SELECT * FROM room 
+            WHERE status = 0 AND is_deleted = 0
+            ORDER BY room_name
+            """
         ).fetchall()
-
 
 def create_room(data: dict):
     with get_db() as conn:
         required_keys = (
             "room_name",
             "area_m2",
-            "floor",
             "base_rent",
             "electric_unit_price",
             "water_unit_price",
-            "status",
-            "note",
         )
-        for k in required_keys:
-            if k not in data:
-                raise ValueError("Thiếu dữ liệu phòng!")
+        if not all(key in data for key in required_keys):
+            raise ValueError("Missing required fields")
 
-        exists = conn.execute(
-            "SELECT 1 FROM room WHERE UPPER(room_name) = UPPER(?) AND is_deleted = 0",
-            (data["room_name"],),
-        ).fetchone()
-        if exists:
-            raise ValueError(f"Phòng '{data['room_name']}' đã tồn tại!")
-
-        cur = conn.execute(
+        conn.execute(
             """
             INSERT INTO room (
-                room_name,
-                area_m2, floor, base_rent, electric_unit_price,
-                water_unit_price, status, note
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                room_name, floor, area_m2, base_rent,
+                electric_unit_price, water_unit_price, status, note
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 data["room_name"],
+                data.get("floor", 1),
                 data["area_m2"],
-                data["floor"],
                 data["base_rent"],
                 data["electric_unit_price"],
                 data["water_unit_price"],
-                data["status"],
-                data["note"],
+                data.get("status", 0),  # Default to available
+                data.get("note", ""),
             ),
         )
-        return cur.lastrowid
-
+        conn.commit()
 
 def update_room(room_id: int, data: dict):
     with get_db() as conn:
         required_keys = (
             "room_name",
             "area_m2",
-            "floor",
             "base_rent",
             "electric_unit_price",
             "water_unit_price",
             "status",
-            "note",
         )
-        for k in required_keys:
-            if k not in data:
-                raise ValueError("Thiếu dữ liệu phòng!")
+        if not all(key in data for key in required_keys):
+            raise ValueError("Missing required fields")
 
-        room_exists = conn.execute(
-            "SELECT 1 FROM room WHERE room_id = ? AND is_deleted = 0",
-            (room_id,),
-        ).fetchone()
-        if not room_exists:
-            raise ValueError("Phòng không tồn tại hoặc đã bị xóa!")
+        # Check if the room is being set to occupied
+        if data["status"] == 1:  # 1 = occupied
+            # Check if there's already an active contract for this room
+            active_contract = conn.execute(
+                """
+                SELECT 1 FROM contract 
+                WHERE room_id = ? AND contract_status = 'active' AND is_deleted = 0
+                """,
+                (room_id,),
+            ).fetchone()
+            
+            if not active_contract:
+                raise ValueError(
+                    "Cannot set room status to occupied without an active contract. " 
+                    "Please create a contract for this room first."
+                )
+        else:
+            # If setting to available, check if there are any active contracts
+            active_contract = conn.execute(
+                """
+                SELECT 1 FROM contract 
+                WHERE room_id = ? AND contract_status = 'active' AND is_deleted = 0
+                """,
+                (room_id,),
+            ).fetchone()
+            
+            if active_contract:
+                raise ValueError(
+                    "Cannot set room status to available while there is an active contract. " 
+                    "Please end or delete the contract first."
+                )
 
-        dup = conn.execute(
+        conn.execute(
             """
-            SELECT 1
-            FROM room
-            WHERE UPPER(room_name) = UPPER(?)
-              AND room_id <> ?
-              AND is_deleted = 0
-            """,
-            (data["room_name"], room_id),
-        ).fetchone()
-        if dup:
-            raise ValueError("Tên phòng này đang được sử dụng bởi phòng khác!")
-
-        cur = conn.execute(
-            """
-            UPDATE room
-            SET room_name = ?,
-                area_m2 = ?,
+            UPDATE room SET 
+                room_name = ?,
                 floor = ?,
+                area_m2 = ?,
                 base_rent = ?,
                 electric_unit_price = ?,
                 water_unit_price = ?,
                 status = ?,
-                note = ?
-            WHERE room_id = ? AND is_deleted = 0
+                note = ?,
+                updated_at = CURRENT_TIMESTAMP
+            WHERE room_id = ?
             """,
             (
                 data["room_name"],
+                data.get("floor", 1),
                 data["area_m2"],
-                data["floor"],
                 data["base_rent"],
                 data["electric_unit_price"],
                 data["water_unit_price"],
                 data["status"],
-                data["note"],
+                data.get("note", ""),
                 room_id,
             ),
         )
-        if getattr(cur, "rowcount", 1) == 0:
-            raise ValueError("Cập nhật thất bại!")
-
+        conn.commit()
 
 def delete_room(room_id: int):
     with get_db() as conn:
@@ -157,19 +161,28 @@ def delete_room(room_id: int):
             "SELECT 1 FROM room WHERE room_id = ? AND is_deleted = 0",
             (room_id,),
         ).fetchone()
-        if not room_exists:
-            raise ValueError("Phòng không tồn tại hoặc đã bị xóa!")
 
+        if not room_exists:
+            raise ValueError("Room not found or already deleted")
+
+        # Check for active contracts
         active_contract = conn.execute(
             """
-                SELECT 1 FROM contract
-                WHERE room_id = ? AND contract_status = 'active' AND is_deleted = 0
+            SELECT 1 FROM contract 
+            WHERE room_id = ? AND contract_status = 'active' AND is_deleted = 0
             """,
             (room_id,),
         ).fetchone()
 
         if active_contract:
-            raise ValueError("Không thể xóa phòng đang có hợp đồng hiệu lực!")
+            raise ValueError(
+                "Cannot delete room with active contract. " 
+                "Please end or delete the contract first."
+            )
 
-        conn.execute("UPDATE room SET is_deleted = 1 WHERE room_id = ?", (room_id,))
-
+        # Soft delete the room
+        conn.execute(
+            "UPDATE room SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE room_id = ?",
+            (room_id,),
+        )
+        conn.commit()

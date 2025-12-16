@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS room (
     base_rent INTEGER,
     electric_unit_price INTEGER,
     water_unit_price INTEGER,
-    status INTEGER NOT NULL DEFAULT 0 CHECK (status IN (0,1)),
+    status INTEGER NOT NULL DEFAULT 0 CHECK (status IN (0,1,2)),
     note TEXT,
     is_deleted INTEGER DEFAULT 0
 );
