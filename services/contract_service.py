@@ -1,9 +1,11 @@
 # services/contract_service.py
 import os
+import tempfile
 from datetime import datetime
+from pathlib import Path
+
 from database.db import get_db
 from utils.pdf_utils import create_contract_pdf
-from config import UPLOAD_FOLDER
 
 
 def get_all_contracts():
@@ -73,8 +75,7 @@ def update_contract(contract_id: int, data: dict):
                 electric_meter_start = ?,
                 water_meter_start = ?,
                 deposit_ymd = ?,
-                note = ?,
-                updated_at = CURRENT_TIMESTAMP
+                note = ?
             WHERE contract_id = ?
             """,
             (
@@ -129,8 +130,7 @@ def end_contract(contract_id: int):
             """
             UPDATE contract 
             SET contract_status = 'ended', 
-                end_ymd = date('now'),
-                updated_at = CURRENT_TIMESTAMP
+                end_ymd = date('now')
             WHERE contract_id = ?
             """,
             (contract_id,),
@@ -178,32 +178,68 @@ def get_tenants_without_active_contract():
         ).fetchall()
 
 
-def export_contract_to_pdf(contract_id):
-    """
-    Export contract to PDF
+def get_contract_for_export(contract_id: int) -> dict:
+    """Get contract data for PDF export"""
+    with get_db() as conn:
+        contract = conn.execute(
+            """
+            SELECT c.*, r.room_name, t.address,
+                   t.full_name as tenant_name, t.phone, t.id_number
+            FROM contract c
+            JOIN room r ON c.room_id = r.room_id
+            JOIN tenant t ON c.tenant_id = t.tenant_id
+            WHERE c.contract_id = ? AND c.is_deleted = 0
+            """,
+            (contract_id,)
+        ).fetchone()
+
+        if not contract:
+            raise ValueError("Contract not found or has been deleted")
+
+        # Convert to dict for easier access
+        contract_dict = dict(contract)
+
+        # Add additional fields if needed
+        contract_dict['contract_code'] = f"HD{contract_id:06d}"
+        contract_dict['company_address'] = "Số 1, Đường ABC, Quận 1, TP.HCM"
+        contract_dict['payment_due_day'] = "05"  # Default payment due day
+
+        # Format dates
+        if 'start_date' in contract_dict and contract_dict['start_date']:
+            if isinstance(contract_dict['start_date'], str):
+                # If it's already a string, try to parse and reformat
+                try:
+                    dt = datetime.strptime(contract_dict['start_date'], '%Y-%m-%d')
+                    contract_dict['start_date'] = dt.strftime('%d/%m/%Y')
+                except:
+                    pass
+            else:
+
+                contract_dict['start_date'] = contract_dict['start_date'].strftime('%d/%m/%Y')
+
+        if 'end_date' in contract_dict and contract_dict['end_date']:
+            if isinstance(contract_dict['end_date'], str):
+                try:
+                    dt = datetime.strptime(contract_dict['end_date'], '%Y-%m-%d')
+                    contract_dict['end_date'] = dt.strftime('%d/%m/%Y')
+                except:
+                    pass
+            else:
+                contract_dict['end_date'] = contract_dict['end_date'].strftime('%d/%m/%Y')
+
+        return contract_dict
+
+
+PDF_EXPORT_DIR = Path("D:/Rental_Manager/exports/contract")
+def export_contract_to_pdf(contract_id: int, output_dir: str = None) -> str:
+    contract_data = get_contract_for_export(contract_id)
     
-    Args:
-        contract_id (int): ID of the contract to export
-        
-    Returns:
-        str: Path to the generated PDF file
-    """
-    contract = get_contract_by_id(contract_id)
-    if not contract:
-        raise ValueError("Contract not found")
-    
-    # Prepare contract data for PDF generation
-    contract_data = dict(contract)
-    
-    # Create output directory if it doesn't exist
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-    
-    # Generate PDF filename with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"contract_{contract_id}_{timestamp}.pdf"
-    output_path = os.path.join(UPLOAD_FOLDER, filename)
-    
-    # Generate the PDF
-    create_contract_pdf(contract_data, output_path)
-    
-    return output_path
+    # Use PDF_EXPORT_DIR if output_dir is not provided
+    output_dir = Path(output_dir) if output_dir else PDF_EXPORT_DIR
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = f"HopDong_{contract_data['contract_code']}_{contract_data['tenant_name']}.pdf"
+    output_path = output_dir / filename
+
+    create_contract_pdf(contract_data, str(output_path))
+    return str(output_path)

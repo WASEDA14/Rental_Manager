@@ -4,7 +4,6 @@ from services.room_service import get_all_rooms, create_room, update_room, delet
 from views.bill_tab import format_currency
 
 from utils.format import parse_currency
-# Định nghĩa hằng số trạng thái để đồng bộ giữa Tiếng Việt (UI) và Tiếng Anh (Database)
 STATUS_MAP = {
     "Trống": 0,
     "Đang thuê": 1,
@@ -27,7 +26,6 @@ class roomTab(ctk.CTkFrame):
         self._load_data()
 
     def _build_ui(self):
-        # --- TIÊU ĐỀ ---
         ctk.CTkLabel(
             self,
             text="QUẢN LÝ PHÒNG TRỌ",
@@ -35,7 +33,6 @@ class roomTab(ctk.CTkFrame):
             text_color="#0041DE",
         ).pack(pady=(30, 20))
 
-        # --- FORM NHẬP LIỆU ---
         form_frame = ctk.CTkFrame(self, fg_color="white", corner_radius=20)
         form_frame.pack(fill="x", padx=50, pady=(0, 25))
 
@@ -43,28 +40,24 @@ class roomTab(ctk.CTkFrame):
         form.pack(fill="x", padx=60, pady=35)
         form.grid_columnconfigure((0, 1, 2, 3), weight=1)
 
-        # -- Hàng 1 --
-        # Tên phòng
+
         ctk.CTkLabel(form, text="Tên phòng *", font=("Inter", 14, "bold")).grid(row=0, column=0, sticky="w",
                                                                                 pady=(0, 5))
         self.entry_name = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15),
                                        placeholder_text="VD: P101")
         self.entry_name.grid(row=1, column=0, sticky="ew", pady=(0, 20))
 
-        # Số tầng
         ctk.CTkLabel(form, text="Số tầng", font=("Inter", 14, "bold")).grid(row=0, column=1, sticky="w", pady=(0, 5),
                                                                             padx=(30, 0))
         self.entry_floor = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15), placeholder_text="VD: 1")
         self.entry_floor.grid(row=1, column=1, sticky="ew", pady=(0, 20), padx=(30, 0))
 
-        # Diện tích
         ctk.CTkLabel(form, text="Diện tích (m²)", font=("Inter", 14, "bold")).grid(row=0, column=2, sticky="w",
                                                                                    pady=(0, 5), padx=(30, 0))
         self.entry_area = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15),
                                        placeholder_text="VD: 25.5")
         self.entry_area.grid(row=1, column=2, sticky="ew", pady=(0, 20), padx=(30, 0))
 
-        # Giá thuê
         ctk.CTkLabel(form, text="Giá thuê (VNĐ)", font=("Inter", 14, "bold")).grid(row=0, column=3, sticky="w",
                                                                                    pady=(0, 5), padx=(30, 0))
         self.entry_rent = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15),
@@ -72,8 +65,6 @@ class roomTab(ctk.CTkFrame):
         self.entry_rent.grid(row=1, column=3, sticky="ew", pady=(0, 20), padx=(30, 0))
         self.entry_rent.bind("<KeyRelease>", self._format_money)
 
-        # -- Hàng 2 --
-        # Giá điện
         ctk.CTkLabel(form, text="Giá điện (VNĐ/kWh)", font=("Inter", 14, "bold")).grid(row=2, column=0, sticky="w",
                                                                                        pady=(0, 5))
         self.entry_elec = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15),
@@ -81,7 +72,6 @@ class roomTab(ctk.CTkFrame):
         self.entry_elec.grid(row=3, column=0, sticky="ew", pady=(0, 20))
         self.entry_elec.bind("<KeyRelease>", self._format_money)
 
-        # Giá nước
         ctk.CTkLabel(form, text="Giá nước (VNĐ/m³)", font=("Inter", 14, "bold")).grid(row=2, column=1, sticky="w",
                                                                                       pady=(0, 5), padx=(30, 0))
         self.entry_water = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15),
@@ -89,7 +79,6 @@ class roomTab(ctk.CTkFrame):
         self.entry_water.grid(row=3, column=1, sticky="ew", pady=(0, 20), padx=(30, 0))
         self.entry_water.bind("<KeyRelease>", self._format_money)
 
-        # Trạng thái
         ctk.CTkLabel(form, text="Trạng thái", font=("Inter", 14, "bold")).grid(row=2, column=2, sticky="w", pady=(0, 5),
                                                                                padx=(30, 0))
         self.combo_status = ctk.CTkComboBox(form, values=list(STATUS_MAP.keys()), height=40, corner_radius=7,
@@ -97,13 +86,11 @@ class roomTab(ctk.CTkFrame):
         self.combo_status.set("Trống")
         self.combo_status.grid(row=3, column=2, sticky="ew", pady=(0, 20), padx=(30, 0))
 
-        # Ghi chú
         ctk.CTkLabel(form, text="Ghi chú", font=("Inter", 14, "bold")).grid(row=2, column=3, sticky="w", pady=(0, 5),
                                                                             padx=(30, 0))
         self.entry_note = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15))
         self.entry_note.grid(row=3, column=3, sticky="ew", pady=(0, 20), padx=(30, 0))
 
-        # --- BUTTONS ---
         btn_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
         btn_frame.pack(fill="x", padx=60, pady=(10, 30))
         btn_right = ctk.CTkFrame(btn_frame, fg_color="transparent")
@@ -501,21 +488,17 @@ class roomTab(ctk.CTkFrame):
             if room["room_id"] == self.current_room_id:
                 room_name = room["room_name"]
                 break
-
         confirm = messagebox.askyesno(
             "Xác nhận xóa",
-            f"Bạn có chắc chắn muốn xóa phòng '{room_name}'?\n"
-            "Hành động này không thể hoàn tác!"
-        )
+            f"Bạn có chắc chắn muốn xóa phòng {room_name}?\n")
         
         if not confirm:
             return
-
         try:
             delete_room(self.current_room_id)
             messagebox.showinfo(
                 "Thành công",
-                f"Đã xóa phòng '{room_name}' thành công!"
+                f"Đã xóa phòng {room_name} thành công!"
             )
             self._load_data()
             self.reset_form()

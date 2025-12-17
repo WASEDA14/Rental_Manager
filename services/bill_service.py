@@ -251,115 +251,15 @@ def get_bill_for_export(bill_id: int) -> dict:
         
         return bill_dict
 
-
+PDF_EXPORT_DIR = Path("D:/Rental_Manager/exports/bill")
 def export_bill_to_pdf(bill_id: int, output_dir: str = None) -> str:
-    """
-    Export a bill to PDF
-    
-    Args:
-        bill_id: ID of the bill to export
-        output_dir: Directory to save the PDF. If None, uses system temp directory
-        
-    Returns:
-        Path to the generated PDF file
-    """
-    # Get bill data
+
     bill_data = get_bill_for_export(bill_id)
-    
-    # Create output directory if it doesn't exist
-    if output_dir is None:
-        output_dir = os.path.join(tempfile.gettempdir(), 'rental_manager', 'bills')
-    
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Generate output filename
+
+    output_dir = Path(output_dir) if output_dir else PDF_EXPORT_DIR
+    output_dir.mkdir(parents=True, exist_ok=True)
     filename = f"HoaDon_{bill_data['bill_code']}_{bill_data['bill_month'].replace('/', '-')}.pdf"
-    output_path = os.path.join(output_dir, filename)
+    output_path = output_dir / filename
     
-    # Create the PDF
-    create_bill_pdf(bill_data, output_path)
-    
-    return output_path
-
-
-def get_contract_for_export(contract_id: int) -> dict:
-    """Get contract data for PDF export"""
-    with get_db() as conn:
-        contract = conn.execute(
-            """
-            SELECT c.*, r.room_name, r.address as property_address,
-                   t.full_name as tenant_name, t.phone, t.id_number,
-                   t.permanent_address
-            FROM contract c
-            JOIN room r ON c.room_id = r.room_id
-            JOIN tenant t ON c.tenant_id = t.tenant_id
-            WHERE c.contract_id = ? AND c.is_deleted = 0
-            """,
-            (contract_id,)
-        ).fetchone()
-        
-        if not contract:
-            raise ValueError("Contract not found or has been deleted")
-            
-        # Convert to dict for easier access
-        contract_dict = dict(contract)
-        
-        # Add additional fields if needed
-        contract_dict['contract_code'] = f"HD{contract_id:06d}"
-        contract_dict['company_address'] = "Số 1, Đường ABC, Quận 1, TP.HCM"
-        contract_dict['payment_due_day'] = "05"  # Default payment due day
-        
-        # Format dates
-        if 'start_date' in contract_dict and contract_dict['start_date']:
-            if isinstance(contract_dict['start_date'], str):
-                # If it's already a string, try to parse and reformat
-                try:
-                    dt = datetime.strptime(contract_dict['start_date'], '%Y-%m-%d')
-                    contract_dict['start_date'] = dt.strftime('%d/%m/%Y')
-                except:
-                    pass
-            else:
-                # If it's a date object
-                contract_dict['start_date'] = contract_dict['start_date'].strftime('%d/%m/%Y')
-                
-        if 'end_date' in contract_dict and contract_dict['end_date']:
-            if isinstance(contract_dict['end_date'], str):
-                try:
-                    dt = datetime.strptime(contract_dict['end_date'], '%Y-%m-%d')
-                    contract_dict['end_date'] = dt.strftime('%d/%m/%Y')
-                except:
-                    pass
-            else:
-                contract_dict['end_date'] = contract_dict['end_date'].strftime('%d/%m/%Y')
-        
-        return contract_dict
-
-
-def export_contract_to_pdf(contract_id: int, output_dir: str = None) -> str:
-    """
-    Export a contract to PDF
-    
-    Args:
-        contract_id: ID of the contract to export
-        output_dir: Directory to save the PDF. If None, uses system temp directory
-        
-    Returns:
-        Path to the generated PDF file
-    """
-    # Get contract data
-    contract_data = get_contract_for_export(contract_id)
-    
-    # Create output directory if it doesn't exist
-    if output_dir is None:
-        output_dir = os.path.join(tempfile.gettempdir(), 'rental_manager', 'contracts')
-    
-    os.makedirs(output_dir, exist_ok=True)
-    
-    # Generate output filename
-    filename = f"HopDong_{contract_data['contract_code']}_{contract_data['tenant_name']}.pdf"
-    output_path = os.path.join(output_dir, filename)
-    
-    # Create the PDF
-    create_contract_pdf(contract_data, output_path)
-    
-    return output_path
+    create_bill_pdf(bill_data, str(output_path))
+    return str(output_path)

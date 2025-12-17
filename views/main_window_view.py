@@ -4,7 +4,8 @@ from views.room_tab import roomTab
 from views.tenant_tab import tenantTab
 from views.bill_tab import billTab
 from views.contract_tab import contractView
-from views.dashboard_view import dashboardView
+from views.dashboard_tab import DashboardView
+from controllers.dashboard_controller import DashboardController
 
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
@@ -41,12 +42,15 @@ class MainWindow(ctk.CTk):
         self.content = ctk.CTkFrame(self)
         self.content.pack(side="right", fill="both", expand=True)
 
+        # Initialize controllers
+        self.dashboard_controller = DashboardController(None)  # View will be set in DashboardView.__init__
+        
         # Child pages (frames)
-        self.dashboard_view = dashboardView(self.content)
-        self.room_tab      = roomTab(self.content)
-        self.tenant_view    = tenantTab(self.content)
-        self.bill_view      = billTab(self.content)
-        self.contract_view  = contractView(self.content)
+        self.dashboard_view = DashboardView(self.content, self.dashboard_controller)
+        self.room_tab = roomTab(self.content)
+        self.tenant_view = tenantTab(self.content)
+        self.bill_view = billTab(self.content)
+        self.contract_view = contractView(self.content)
 
         # Chồng các page lên nhau
         for frame in (

@@ -219,7 +219,7 @@ class contractView(ctk.CTkFrame):
 
     def on_tenant_select(self, choice):
         # Tự động điền người liên hệ là tên khách thuê
-        self.contact_name_var.set(choice)
+        self.tenant_var.set(choice)
 
     def on_pick(self, _):
         sel = self.tree.selection()
@@ -385,16 +385,7 @@ class contractView(ctk.CTkFrame):
             # Get the path to the generated PDF
             pdf_path = export_contract_to_pdf(self._selected_id)
             
-            # Open the PDF file with the default application
-            if os.name == 'nt':  # Windows
-                os.startfile(pdf_path)
-            elif os.name == 'posix':  # macOS and Linux
-                if os.uname().sysname == 'Darwin':
-                    os.system(f'open "{pdf_path}"')
-                else:
-                    os.system(f'xdg-open "{pdf_path}"')
-                    
-            messagebox.showinfo("Thành công", f"Đã xuất file PDF thành công!\n\nĐường dẫn: {pdf_path}")
+            messagebox.showinfo("Thành công", "Đã xuất hợp đồng thành công!")
         except Exception as e:
             messagebox.showerror("Lỗi", f"Lỗi khi xuất file PDF: {str(e)}")
 

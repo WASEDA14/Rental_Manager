@@ -511,9 +511,7 @@ class billTab(ctk.CTkFrame):
             # Gọi service để xuất PDF
             pdf_path = export_bill_to_pdf(self._selected_bill_id)
             if pdf_path and os.path.exists(pdf_path):
-                messagebox.showinfo("Thành công", f"Đã xuất hóa đơn ra file:\n{pdf_path}")
-                # Mở thư mục chứa file
-                os.startfile(os.path.dirname(pdf_path))
+                messagebox.showinfo("Thành công", "Đã xuất hóa đơn thành công")
             else:
                 messagebox.showerror("Lỗi", "Không thể xuất hóa đơn. Vui lòng thử lại!")
         except Exception as e:

@@ -137,8 +137,7 @@ def update_room(room_id: int, data: dict):
                 electric_unit_price = ?,
                 water_unit_price = ?,
                 status = ?,
-                note = ?,
-                updated_at = CURRENT_TIMESTAMP
+                note = ?
             WHERE room_id = ?
             """,
             (
@@ -182,7 +181,7 @@ def delete_room(room_id: int):
 
         # Soft delete the room
         conn.execute(
-            "UPDATE room SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE room_id = ?",
+            "UPDATE room SET is_deleted = 1 WHERE room_id = ?",
             (room_id,),
         )
         conn.commit()

@@ -33,6 +33,7 @@ def validate_tenant(data: dict):
                     raise ValueError("sex phải là số (0,1,2) hoặc None.")
                 if sex not in (0, 1, 2):
                     raise ValueError("sex phải có giá trị 0, 1 hoặc 2.")
+            return data
 
 
 # ---------- Commands ----------
