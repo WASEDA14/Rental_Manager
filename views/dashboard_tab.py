@@ -2,19 +2,17 @@ import customtkinter as ctk
 from tkinter import messagebox
 
 class Card(ctk.CTkFrame):
-    def __init__(self, parent, title: str, value: str, color: str, view_text="View"):
+    def __init__(self, parent, title: str, value: str, color: str):
         super().__init__(parent, corner_radius=12)
         self.configure(fg_color=color)
         self._value = value
         self._title = title
         self._color = color
-        self._view_text = view_text
         
         # Store widgets for later updates
         self.value_label = None
         self.title_label = None
-        self.view_button = None
-        
+
         self.setup_ui()
     
     def setup_ui(self):
@@ -38,17 +36,6 @@ class Card(ctk.CTkFrame):
             text_color="white"
         )
         self.title_label.grid(row=1, column=0, padx=16, sticky="w")
-        
-        # View button
-        self.view_button = ctk.CTkButton(
-            self, 
-            text=self._view_text, 
-            height=30,
-            fg_color="white", 
-            text_color="black",
-            hover_color="#e6e6e6"
-        )
-        self.view_button.grid(row=3, column=0, padx=16, pady=16, sticky="w")
     
     def update_value(self, new_value):
         """Update the value displayed in the card"""
@@ -58,17 +45,25 @@ class Card(ctk.CTkFrame):
         """Update the title of the card"""
         self.title_label.configure(text=new_title)
 
-
 class DashboardView(ctk.CTkFrame):
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller=None):
         super().__init__(parent, fg_color="transparent")
         self.controller = controller
-        
+
+        if self.controller is not None:
+            self.controller.view = self
+
+        self.setup_ui()
+
+        if self.controller is not None:
+            self.refresh_data()
+
+    def setup_ui(self):
         # Header
         ctk.CTkLabel(
             self, 
             text="Have a nice day", 
-            font=ctk.CTkFont(size=24, weight="bold")
+            font=ctk.CTkFont(size=40, weight="bold")
         ).pack(pady='30')
         
         # Refresh button
@@ -91,23 +86,18 @@ class DashboardView(ctk.CTkFrame):
             self.cards_frame.grid_columnconfigure(i, weight=1, uniform="cards")
         
         # Create cards
-        self.room_card = Card(self.cards_frame, "Rooms", "0/0", "#3498db", "View Rooms")
-        self.tenant_card = Card(self.cards_frame, "Tenants", "0", "#f1c40f", "View Tenants")
+        self.room_card = Card(self.cards_frame, "Rooms", "0/0", "#3498db")
+        self.tenant_card = Card(self.cards_frame, "Tenants", "0", "#f1c40f")
         # self.payment_card = Card(self.cards_frame, "Payments This Month", "0.0", "#27ae60", "View Payments")
         
         # Place cards in grid
         self.room_card.grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
         self.tenant_card.grid(row=0, column=1, padx=8, pady=8, sticky="nsew")
-        # self.payment_card.grid(row=0, column=2, padx=8, pady=8, sticky="nsew")
-        
-        # Set up controller
-        self.controller.view = self
-        
-        # Initial data load
-        self.refresh_data()
     
     def refresh_data(self):
         """Request a refresh of the dashboard data"""
+        if self.controller is None:
+            return
         self.controller.refresh_data()
     
     def update_room_card(self, occupied, total):

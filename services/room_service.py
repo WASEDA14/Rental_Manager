@@ -185,3 +185,38 @@ def delete_room(room_id: int):
             (room_id,),
         )
         conn.commit()
+
+def update_roomStatus():
+    with get_db() as conn:
+        conn.execute(
+            """ 
+           UPDATE room 
+            SET status = 1
+            WHERE room_id IN (
+                SELECT r.room_id 
+                FROM room r
+                JOIN contract c ON r.room_id = c.room_id
+                WHERE c.contract_status = 'active' 
+                AND c.is_deleted = 0
+                AND r.is_deleted = 0
+            )
+            """
+        )
+        conn.execute(
+            """ 
+           UPDATE room 
+            SET status = 2
+            WHERE room_id IN (
+                SELECT r.room_id 
+                FROM room r
+                JOIN contract c ON r.room_id = c.room_id
+                WHERE c.contract_status = 'ended' 
+                AND c.is_deleted = 1
+                AND r.is_deleted = 0
+            )
+            """
+        )
+        conn.commit()
+
+
+

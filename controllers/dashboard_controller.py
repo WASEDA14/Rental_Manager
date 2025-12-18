@@ -1,9 +1,8 @@
 from services.dashboard_service import get_dashboard_stats
 
 class DashboardController:
-    def __init__(self, view):
+    def __init__(self, view=None):
         self.view = view
-        self.refresh_data()
     
     def refresh_data(self):
         """
@@ -18,7 +17,7 @@ class DashboardController:
                 total=stats['total_rooms']
             )
             self.view.update_tenant_card(count=stats['total_tenants'])
-            self.view.update_payment_card(amount=stats['monthly_payment'])
+            # Payment card update removed as the UI element is disabled
             
         except Exception as e:
             print(f"Error refreshing dashboard data: {e}")

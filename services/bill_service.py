@@ -133,7 +133,7 @@ def create_bill(data: dict):
         conn.execute(
             """
             INSERT INTO bill (
-                contract_id, tenant_name, room_no, bill_month,
+                contract_id, tenant_name, room_id,room_name, bill_month,
                 elec_prev, elec_current, water_prev, water_current,
                 electric_unit_price, water_unit_price,
                 room_rent_amount, other_fee, total_amount, note
@@ -141,8 +141,9 @@ def create_bill(data: dict):
             """,
             (
                 data["contract_id"],
-                tenant_name,
-                room_name,
+                data["tenant_name"],
+                data["room_id"],
+                data["room_name"],
                 data["bill_month"],
                 data["elec_prev"],
                 data["elec_current"],

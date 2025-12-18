@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS bill (
     contract_id INTEGER NOT NULL REFERENCES contract(contract_id),
     room_id INTEGER REFERENCES room(room_id),
     tenant_name TEXT NOT NULL,
-    room_no TEXT NOT NULL,
+    room_name TEXT NOT NULL,
     bill_month TEXT NOT NULL,
     elec_prev INTEGER,
     elec_current INTEGER,

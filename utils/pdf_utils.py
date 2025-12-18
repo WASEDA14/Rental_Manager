@@ -346,8 +346,7 @@ def create_contract_pdf(contract_data, output_path):
     # Add header
     elements.append(Paragraph("HỢP ĐỒNG CHO THUÊ PHÒNG TRỌ", styles['Title']))
     elements.append(Paragraph("Số: {}".format(contract_data.get('contract_code', '')), styles['Normal']))
-    elements.append(Spacer(1, 10))
-
+    elements.append(Spacer(1, 5))
     
     # Add parties
     elements.append(Paragraph("BÊN CHO THUÊ (BÊN A):", styles['Header']))
@@ -355,18 +354,18 @@ def create_contract_pdf(contract_data, output_path):
     elements.append(Paragraph("Địa chỉ: {}".format(contract_data.get('company_address', 'Số 1, Đường ABC, Quận 1, TP.HCM')), styles['Normal']))
     elements.append(Paragraph("Mã số thuế: 1234567890", styles['Normal']))
     elements.append(Paragraph("Điện thoại: 0123 456 789", styles['Normal']))
-    elements.append(Spacer(1, 10))
+    elements.append(Spacer(1, 5))
     
     elements.append(Paragraph("BÊN THUÊ (BÊN B):", styles['Header']))
     elements.append(Paragraph("Họ và tên: {}".format(contract_data.get('tenant_name', '')), styles['Bold']))
     elements.append(Paragraph("Số CMND/CCCD: {}".format(contract_data.get('id_number', '')), styles['Normal']))
     elements.append(Paragraph("Địa chỉ thường trú: {}".format(contract_data.get('address', '')), styles['Normal']))
     elements.append(Paragraph("Điện thoại: {}".format(contract_data.get('phone', '')), styles['Normal']))
-    elements.append(Spacer(1, 15))
+    elements.append(Spacer(1, 5))
     
     # Add contract terms
     elements.append(Paragraph("Hai bên cùng thỏa thuận ký kết hợp đồng thuê phòng với các điều khoản sau:", styles['Bold']))
-    elements.append(Spacer(1, 10))
+    elements.append(Spacer(1, 5))
     
     # Term 1: Property information
     elements.append(Paragraph("Điều 1: Đối tượng hợp đồng", styles['Bold']))
@@ -397,7 +396,7 @@ def create_contract_pdf(contract_data, output_path):
     # Term 4: Rights and obligations
     elements.append(Paragraph("Điều 4: Quyền và nghĩa vụ của các bên", styles['Bold']))
     elements.append(Paragraph("1. Quyền và nghĩa vụ của bên A:", styles['Bold']))
-    elements.append(Paragraph("- Cung cấp phòng đúng tiêu chuẩn, tiện nghi và trang thiết bị:<br/>""...................................................................................................", styles['Normal']))
+    elements.append(Paragraph("- Cung cấp phòng đúng tiêu chuẩn, tiện nghi và trang thiết bị:......................................", styles['Normal']))
     elements.append(Paragraph("2. Quyền và nghĩa vụ của bên B:", styles['Bold']))
     elements.append(Paragraph("- Thanh toán đầy đủ tiền phòng đúng hạn.", styles['Normal']))
     elements.append(Paragraph("- Giữ gìn vệ sinh chung, bảo quản tài sản của phòng.", styles['Normal']))
@@ -406,13 +405,12 @@ def create_contract_pdf(contract_data, output_path):
     # Term 5: Other agreements
     elements.append(Paragraph("Điều 5: Các thỏa thuận khác", styles['Bold']))
     elements.append(Paragraph("1. Hợp đồng này có hiệu lực kể từ ngày ký.", styles['Normal']))
-    elements.append(Paragraph("2. Mọi tranh chấp phát sinh sẽ được giải quyết trên tinh thần thỏa thuận.", styles['Normal']))
-    elements.append(Paragraph("3. Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá trị pháp lý như nhau.", styles['Normal']))
-    elements.append(Spacer(1, 20))
+    elements.append(Paragraph("2. Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá trị pháp lý như nhau.", styles['Normal']))
+    elements.append(Spacer(1, 10))
     
     # Add signature
     signature = [
-        ["ĐẠI DIỆN BÊN A", "BÊN B (KÝ TÊN)"],
+        ["Bên cho thuê", "Bên thuê"],
         "", "", "", "", "", "",
         ["(Ký, ghi rõ họ tên)", "(Ký, ghi rõ họ tên)"]
     ]

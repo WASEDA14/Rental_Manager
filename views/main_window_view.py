@@ -43,8 +43,8 @@ class MainWindow(ctk.CTk):
         self.content.pack(side="right", fill="both", expand=True)
 
         # Initialize controllers
-        self.dashboard_controller = DashboardController(None)  # View will be set in DashboardView.__init__
-        
+        self.dashboard_controller = DashboardController()
+
         # Child pages (frames)
         self.dashboard_view = DashboardView(self.content, self.dashboard_controller)
         self.room_tab = roomTab(self.content)
