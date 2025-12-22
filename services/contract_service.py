@@ -101,16 +101,16 @@ def delete_contract(contract_id: int):
         room_id = conn.execute(
             "SELECT room_id FROM contract WHERE contract_id = ?", (contract_id,)
         ).fetchone()
-        
+
         if room_id:
             status = conn.execute(
                 "SELECT contract_status FROM contract WHERE contract_id = ?", (contract_id,)
             ).fetchone()[0]
             if status == "active":
                 conn.execute(
-                    "UPDATE room SET status = 0 WHERE room_id = ?", (room_id[0],)
+                    "UPDATE room SET status = 2 WHERE room_id = ?", (room_id[0],)
                 )
-        
+
         conn.execute("UPDATE contract SET is_deleted = 1 WHERE contract_id = ?", (contract_id,))
         conn.commit()
 
@@ -120,12 +120,12 @@ def end_contract(contract_id: int):
         room_id = conn.execute(
             "SELECT room_id FROM contract WHERE contract_id = ?", (contract_id,)
         ).fetchone()
-        
+
         if room_id:
             conn.execute(
-                "UPDATE room SET status = 0 WHERE room_id = ?", (room_id[0],)
+                "UPDATE room SET status = 2 WHERE room_id = ?", (room_id[0],)
             )
-        
+
         conn.execute(
             """
             UPDATE contract 
@@ -168,12 +168,15 @@ def get_tenants_without_active_contract():
     with get_db() as conn:
         return conn.execute(
             """
-            SELECT t.tenant_id, t.full_name, t.phone
-            FROM tenant t
-            LEFT JOIN contract c ON t.tenant_id = c.tenant_id AND c.contract_status = 'active' AND c.is_deleted = 0
-            WHERE t.is_deleted = 0
-            GROUP BY t.tenant_id
-            HAVING COUNT(CASE WHEN c.contract_id IS NOT NULL THEN 1 END) = 0
+           SELECT t.tenant_id, t.full_name, t.phone
+FROM tenant t
+WHERE t.is_deleted = 0
+AND NOT EXISTS (
+    SELECT 1
+    FROM contract c
+    WHERE c.tenant_id = t.tenant_id
+      AND c.contract_status = 'active'
+      AND c.is_deleted = 0)
             """
         ).fetchall()
 
@@ -233,7 +236,7 @@ def get_contract_for_export(contract_id: int) -> dict:
 PDF_EXPORT_DIR = Path("D:/Rental_Manager/exports/contract")
 def export_contract_to_pdf(contract_id: int, output_dir: str = None) -> str:
     contract_data = get_contract_for_export(contract_id)
-    
+
     # Use PDF_EXPORT_DIR if output_dir is not provided
     output_dir = Path(output_dir) if output_dir else PDF_EXPORT_DIR
     output_dir.mkdir(parents=True, exist_ok=True)

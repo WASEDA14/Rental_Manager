@@ -108,11 +108,9 @@ def update_room(room_id: int, data: dict):
             
             if not active_contract:
                 raise ValueError(
-                    "Cannot set room status to occupied without an active contract. " 
-                    "Please create a contract for this room first."
+                    "Phòng chưa có hợp đồng. Vui lòng tạo hợp đồng cho phòng này."
                 )
         else:
-            # If setting to available, check if there are any active contracts
             active_contract = conn.execute(
                 """
                 SELECT 1 FROM contract 
@@ -123,9 +121,7 @@ def update_room(room_id: int, data: dict):
             
             if active_contract:
                 raise ValueError(
-                    "Cannot set room status to available while there is an active contract. " 
-                    "Please end or delete the contract first."
-                )
+                    "Phòng đang có hợp đồng hiệu lực, không thể chuyển sang trạng thái trống.")
 
         conn.execute(
             """
@@ -186,37 +182,37 @@ def delete_room(room_id: int):
         )
         conn.commit()
 
-def update_roomStatus():
-    with get_db() as conn:
-        conn.execute(
-            """ 
-           UPDATE room 
-            SET status = 1
-            WHERE room_id IN (
-                SELECT r.room_id 
-                FROM room r
-                JOIN contract c ON r.room_id = c.room_id
-                WHERE c.contract_status = 'active' 
-                AND c.is_deleted = 0
-                AND r.is_deleted = 0
-            )
-            """
-        )
-        conn.execute(
-            """ 
-           UPDATE room 
-            SET status = 2
-            WHERE room_id IN (
-                SELECT r.room_id 
-                FROM room r
-                JOIN contract c ON r.room_id = c.room_id
-                WHERE c.contract_status = 'ended' 
-                AND c.is_deleted = 1
-                AND r.is_deleted = 0
-            )
-            """
-        )
-        conn.commit()
+# def update_roomStatus():
+#     with get_db() as conn:
+#         conn.execute(
+#             """
+#            UPDATE room
+#             SET status = 1
+#             WHERE room_id IN (
+#                 SELECT r.room_id
+#                 FROM room r
+#                 JOIN contract c ON r.room_id = c.room_id
+#                 WHERE c.contract_status = 'active'
+#                 AND c.is_deleted = 0
+#                 AND r.is_deleted = 0
+#             )
+#             """
+#         )
+#         conn.execute(
+#             """
+#            UPDATE room
+#             SET status = 2
+#             WHERE room_id IN (
+#                 SELECT r.room_id
+#                 FROM room r
+#                 JOIN contract c ON r.room_id = c.room_id
+#                 WHERE c.contract_status = 'ended'
+#                 AND c.is_deleted = 1
+#                 AND r.is_deleted = 0
+#             )
+#             """
+#         )
+#         conn.commit()
 
 
 

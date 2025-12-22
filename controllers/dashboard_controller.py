@@ -5,23 +5,13 @@ class DashboardController:
         self.view = view
     
     def refresh_data(self):
-        """
-        Fetch the latest dashboard data and update the view
-        """
         try:
             stats = get_dashboard_stats()
-            
-            # Update the view with the latest data
             self.view.update_room_card(
                 occupied=stats['occupied_rooms'],
                 total=stats['total_rooms']
             )
             self.view.update_tenant_card(count=stats['total_tenants'])
-
-            self.view.update_payment_card(
-                count=stats['monthly_payment'],
-                )
-
-
+            self.view.update_payment_card(amount=stats['monthly_payment'])
         except Exception as e:
             print(f"Error refreshing dashboard data: {e}")

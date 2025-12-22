@@ -14,7 +14,7 @@ from services.contract_service import (
     get_contract_by_id,
     export_contract_to_pdf
 )
-from services.room_service import update_roomStatus
+# from services.room_service import update_roomStatus
 
 # Helper format tiền tệ
 def format_currency(value):
@@ -326,7 +326,7 @@ class contractView(ctk.CTkFrame):
 
         try:
             create_contract(data)
-            update_roomStatus()
+            # update_roomStatus()
             messagebox.showinfo("Thành công", "Tạo hợp đồng mới thành công!")
             self._full_reload()  # Reload để cập nhật trạng thái phòng
         except Exception as e:

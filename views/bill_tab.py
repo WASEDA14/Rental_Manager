@@ -44,7 +44,6 @@ class billTab(ctk.CTkFrame):
         # Biến Form
         self.search_var = ctk.StringVar()
 
-        # Biến chọn hợp đồng
         self.contract_select_var = ctk.StringVar()
 
         # Thông tin chung
@@ -70,9 +69,6 @@ class billTab(ctk.CTkFrame):
         self.other_fee_var = ctk.StringVar(value="0")
         self.total_amount_var = ctk.StringVar(value="0")
 
-        # Trạng thái thanh toán (Mặc định khi tạo mới là chưa thanh toán)
-        # Nếu muốn quản lý thanh toán ngay lúc tạo, có thể thêm logic,
-        # nhưng thường tạo bill xong mới thu tiền sau.
 
     def _build_ui(self):
         # === 1. FORM NHẬP LIỆU ===

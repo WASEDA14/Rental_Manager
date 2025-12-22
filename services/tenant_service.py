@@ -24,7 +24,6 @@ def validate_tenant(data: dict):
             # Required
             if not data.get("full_name") or not str(data["full_name"]).strip():
                 raise ValueError("full_name là bắt buộc.")
-            # sex: cho phép None hoặc 0/1/2
             sex = data.get("sex")
             if sex is not None:
                 try:
@@ -35,8 +34,6 @@ def validate_tenant(data: dict):
                     raise ValueError("sex phải có giá trị 0, 1 hoặc 2.")
             return data
 
-
-# ---------- Commands ----------
 def create_tenant(data: dict):
     with get_db() as conn:
         conn.execute(

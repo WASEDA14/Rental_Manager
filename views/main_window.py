@@ -146,15 +146,23 @@ class MainWindow(ctk.CTk):
         self.dashboard_view.tkraise()
 
     def show_room(self):
+        if hasattr(self.room_tab, '_load_data'):
+            self.room_tab._load_data()
         self.room_tab.tkraise()
 
     def show_tenant(self):
+        if hasattr(self.tenant_view, '_load_data'):
+            self.tenant_view._load_data()
         self.tenant_view.tkraise()
 
     def show_bill(self):
+        if hasattr(self.bill_view, '_load_data'):
+            self.bill_view._load_data()
         self.bill_view.tkraise()
 
     def show_contract(self):
+        if hasattr(self.contract_view, '_load_data'):
+            self.contract_view._load_data()
         self.contract_view.tkraise()
 
 
