@@ -17,7 +17,11 @@ class DashboardController:
                 total=stats['total_rooms']
             )
             self.view.update_tenant_card(count=stats['total_tenants'])
-            # Payment card update removed as the UI element is disabled
-            
+
+            self.view.update_payment_card(
+                count=stats['monthly_payment'],
+                )
+
+
         except Exception as e:
             print(f"Error refreshing dashboard data: {e}")

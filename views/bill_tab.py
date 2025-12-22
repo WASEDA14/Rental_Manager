@@ -182,7 +182,7 @@ class billTab(ctk.CTkFrame):
                       width=100).pack(side="left", padx=5)
         ctk.CTkButton(btn_frame, text="Xóa", command=self.on_delete, fg_color="#dc3545", width=80).pack(side="left",
                                                                                                         padx=5)
-        ctk.CTkButton(btn_frame, text="Đã thanh toán", command=self.on_mark_paid, fg_color="#007bff", width=100).pack(
+        ctk.CTkButton(btn_frame, text="Thanh toán", command=self.on_mark_paid, fg_color="#007bff", width=100).pack(
             side="left", padx=5)
         ctk.CTkButton(btn_frame, text="Xuất hóa đơn", command=self._on_export_pdf, fg_color="#3498db", width=80).pack(
             side="left", padx=5)

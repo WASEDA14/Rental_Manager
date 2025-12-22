@@ -225,16 +225,9 @@ class contractView(ctk.CTkFrame):
         sel = self.tree.selection()
         if not sel: return
 
-        # Lấy ID từ dòng chọn
         item = self.tree.item(sel[0])
         self._selected_id = int(item["values"][0])
 
-        # Load chi tiết để fill form (vì bảng thiếu thông tin như điện/nước/cọc)
-        # Cách tốt nhất là gọi get_contract_by_id từ BE, nhưng BE trả về tuple c.* chưa join
-        # Ở đây ta dùng data từ bảng kết hợp tìm trong list get_all_contracts hoặc query lại
-
-        # Query lại cho chắc chắn
-        # Note: get_all_contracts trả về list, ta lọc ra
         all_contracts = get_all_contracts()
         contract = next((c for c in all_contracts if c[0] == self._selected_id), None)
 

@@ -82,3 +82,6 @@ CREATE TABLE IF NOT EXISTS user (
     user_name TEXT NOT NULL,
     email TEXT
 );
+
+INSERT OR IGNORE INTO user (login_id, login_password, user_name, email)
+VALUES ('admin', 'admin1', 'Administrator', 'admin@example.com');

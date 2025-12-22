@@ -119,8 +119,8 @@ add_style(
     fontName=DEFAULT_FONT,
     fontSize=16,
     alignment=1,  # Center aligned
-    spaceAfter=20,
-    leading=20,
+    spaceAfter=15,
+    leading=15,
     textColor=colors.black
 )
 
@@ -411,7 +411,7 @@ def create_contract_pdf(contract_data, output_path):
     # Add signature
     signature = [
         ["Bên cho thuê", "Bên thuê"],
-        "", "", "", "", "", "",
+        "",
         ["(Ký, ghi rõ họ tên)", "(Ký, ghi rõ họ tên)"]
     ]
     

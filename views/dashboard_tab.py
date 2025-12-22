@@ -88,11 +88,12 @@ class DashboardView(ctk.CTkFrame):
         # Create cards
         self.room_card = Card(self.cards_frame, "Rooms", "0/0", "#3498db")
         self.tenant_card = Card(self.cards_frame, "Tenants", "0", "#f1c40f")
-        # self.payment_card = Card(self.cards_frame, "Payments This Month", "0.0", "#27ae60", "View Payments")
+        self.payment_card = Card(self.cards_frame, "Payments This Month", "0.0", "#27ae60")
         
         # Place cards in grid
         self.room_card.grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
         self.tenant_card.grid(row=0, column=1, padx=8, pady=8, sticky="nsew")
+        self.payment_card.grid(row=0, column=2, padx=8, pady=8, sticky="nsew")
     
     def refresh_data(self):
         """Request a refresh of the dashboard data"""
@@ -108,8 +109,8 @@ class DashboardView(ctk.CTkFrame):
         """Update the tenant card with new data"""
         self.tenant_card.update_value(str(count))
     
-    # def update_payment_card(self, amount):
-    #     """Update the payment card with new data"""
-    #     # Format as currency (you might want to add a currency formatter)
-    #     formatted_amount = f"{amount:,.0f} VND" if amount is not None else "0 VND"
-    #     self.payment_card.update_value(formatted_amount)
+    def update_payment_card(self, amount):
+        """Update the payment card with new data"""
+        # Format as currency (you might want to add a currency formatter)
+        formatted_amount = f"{amount:,.0f} VND" if amount is not None else "0 VND"
+        self.payment_card.update_value(formatted_amount)
