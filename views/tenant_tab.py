@@ -48,10 +48,10 @@ class tenantTab(ctk.CTkFrame):
             .grid(row=0, column=1, padx=6)
 
         ctk.CTkLabel(form, text="SĐT").grid(row=0, column=2, sticky="w")
-        e_phone = ctk.CTkEntry(form, textvariable=self.phone_var, width=140)
-        e_phone.grid(row=0, column=3, padx=6)
-        e_phone.configure(validate="key",
-                           validatecommand=(e_phone.register(
+        enTry_phone = ctk.CTkEntry(form, textvariable=self.phone_var, width=140)
+        enTry_phone.grid(row=0, column=3, padx=6)
+        enTry_phone.configure(validate="key",
+                           validatecommand=(enTry_phone.register(
                                lambda s: s.isdigit() or s == ""), "%P"))
 
         ctk.CTkLabel(form, text="Giới tính").grid(row=0, column=4, sticky="w")
@@ -98,17 +98,17 @@ class tenantTab(ctk.CTkFrame):
 
         ctk.CTkButton(action, text="Xóa khách hàng",
                       fg_color="#e74c3c",
-                      command=self.on_delete) \
+                      command=self.on_delete_tenant) \
             .pack(side="right", padx=6)
 
         ctk.CTkButton(action, text="Cập nhật",
                       fg_color="#f39c12",
-                      command=self.on_update)\
+                      command=self.on_update_tenant)\
             .pack(side="right", padx=6)
 
         ctk.CTkButton(action, text="Thêm",
                       fg_color="#27ae60",
-                      command=self.on_add)\
+                      command=self.on_create_tenant)\
             .pack(side="right", padx=6)
 
     def _build_table(self):
@@ -214,28 +214,55 @@ class tenantTab(ctk.CTkFrame):
         self.birth_var.set(v[6])
         self.note_var.set(v[7])
 
-    def on_add(self):
+    def on_create_tenant(self):
         data = self._collect_data()
         if not data:
             return
-
+        if not data["full_name"]:
+            messagebox.showwarning("Lỗi", "Vui lòng nhập tên khách hàng!")
+            return
+        phone = self.phone_var.get().strip()
+        if phone and (len(phone) < 10 or len(phone) > 11):
+            messagebox.showwarning("Lỗi", "Số điện thoại tối thiểu 10 ký tự và tối đa 11 ký tự")
+            return
+        if not data["id_number"]:
+            messagebox.showwarning("Lỗi", "Vui lòng nhập CCCD/CMND!")
+            return
+        id_number = self.id_number_var.get().strip()
+        if id_number and len(id_number) != 12:
+            messagebox.showwarning("Lỗi", "CCCD phải đúng 12 ký tự")
+            return
         if any(r["id_number"].upper() == data["id_number"].upper() for r in self.tenants_cache):
             messagebox.showwarning("Lỗi", f"Khách hàng đã tồn tại!")
             return
         try:
             create_tenant(validate_tenant(data))
-            messagebox.showinfo("OK", "Đã thêm tenant")
+            messagebox.showinfo("OK", "Thêm khách hàng thành công")
             self.reset_form()
             self._load_data()
         except Exception as e:
             messagebox.showerror("Lỗi", str(e))
 
-    def on_update(self):
+    def on_update_tenant(self):
         if not self.current_tenant_id:
-            messagebox.showwarning("Chưa chọn", "Chọn tenant trước")
+            messagebox.showwarning("Chưa chọn", "Chọn khách hàng trước")
             return
         data = self._collect_data()
         if not data:
+            return
+        if not data["full_name"]:
+            messagebox.showwarning("Lỗi", "Vui lòng nhập tên khách hàng!")
+            return
+        phone = self.phone_var.get().strip()
+        if phone and (len(phone) < 10 or len(phone) > 11):
+            messagebox.showwarning("Lỗi", "Số điện thoại tối thiểu 10 ký tự và tối đa 11 ký tự")
+            return
+        if not data["id_number"]:
+            messagebox.showwarning("Lỗi", "Vui lòng nhập CCCD/CMND!")
+            return
+        id_number = self.id_number_var.get().strip()
+        if id_number and len(id_number) != 12:
+            messagebox.showwarning("Lỗi", "CCCD phải đúng 12 ký tự")
             return
         if any(r["id_number"].upper() == data["id_number"].upper() for r in self.tenants_cache if r["tenant_id"] != self.current_tenant_id):
             messagebox.showwarning("Lỗi", f"Khách hàng đã tồn tại!")
@@ -248,7 +275,7 @@ class tenantTab(ctk.CTkFrame):
         except Exception as e:
             messagebox.showerror("Lỗi", str(e))
 
-    def on_delete(self):
+    def on_delete_tenant(self):
         # print(f"[DEBUG] on_delete called. Current tenant_id: {self.current_tenant_id}")
         if not self.current_tenant_id:
             messagebox.showwarning("Lỗi", "Vui lòng chọn khách hàng cần xóa!")

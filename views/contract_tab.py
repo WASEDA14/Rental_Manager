@@ -24,7 +24,7 @@ def format_currency(value):
         return "0"
 
 
-class contractView(ctk.CTkFrame):
+class contractTab(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
         self._selected_id = None
@@ -54,6 +54,11 @@ class contractView(ctk.CTkFrame):
         self._build_actions()
 
         # Load Data
+        self._load_combobox_data()
+        self.reload()
+
+    def initialize(self):
+        """Initialize or refresh the tab data"""
         self._load_combobox_data()
         self.reload()
 
@@ -288,21 +293,18 @@ class contractView(ctk.CTkFrame):
             messagebox.showerror("Lỗi nhập liệu", "Giá tiền, Điện, Nước phải là số!")
             return None
 
-        # Lấy ID từ tên hiển thị trong Combobox
+        # Lấy ID từ tên hiển thị
         room_name = self.room_var.get()
         tenant_name = self.tenant_var.get()
 
         room_id = self.rooms_map.get(room_name, {}).get("id")
         tenant_id = self.tenants_map.get(tenant_name)
 
-        # Trường hợp Edit: room_id/tenant_id có thể không có trong combobox (nếu phòng đang occupied)
-        # Cần logic lấy ID từ selected row nếu combobox rỗng hoặc không tìm thấy map
+
         if self._selected_id and (room_id is None or tenant_id is None):
-            # Lấy lại ID gốc từ data đang load (đơn giản hóa ở đây giả sử không đổi phòng/khách khi edit)
-            # Logic đúng: Nếu muốn đổi phòng, phải chọn phòng mới từ list available.
             pass
 
-        if room_id is None and not self._selected_id:  # Chỉ bắt buộc khi tạo mới
+        if room_id is None and not self._selected_id:
             messagebox.showerror("Lỗi", "Phòng không hợp lệ (có thể đã có người ở).")
             return None
 
@@ -326,7 +328,6 @@ class contractView(ctk.CTkFrame):
 
         try:
             create_contract(data)
-            # update_roomStatus()
             messagebox.showinfo("Thành công", "Tạo hợp đồng mới thành công!")
             self._full_reload()  # Reload để cập nhật trạng thái phòng
         except Exception as e:
@@ -370,9 +371,7 @@ class contractView(ctk.CTkFrame):
         if not self._selected_id:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn hợp đồng để xuất PDF!")
             return
-
         try:
-            # Get the path to the generated PDF
             pdf_path = export_contract_to_pdf(self._selected_id)
             
             messagebox.showinfo("Thành công", "Đã xuất hợp đồng thành công!")

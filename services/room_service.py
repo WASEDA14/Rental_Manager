@@ -1,8 +1,5 @@
 from database.db import get_db
-# from utils.formatter import format_currency
 
-
-# --- LIST ---
 def get_all_rooms():
     with get_db() as conn:
         return conn.execute(
@@ -28,7 +25,6 @@ def get_all_rooms():
             """
         ).fetchall()
 
-# --- GET = room_id
 def get_room_by_id(room_id: int):
     with get_db() as conn:
         return conn.execute(
@@ -158,7 +154,7 @@ def delete_room(room_id: int):
         ).fetchone()
 
         if not room_exists:
-            raise ValueError("Room not found or already deleted")
+            raise ValueError("Phòng không tồn tại")
 
         # Check for active contracts
         active_contract = conn.execute(
@@ -171,48 +167,11 @@ def delete_room(room_id: int):
 
         if active_contract:
             raise ValueError(
-                "Cannot delete room with active contract. " 
-                "Please end or delete the contract first."
+                "Phòng đang được dùng."
             )
-
-        # Soft delete the room
         conn.execute(
             "UPDATE room SET is_deleted = 1 WHERE room_id = ?",
             (room_id,),
         )
         conn.commit()
-
-# def update_roomStatus():
-#     with get_db() as conn:
-#         conn.execute(
-#             """
-#            UPDATE room
-#             SET status = 1
-#             WHERE room_id IN (
-#                 SELECT r.room_id
-#                 FROM room r
-#                 JOIN contract c ON r.room_id = c.room_id
-#                 WHERE c.contract_status = 'active'
-#                 AND c.is_deleted = 0
-#                 AND r.is_deleted = 0
-#             )
-#             """
-#         )
-#         conn.execute(
-#             """
-#            UPDATE room
-#             SET status = 2
-#             WHERE room_id IN (
-#                 SELECT r.room_id
-#                 FROM room r
-#                 JOIN contract c ON r.room_id = c.room_id
-#                 WHERE c.contract_status = 'ended'
-#                 AND c.is_deleted = 1
-#                 AND r.is_deleted = 0
-#             )
-#             """
-#         )
-#         conn.commit()
-
-
 

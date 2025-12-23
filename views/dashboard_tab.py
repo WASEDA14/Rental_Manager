@@ -1,5 +1,14 @@
 import customtkinter as ctk
-from tkinter import messagebox
+from views.bill_tab import billTab
+from views.contract_tab import contractTab
+from views.room_tab import roomTab
+from views.tenant_tab import tenantTab
+from controllers.dashboard_controller import DashboardController
+
+
+
+
+
 
 class Card(ctk.CTkFrame):
     def __init__(self, parent, title: str, value: str, color: str):
@@ -7,110 +16,159 @@ class Card(ctk.CTkFrame):
         self.configure(fg_color=color)
         self._value = value
         self._title = title
-        self._color = color
-        
-        # Store widgets for later updates
-        self.value_label = None
-        self.title_label = None
 
-        self.setup_ui()
-    
-    def setup_ui(self):
-        # Configure layout
-        self.grid_rowconfigure(2, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        # Value (big number)
         self.value_label = ctk.CTkLabel(
-            self, 
-            text=self._value,
-            font=ctk.CTkFont(size=28, weight="bold"),
-            text_color="white"
+            self, text=self._value, font=ctk.CTkFont(size=28, weight="bold"), text_color="white"
         )
         self.value_label.grid(row=0, column=0, padx=16, pady=(16, 4), sticky="w")
-        
-        # Title
-        self.title_label = ctk.CTkLabel(
-            self, 
-            text=self._title, 
-            text_color="white"
-        )
+
+        self.title_label = ctk.CTkLabel(self, text=self._title, text_color="white")
         self.title_label.grid(row=1, column=0, padx=16, sticky="w")
-    
+
     def update_value(self, new_value):
-        """Update the value displayed in the card"""
         self.value_label.configure(text=new_value)
-    
-    def update_title(self, new_title):
-        """Update the title of the card"""
-        self.title_label.configure(text=new_title)
+
 
 class DashboardView(ctk.CTkFrame):
     def __init__(self, parent, controller=None):
         super().__init__(parent, fg_color="transparent")
+        self.parent = parent
         self.controller = controller
+        if controller is not None:
+            self.controller.refresh_data()
 
-        if self.controller is not None:
-            self.controller.view = self
 
+        # Lazy tab initialization flags
+        self.tabs = {}
         self.setup_ui()
 
-        if self.controller is not None:
-            self.refresh_data()
-
     def setup_ui(self):
-        # Header
-        ctk.CTkLabel(
-            self, 
-            text="Have a nice day", 
-            font=ctk.CTkFont(size=40, weight="bold")
-        ).pack(pady='30')
-        
-        # Refresh button
-        refresh_btn = ctk.CTkButton(
-            self,
-            text="⟳ Refresh",
-            command=self.refresh_data,
-            width=100,
-            fg_color="#2c3e50",
-            hover_color="#34495e"
-        )
-        refresh_btn.pack(anchor='e', padx=16)
-        
-        # Row containing the cards
-        self.cards_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.cards_frame.pack(fill="x", padx=16, pady=16)
-        
-        # Configure 3 equal columns
+        self.setup_sidebar()
+        self.setup_content()
+        self.show_dashboard()
+
+    def setup_sidebar(self):
+        self.sidebar = ctk.CTkFrame(self, width=240, corner_radius=0,
+                                    fg_color=("#f0f2f5", "#1a1a1a"),
+                                    border_width=1, border_color=("#e0e0e0", "#2d2d2d"))
+        self.sidebar.pack(side="left", fill="y")
+        self.sidebar.pack_propagate(False)
+
+        sidebar_content = ctk.CTkFrame(self.sidebar, fg_color="transparent")
+        sidebar_content.pack(fill="both", expand=True, padx=10, pady=10)
+
+        ctk.CTkLabel(sidebar_content, text="Rental Manager",
+                     font=ctk.CTkFont(size=22, weight="bold"),
+                     text_color=("#2b2b2b", "#ffffff")).pack(pady=(10, 20))
+
+        nav_frame = ctk.CTkFrame(sidebar_content, fg_color="transparent")
+        nav_frame.pack(fill="x", expand=True)
+
+        nav_buttons = [
+            ("Dashboard", self.show_dashboard),
+            ("Room", self.show_room),
+            ("Tenant", self.show_tenant),
+            ("Bill", self.show_bill),
+            ("Contract", self.show_contract)
+        ]
+
+        for text, command in nav_buttons:
+            btn = ctk.CTkButton(nav_frame, text=text, command=command,
+                                anchor="w", height=40, corner_radius=8,
+                                font=ctk.CTkFont(weight="normal"),
+                                fg_color=("#ffffff", "#2b2b2b"),
+                                text_color=("#2b2b2b", "#ffffff"),
+                                hover_color=("#e9e9e9", "#3a3a3a"),
+                                border_width=1, border_color=("#e0e0e0", "#3a3a3a"))
+            btn.pack(fill="x", pady=4)
+
+        # Logout
+        logout_frame = ctk.CTkFrame(sidebar_content, fg_color="transparent")
+        logout_frame.pack(fill="x", side="bottom")
+        ctk.CTkButton(logout_frame, text="Logout", command=self.logout,
+                       height=40, corner_radius=8,
+                       font=ctk.CTkFont(weight="bold"),
+                       fg_color=("#e74c3c", "#c0392b"),
+                       hover_color=("#c0392b", "#e74c3c"),
+                       text_color=("#ffffff", "#ffffff")).pack(fill="x", pady=(10, 0))
+
+    def setup_content(self):
+        self.content = ctk.CTkFrame(self, fg_color="transparent")
+        self.content.pack(side="right", fill="both", expand=True)
+
+        # Dashboard frame
+        self.dashboard_frame = ctk.CTkFrame(self.content, fg_color="transparent")
+        self.dashboard_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+        ctk.CTkLabel(self.dashboard_frame, text="Dashboard",
+                     font=ctk.CTkFont(size=24, weight="bold")).pack(anchor="w", pady=(0, 20))
+
+        self.cards_frame = ctk.CTkFrame(self.dashboard_frame, fg_color="transparent")
+        self.cards_frame.pack(fill="x", pady=(0, 20))
+
         for i in range(3):
             self.cards_frame.grid_columnconfigure(i, weight=1, uniform="cards")
-        
-        # Create cards
+
         self.room_card = Card(self.cards_frame, "Rooms", "0/0", "#3498db")
         self.tenant_card = Card(self.cards_frame, "Tenants", "0", "#f1c40f")
-        self.payment_card = Card(self.cards_frame, "Payments This Month", "0.0", "#27ae60")
-        
-        # Place cards in grid
+        self.payment_card = Card(self.cards_frame, "Payments", "0 VND", "#27ae60")
+
         self.room_card.grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
         self.tenant_card.grid(row=0, column=1, padx=8, pady=8, sticky="nsew")
         self.payment_card.grid(row=0, column=2, padx=8, pady=8, sticky="nsew")
-    
-    def refresh_data(self):
-        """Request a refresh of the dashboard data"""
-        if self.controller is None:
-            return
-        self.controller.refresh_data()
-    
-    def update_room_card(self, occupied, total):
-        """Update the room card with new data"""
+
+    def lazy_load_tab(self, name, cls):
+        # Always create a new instance of the tab when requested
+        self.tabs[name] = cls(self.content)
+        return self.tabs[name]
+
+    def hide_all(self):
+        self.dashboard_frame.pack_forget()
+        for tab in self.tabs.values():
+            tab.pack_forget()
+
+    def show_dashboard(self):
+        self.hide_all()
+        self.dashboard_frame.pack(fill="both", expand=True, padx=20, pady=20)
+
+    def show_room(self):
+        self.hide_all()
+        tab = self.lazy_load_tab("room", roomTab)
+        if hasattr(tab, 'initialize'):
+            tab.initialize()
+        tab.pack(fill="both", expand=True, padx=20, pady=20)
+
+    def show_tenant(self):
+        self.hide_all()
+        tab = self.lazy_load_tab("tenant", tenantTab)
+        if hasattr(tab, 'initialize'):
+            tab.initialize()
+        tab.pack(fill="both", expand=True, padx=20, pady=20)
+
+    def show_bill(self):
+        self.hide_all()
+        tab = self.lazy_load_tab("bill", billTab)
+        if hasattr(tab, 'initialize'):
+            tab.initialize()
+        tab.pack(fill="both", expand=True, padx=20, pady=20)
+
+    def show_contract(self):
+        self.hide_all()
+        tab = self.lazy_load_tab("contract", contractTab)
+        if hasattr(tab, 'initialize'):
+            tab.initialize()
+        tab.pack(fill="both", expand=True, padx=20, pady=20)
+
+
+    def reload_room_card(self, occupied, total):
         self.room_card.update_value(f"{occupied}/{total}")
-    
-    def update_tenant_card(self, count):
-        """Update the tenant card with new data"""
+
+    def reload_tenant_card(self, count):
         self.tenant_card.update_value(str(count))
-    
-    def update_payment_card(self, amount):
-        """Update the payment card with new data"""
-        # Format as currency (you might want to add a currency formatter)
-        formatted_amount = f"{amount:,.0f} VND" if amount is not None else "0 VND"
-        self.payment_card.update_value(formatted_amount)
+
+    def reload_payment_card(self, count):
+        self.payment_card.update_value(str(count))
+
+    def logout(self):
+        if hasattr(self.parent, 'show_login'):
+            self.parent.show_login()

@@ -84,6 +84,6 @@ def delete_tenant(tenant_id: int):
             (tenant_id,),
         ).fetchone()
         if active:
-            raise ValueError("Không thể xóa khách đang có hợp đồng hiệu lực!")
+            raise ValueError("Không thể xóa khách đang có hợp đồng còn hiệu lực!")
         conn.execute("UPDATE tenant SET is_deleted = 1 WHERE tenant_id = ?", (tenant_id,))
         conn.commit()

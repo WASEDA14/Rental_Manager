@@ -1,10 +1,8 @@
 import customtkinter as ctk
 from tkinter import messagebox, ttk
-from tkcalendar import DateEntry
-from datetime import datetime
 import time
 import os
-
+from utils.format import format_currency
 from services.bill_service import (
     get_all_bills,
     get_active_contracts_with_last_bill,
@@ -16,15 +14,6 @@ from services.bill_service import (
     mark_bill_paid,
     export_bill_to_pdf
 )
-
-
-# Giả lập formatter nếu chưa có utils
-def format_currency(value):
-    try:
-        return f"{int(value):,}".replace(",", ".")
-    except:
-        return "0"
-
 
 class billTab(ctk.CTkFrame):
     def __init__(self, parent):
@@ -101,7 +90,7 @@ class billTab(ctk.CTkFrame):
         ctk.CTkLabel(form_frame, text="Tiền phòng cơ bản:", text_color="black").grid(row=2, column=3, padx=5, pady=5,
                                                                                      sticky="e")
         ctk.CTkEntry(form_frame, textvariable=self.room_rent_var, width=120).grid(row=2, column=4, padx=5, pady=5,
-                                                                                  sticky="w")  # Có thể sửa nếu cần giảm giá
+                                                                                  sticky="w")
 
         # --- KHỐI ĐIỆN ---
         elec_frame = ctk.CTkFrame(form_frame, fg_color="#f0f9ff", border_width=1, border_color="#ccc")
@@ -170,13 +159,13 @@ class billTab(ctk.CTkFrame):
 
         ctk.CTkButton(btn_frame, text="Tính toán", command=self.on_recalc, fg_color="#6c757d", width=80).pack(
             side="left", padx=5)
-        ctk.CTkButton(btn_frame, text="Làm mới", command=self.on_clear, fg_color="#17a2b8", width=80).pack(side="left",
+        ctk.CTkButton(btn_frame, text="Làm mới", command=self.on_clear_form, fg_color="#17a2b8", width=80).pack(side="left",
                                                                                                            padx=5)
-        ctk.CTkButton(btn_frame, text="Tạo Hóa Đơn", command=self.on_create, fg_color="#28a745", width=100).pack(
+        ctk.CTkButton(btn_frame, text="Tạo Hóa Đơn", command=self.on_create_bill, fg_color="#28a745", width=100).pack(
             side="left", padx=5)
-        ctk.CTkButton(btn_frame, text="Cập Nhật", command=self.on_update, fg_color="#ffc107", text_color="black",
+        ctk.CTkButton(btn_frame, text="Cập Nhật", command=self.on_update_bill, fg_color="#ffc107", text_color="black",
                       width=100).pack(side="left", padx=5)
-        ctk.CTkButton(btn_frame, text="Xóa", command=self.on_delete, fg_color="#dc3545", width=80).pack(side="left",
+        ctk.CTkButton(btn_frame, text="Xóa", command=self.on_delete_bill, fg_color="#dc3545", width=80).pack(side="left",
                                                                                                         padx=5)
         ctk.CTkButton(btn_frame, text="Thanh toán", command=self.on_mark_paid, fg_color="#007bff", width=100).pack(
             side="left", padx=5)
@@ -235,31 +224,28 @@ class billTab(ctk.CTkFrame):
     def _load_active_contracts(self):
         """Lấy danh sách hợp đồng active để đưa vào Combobox"""
         contracts = get_active_contracts_with_last_bill()
-        # contracts trả về list tuple. Cần mapping theo index dựa trên câu SQL BE
-        # Index: 0:id, 1:room, 2:tenant, 3:rent, 4:elec_price, 5:water_price,
-        #        6:elec_start, 7:water_start, 8:elec_prev_calc, 9:water_prev_calc, 10:last_bill_month
-
         values = []
         self.active_contracts_data = {}
 
         for c in contracts:
             c_id = c[0]
-            room_name = c[1]
-            tenant_name = c[2]
+            room_id = c[1]
+            room_name = c[2]
+            tenant_name = c[3]
+            room_rent_amount = c[4]
             display_str = f"{room_name} - {tenant_name}"
             values.append(display_str)
-
             self.active_contracts_data[display_str] = {
                 "contract_id": c_id,
+                "room_id": room_id,
                 "room_name": room_name,
                 "tenant_name": tenant_name,
-                "rent": c[3],
-                "elec_price": c[4],
-                "water_price": c[5],
-                "elec_prev": c[8],  # Lấy chỉ số mới nhất (từ bill cũ hoặc start hợp đồng)
-                "water_prev": c[9]
+                "room_rent_amount": c[4],
+                "elec_price": c[5],
+                "water_price": c[6],
+                "elec_prev": c[9],
+                "water_prev": c[10]
             }
-
         self.cb_contract['values'] = values
 
     def _load_table_data(self):
@@ -268,17 +254,9 @@ class billTab(ctk.CTkFrame):
             self.tree.delete(item)
 
         bills = get_all_bills()
-        # bills trả về tuple join nhiều bảng.
-        # Cần check lại index của get_all_bills trong BE.
-        # SQL: SELECT b.* (13 cột), r.name_room, t.full_name, c.rent
-        # Index giả định: 0:bill_id, 1:code, 2:contract_id, 3:month, ..., 12:note, 13:room, 14:tenant...
-        # Để an toàn, nên debug print(bills[0]) nếu có dữ liệu để xem index.
-        # Tạm thởi giả định structure:
-
         filter_kw = self.search_var.get().lower()
 
         for b in bills:
-
             b_id = b[0]
             b_code = b[1]
             b_month = b[3]
@@ -299,8 +277,6 @@ class billTab(ctk.CTkFrame):
                 b_id, b_code, b_room, b_tenant, b_month, format_currency(b_total), status_display, b_note
             ))
 
-    # === LOGIC FORM ===
-
     def on_contract_select(self, event):
         selection = self.contract_select_var.get()
         if not selection or selection not in self.active_contracts_data:
@@ -312,7 +288,7 @@ class billTab(ctk.CTkFrame):
         # Fill thông tin
         self.tenant_name_var.set(data["tenant_name"])
         self.room_name_var.set(data["room_name"])  # Có thể không hiển thị trên form nhưng lưu biến
-        self.room_rent_var.set(int(data["rent"]))
+        self.room_rent_var.set(int(data["room_rent_amount"]))
 
         self.elec_price_var.set(int(data["elec_price"]))
         self.water_price_var.set(int(data["water_price"]))
@@ -356,12 +332,12 @@ class billTab(ctk.CTkFrame):
             # Cập nhật UI
             self.elec_total_var.set(format_currency(e_total))
             self.water_total_var.set(format_currency(w_total))
-            self.total_amount_var.set(format_currency(total) + " đ")
+            self.total_amount_var.set(format_currency(total) + " VND")
 
         except ValueError:
             pass
 
-    def on_create(self):
+    def on_create_bill(self):
         if not self._current_contract_id:
             messagebox.showwarning("Thiếu thông tin", "Vui lòng chọn hợp đồng trước!")
             return
@@ -397,6 +373,9 @@ class billTab(ctk.CTkFrame):
                 "bill_id": bill_id,
                 "contract_id": self._current_contract_id,
                 "bill_month": month,
+                "tenant_name": self.tenant_name_var.get(),
+                "room_id": self.active_contracts_data[self.contract_select_var.get()]["room_id"],
+                "room_name": self.room_name_var.get(),
                 "elec_prev": e_prev,
                 "elec_current": e_curr,
                 "water_prev": w_prev,
@@ -418,7 +397,7 @@ class billTab(ctk.CTkFrame):
         except Exception as e:
             messagebox.showerror("Lỗi hệ thống", str(e))
 
-    def on_update(self):
+    def on_update_bill(self):
         if not self._selected_bill_id:
             messagebox.showwarning("Chọn", "Vui lòng chọn hóa đơn cần sửa trong bảng!")
             return
@@ -444,7 +423,7 @@ class billTab(ctk.CTkFrame):
         except Exception as e:
             messagebox.showerror("Lỗi", str(e))
 
-    def on_delete(self):
+    def on_delete_bill(self):
         if not self._selected_bill_id:
             return
         if messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn xóa hóa đơn này?"):
@@ -481,21 +460,9 @@ class billTab(ctk.CTkFrame):
         # val = (id, code, room, tenant, month, total, status, note)
 
         self._selected_bill_id = val[0]
-
-        # Fill ngược lại form (chỉ để xem/sửa, không đổi được contract_id gốc dễ dàng)
-        # Lưu ý: Chế độ sửa này chỉ nên cho sửa chỉ số điện nước/tiền,
-        # không nên cho đổi hợp đồng của bill đã tạo.
-
         self.tenant_name_var.set(val[3])
         self.bill_month_var.set(val[4])
         self.note_var.set(val[7])
-
-        # Để fill chi tiết (chỉ số cũ/mới), cần query lại DB lấy chi tiết bill
-        # hoặc load hết vào bảng treeview (cột ẩn).
-        # Do get_all_bills trả về b.*, ta có thể lấy chi tiết nếu lưu data ẩn.
-        # Ở đây demo đơn giản, ta cần reload lại active contract để reset form,
-        # hoặc gọi 1 hàm get_bill_by_id từ BE để lấy chi tiết số điện nước fill vào form.
-        # Tạm thời bạn có thể code thêm hàm get_bill_by_id ở BE để hỗ trợ tính năng này tốt nhất.
 
     def _on_export_pdf(self):
         """Xuất hóa đơn ra file PDF"""
@@ -513,8 +480,7 @@ class billTab(ctk.CTkFrame):
         except Exception as e:
             messagebox.showerror("Lỗi", f"Có lỗi xảy ra khi xuất hóa đơn: {str(e)}")
 
-    def on_clear(self):
-        """Xóa form"""
+    def on_clear_form(self):
         self._selected_bill_id = None
         self._current_contract_id = None
         self.contract_select_var.set("")
@@ -549,6 +515,5 @@ class billTab(ctk.CTkFrame):
         self.other_fee_var.set("0")
         self.total_amount_var.set("0")
 
-        # Bỏ chọn bảng
         if self.tree.selection():
             self.tree.selection_remove(self.tree.selection()[0])

@@ -13,8 +13,7 @@ def get_dashboard_stats():
             WHERE is_deleted = 0
             """
         ).fetchone()
-        
-        # Get tenant statistics
+
         tenant_count = conn.execute(
             """
             SELECT COUNT(DISTINCT tenant_id) 
@@ -25,12 +24,11 @@ def get_dashboard_stats():
         
         # Get current month's payments
         current_month = datetime.now().strftime('%Y-%m')
-        monthly_payment = conn.execute(
+        monthly_paid = conn.execute(
             """
-            SELECT COALESCE(SUM(total_amount), 0)
+            SELECT COUNT
             FROM bill
-            WHERE strftime('%Y-%m', paid_ymd) = ?
-            AND paid_status = 'paid'
+            WHERE paid_status = 'paid'
             AND is_deleted = 0
             """,
             (current_month,)
@@ -41,5 +39,5 @@ def get_dashboard_stats():
         'occupied_rooms': room_stats['occupied_rooms'] or 0,
         'available_rooms': (room_stats['total_rooms'] or 0) - (room_stats['occupied_rooms'] or 0),
         'total_tenants': tenant_count or 0,
-        'monthly_payment': monthly_payment or 0.0
+        'monthly_payment': monthly_paid or 0.0
     }

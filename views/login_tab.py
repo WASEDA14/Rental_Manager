@@ -1,111 +1,149 @@
-# views/login_tab.py
+# ui/login.py
 import customtkinter as ctk
 from tkinter import messagebox
-from typing import Callable
+from PIL import Image
+from services.login_service import authenticate_user
+from views.dashboard_tab import DashboardView
 
 
-class LoginTab(ctk.CTkFrame):
-    def __init__(self, parent, on_login_success: Callable, *args, **kwargs):
-        super().__init__(parent, *args, **kwargs)
-        self.on_login_success = on_login_success
-        self.auth_service = None  # Will be injected
-        self.setup_ui()
+# =====================================#
+# =====================================#
+# =====================================#
+class loginTab(ctk.CTkFrame):
+    def __init__(self, master, **kwargs):
+        super().__init__(master, **kwargs)
+        self.master = master
+        
+        # Configure the main window through the master
+        self.master.title("Đăng nhập hệ thống - Hệ thống quản lý nhà trọ")
+        self.master.geometry("480x680")
+        self.master.resizable(False, False)
+        
+        # Center the window
+        self._center_window()
+        
+        # Configure the frame to expand
+        self.pack(fill='both', expand=True, padx=20, pady=20)
 
-    def setup_ui(self):
-        # Configure grid
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        self._build_ui()
 
-        # Main container
-        container = ctk.CTkFrame(self, fg_color="transparent")
-        container.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
-        container.grid_columnconfigure(0, weight=1)
+    def _center_window(self):
+        self.master.update_idletasks()
+        width = 480
+        height = 680
+        x = (self.master.winfo_screenwidth() // 2) - (width // 2)
+        y = (self.master.winfo_screenheight() // 2) - (height // 2)
+        self.master.geometry(f"{width}x{height}+{x}+{y}")
 
-        # Title
-        title = ctk.CTkLabel(
+    def _build_ui(self):
+        self.configure(fg_color="#E8F0FE")
+
+        container = ctk.CTkFrame(
+            self,
+            fg_color="white",
+            corner_radius=10,
+            border_width=1,
+            border_color="#ffffff",
+        )
+        container.pack(fill="both", expand=True, padx=40, pady=40)
+
+        # try:
+        #     logo_img = Image.open(LOGO_PNG)
+        #     logo = ctk.CTkImage(
+        #         light_image=logo_img, dark_image=logo_img, size=(200, 40)
+        #     )
+        #     ctk.CTkLabel(container, image=logo, text="").pack(pady=(50, 10))
+        # except:
+        #     ctk.CTkLabel(container, text="LOGO", font=("Inter", 50)).pack(pady=(50, 10))
+
+        ctk.CTkLabel(
             container,
-            text="Rental Manager Login",
-            font=("Arial", 24, "bold")
-        )
-        title.grid(row=0, column=0, pady=(0, 30))
-
-        # Login Form
-        self.login_id_var = ctk.StringVar()
-        self.login_password_var = ctk.StringVar()
-
-        form_frame = ctk.CTkFrame(container, fg_color="transparent")
-        form_frame.grid(row=1, column=0, sticky="ew")
-
-        # Login ID
+            text="Đăng nhập hệ thống",
+            font=("Inter", 22, "bold"),
+            text_color="#131313",
+        ).pack(pady=(20, 0))
         ctk.CTkLabel(
-            form_frame,
-            text="Login ID:",
-            font=("Arial", 12)
-        ).grid(row=0, column=0, sticky="w", pady=(0, 5))
+            container,
+            text="Nhập tên tài khoản và mật khẩu quản trị hệ thống",
+            font=("Inter", 13),
+            text_color="#888888",
+        ).pack(pady=(0, 30))
 
-        login_id_entry = ctk.CTkEntry(
-            form_frame,
-            textvariable=self.login_id_var,
-            width=300,
-            height=40,
-            font=("Arial", 14)
+        form = ctk.CTkFrame(container, fg_color="transparent")
+        form.pack(padx=50, fill="x")
+
+        ctk.CTkLabel(form, text="Tên tài khoản", font=("Inter", 14, "bold")).pack(
+            anchor="w", pady=(0, 5)
         )
-        login_id_entry.grid(row=1, column=0, pady=(0, 15))
-        login_id_entry.focus()  # Focus on login ID field by default
+        self.entry_loginId = ctk.CTkEntry(
+            form,
+            placeholder_text="Nhập tên tài khoản",
+            height=50,
+            corner_radius=10,
+            font=("Inter", 16),
+            fg_color="#f8fafc",
+        )
+        self.entry_loginId.pack(fill="x", pady=(0, 20))
+        self.entry_loginId.focus()
 
-        # Password
+        ctk.CTkLabel(form, text="Mật khẩu", font=("Inter", 14, "bold")).pack(
+            anchor="w", pady=(0, 5)
+        )
+        self.entry_pass = ctk.CTkEntry(
+            form,
+            placeholder_text="Nhập mật khẩu",
+            show="*",
+            height=50,
+            corner_radius=10,
+            font=("Inter", 16),
+            fg_color="#f8fafc",
+        )
+        self.entry_pass.pack(fill="x", pady=(0, 40))
+
+        ctk.CTkButton(
+            form,
+            text="Đăng nhập ngay",
+            command=self.login,
+            height=50,
+            corner_radius=10,
+            font=("Inter", 16, "bold"),
+            fg_color="#0042DC",
+            hover_color="#013BC4",
+        ).pack(fill="x")
+
         ctk.CTkLabel(
-            form_frame,
-            text="Password:",
-            font=("Arial", 12)
-        ).grid(row=2, column=0, sticky="w", pady=(0, 5))
+            container,
+            text="Hệ thống quản lý nhà trọ © 2025 Nhóm 8",
+            font=("Inter", 12),
+            text_color="#000",
+        ).pack(side="bottom", pady=30)
 
-        password_entry = ctk.CTkEntry(
-            form_frame,
-            textvariable=self.login_password_var,
-            show="•",
-            width=300,
-            height=40,
-            font=("Arial", 14)
-        )
-        password_entry.grid(row=3, column=0, pady=(0, 20))
+        self.entry_loginId.bind("<Return>", lambda e: self.entry_pass.focus())
+        self.entry_pass.bind("<Return>", lambda e: self.login())
 
-        # Bind Enter key to login
-        password_entry.bind('<Return>', lambda e: self.handle_login())
+    def login(self):
+        user = self.entry_loginId.get().strip()
+        pwd = self.entry_pass.get().strip()
 
-        # Login Button
-        login_btn = ctk.CTkButton(
-            form_frame,
-            text="Login",
-            command=self.handle_login,
-            height=40,
-            font=("Arial", 14, "bold")
-        )
-        login_btn.grid(row=4, column=0, pady=(10, 0), sticky="ew")
-
-    def handle_login(self):
-        """Handle login button click"""
-        login_id = self.login_id_var.get().strip()
-        password = self.login_password_var.get()
-
-        if not login_id or not password:
-            messagebox.showerror("Error", "Please enter both login ID and password")
+        if not user or not pwd:
+            messagebox.showwarning("Lỗi", "Vui lòng nhập đầy đủ!", parent=self)
             return
 
-        # Authenticate user
-        user = self.auth_service.authenticate_user(login_id, password)
+        result = authenticate_user(user, pwd)
+        if result:
+            # Since authenticate_user returns a SQLite row object, we can access columns by index
+            # The query only selects 'user_name', so that's all we can access
+            user_data = {
+                'login_id': user,  # We already have this from the input
+                'user_name': result[0] if result else None  # First (and only) column is user_name
+            }
 
-        if user:
-            # Log successful login
-            self.auth_service.log_login_attempt(login_id, True)
-            # Clear password field
-            self.login_password_var.set("")
-            # Call the success callback with user data
-            self.on_login_success(user)
+            if hasattr(self.master, 'on_login_success'):
+                self.master.on_login_success(user_data)
+            else:
+                # Fallback if on_login_success is not available
+                self.master.show_main_app()
         else:
-            # Log failed login
-            self.auth_service.log_login_attempt(login_id, False)
-            messagebox.showerror("Login Failed", "Invalid login ID or password")
-            self.login_password_var.set("")
-            # Focus back to password field
-            self.focus_set()
+            messagebox.showerror("Lỗi", "Sai tên đăng nhập hoặc mật khẩu!", parent=self)
+            self.entry_pass.delete(0, "end")
+            self.entry_loginId.focus()

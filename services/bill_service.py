@@ -27,6 +27,7 @@ def get_active_contracts_with_last_bill():
             """
             SELECT 
                 c.contract_id,
+                r.room_id,
                 r.room_name,
                 t.full_name,
                 c.rent,
@@ -137,7 +138,7 @@ def create_bill(data: dict):
                 elec_prev, elec_current, water_prev, water_current,
                 electric_unit_price, water_unit_price,
                 room_rent_amount, other_fee, total_amount, note
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
             """,
             (
                 data["contract_id"],
@@ -153,7 +154,7 @@ def create_bill(data: dict):
                 data["water_unit_price"],
                 data["room_rent_amount"],
                 data.get("other_fee", 0),
-                total,
+                data.get("total_amount", 0),
                 data.get("note", ""),
             ),
         )
