@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS contract (
     contract_status TEXT DEFAULT 'active',
     deposit_ymd TEXT,
     note TEXT,
-    contract_name TEXT,
+--    contract_name TEXT,
     is_deleted INTEGER DEFAULT 0,
     FOREIGN KEY (room_id) REFERENCES room(room_id),
     FOREIGN KEY (tenant_id) REFERENCES tenant(tenant_id)

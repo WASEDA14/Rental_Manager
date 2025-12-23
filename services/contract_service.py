@@ -35,7 +35,7 @@ def create_contract(data: dict):
         conn.execute(
             """
             INSERT INTO contract (
-                room_id, tenant_id, contract_name, start_ymd, end_ymd,
+                room_id, tenant_id, start_ymd, end_ymd,
                 rent, deposit_amount, electric_meter_start, water_meter_start,
                 deposit_ymd, note
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -43,7 +43,6 @@ def create_contract(data: dict):
             (
                 data["room_id"],
                 data["tenant_id"],
-                data["contract_name"],
                 data["start_ymd"],
                 data["end_ymd"],
                 data["rent"],
@@ -67,7 +66,6 @@ def update_contract(contract_id: int, data: dict):
             UPDATE contract SET
                 room_id = ?,
                 tenant_id = ?,
-                contract_name = ?,
                 start_ymd = ?,
                 end_ymd = ?,
                 rent = ?,
@@ -81,7 +79,6 @@ def update_contract(contract_id: int, data: dict):
             (
                 data["room_id"],
                 data["tenant_id"],
-                data["contract_name"],
                 data["start_ymd"],
                 data["end_ymd"],
                 data["rent"],

@@ -36,7 +36,6 @@ class contractTab(ctk.CTkFrame):
         # ===== Variables =====
         self.room_var = ctk.StringVar()
         self.tenant_var = ctk.StringVar()
-        self.contact_name_var = ctk.StringVar()
         self.rent_var = ctk.StringVar()
         self.deposit_var = ctk.StringVar()
         self.start_date_var = ctk.StringVar()
@@ -75,8 +74,8 @@ class contractTab(ctk.CTkFrame):
         self.cb_tenant = ctk.CTkComboBox(form, width=160, variable=self.tenant_var, command=self.on_tenant_select)
         self.cb_tenant.grid(row=0, column=3, padx=6, pady=6)
 
-        ctk.CTkLabel(form, text="Người Liên Hệ").grid(row=0, column=4, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.contact_name_var, width=160).grid(row=0, column=5, padx=6, pady=6)
+        # ctk.CTkLabel(form, text="Tên hợp đồng").grid(row=0, column=4, padx=6, pady=6, sticky="w")
+        # ctk.CTkEntry(form, textvariable=self.contract_name_var, width=160).grid(row=0, column=5, padx=6, pady=6)
 
         # --- Row 1 ---
         ctk.CTkLabel(form, text="Giá Thuê (VND)").grid(row=1, column=0, padx=6, pady=6, sticky="w")
@@ -240,7 +239,7 @@ class contractTab(ctk.CTkFrame):
 
             self.room_var.set(contract['room_name'])
             self.tenant_var.set(contract['full_name'])
-            self.contact_name_var.set(contract['contract_name'])
+            # self.contract_name_var.set(contract['contract_name'])
             self.rent_var.set(str(int(contract['rent'])))
             self.deposit_var.set(str(int(contract['deposit_amount'])))
             self.start_date_var.set(contract['start_ymd'])
@@ -258,7 +257,7 @@ class contractTab(ctk.CTkFrame):
         self._selected_id = None
         self.room_var.set("")
         self.tenant_var.set("")
-        self.contact_name_var.set("")
+        # self.contract_name_var.set("")
         self.rent_var.set("")
         self.deposit_var.set("")
         self.start_date_var.set("")
@@ -311,7 +310,7 @@ class contractTab(ctk.CTkFrame):
         return {
             "room_id": room_id,
             "tenant_id": tenant_id,
-            "contract_name": self.contact_name_var.get(),
+            # "contract_name": self.contract_name_var.get(),
             "start_ymd": self.start_date_var.get(),
             "end_ymd": self.end_date_var.get(),
             "rent": rent,
