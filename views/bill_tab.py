@@ -389,7 +389,7 @@ class billTab(ctk.CTkFrame):
 
             create_bill(data)
             messagebox.showinfo("Thành công", "Đã tạo hóa đơn mới!")
-            self.on_clear()
+            self.on_clear_form()
             self._load_table_data()  # Reload bảng
 
         except ValueError:
@@ -418,7 +418,7 @@ class billTab(ctk.CTkFrame):
             }
             update_bill(self._selected_bill_id, data)
             messagebox.showinfo("Thành công", "Cập nhật hóa đơn thành công!")
-            self.on_clear()
+            self.on_clear_form()
             self._load_table_data()
         except Exception as e:
             messagebox.showerror("Lỗi", str(e))
@@ -429,7 +429,7 @@ class billTab(ctk.CTkFrame):
         if messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn xóa hóa đơn này?"):
             try:
                 delete_bill(self._selected_bill_id)
-                self.on_clear()
+                self.on_clear_form()
                 self._load_table_data()
             except Exception as e:
                 messagebox.showerror("Lỗi", str(e))

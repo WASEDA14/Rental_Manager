@@ -98,22 +98,29 @@ def update_contract(contract_id: int, data: dict):
 
 def delete_contract(contract_id: int):
     with get_db() as conn:
-        room_id = conn.execute(
-            "SELECT room_id FROM contract WHERE contract_id = ?", (contract_id,)
+        row = conn.execute(
+            """
+            SELECT contract_status, is_deleted, room_id
+            FROM contract
+            WHERE contract_id = ?
+            """,
+            (contract_id,)
         ).fetchone()
 
-        if room_id:
-            status = conn.execute(
-                "SELECT contract_status FROM contract WHERE contract_id = ?", (contract_id,)
-            ).fetchone()[0]
-            if status == "active":
-                conn.execute(
-                    "UPDATE room SET status = 2 WHERE room_id = ?", (room_id[0],)
-                )
+        if not row:
+            raise ValueError("Hợp đồng không tồn tại")
 
-        conn.execute("UPDATE contract SET is_deleted = 1 WHERE contract_id = ?", (contract_id,))
+        if row["is_deleted"] == 1:
+            raise ValueError("Hợp đồng đã bị xóa")
+
+        if row["contract_status"] == "active":
+            raise ValueError("Hợp đồng đang hoạt động, không thể xóa")
+
+        conn.execute(
+            "UPDATE contract SET is_deleted = 1 WHERE contract_id = ?",
+            (contract_id,)
+        )
         conn.commit()
-
 
 def end_contract(contract_id: int):
     with get_db() as conn:
@@ -125,6 +132,16 @@ def end_contract(contract_id: int):
             conn.execute(
                 "UPDATE room SET status = 2 WHERE room_id = ?", (room_id[0],)
             )
+        unpaid = conn.execute(
+            """
+            SELECT 1 FROM bill
+            WHERE contract_id = ? AND paid_status = 'unpaid'
+            """,
+            (contract_id,)
+        ).fetchone()
+
+        if unpaid:
+            raise ValueError("Hợp đồng có hóa đơn chưa thanh toán, không thể kết thúc")
 
         conn.execute(
             """

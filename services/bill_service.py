@@ -206,8 +206,30 @@ def update_bill(bill_id: int, data: dict):
 
 def delete_bill(bill_id: int):
     with get_db() as conn:
-        conn.execute("UPDATE bill SET is_deleted = 1 WHERE bill_id = ?", (bill_id,))
+        row = conn.execute(
+            """
+            SELECT is_deleted, paid_status
+            FROM bill
+            WHERE bill_id = ?
+            """,
+            (bill_id,)
+        ).fetchone()
+
+        if not row:
+            raise ValueError("Hóa đơn không tồn tại")
+
+        if row["is_deleted"] == 1:
+            raise ValueError("Hóa đơn đã bị xóa")
+
+        if row["paid_status"] == "unpaid":
+            raise ValueError("Hóa đơn chưa được thanh toán, không thể xóa")
+
+        conn.execute(
+            "UPDATE bill SET is_deleted = 1 WHERE bill_id = ?",
+            (bill_id,)
+        )
         conn.commit()
+
 
 
 def mark_bill_paid(bill_id: int):

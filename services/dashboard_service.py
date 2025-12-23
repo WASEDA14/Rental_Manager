@@ -3,7 +3,6 @@ from datetime import datetime
 
 def get_dashboard_stats():
     with get_db() as conn:
-        # Get room statistics
         room_stats = conn.execute(
             """
             SELECT 
@@ -21,8 +20,7 @@ def get_dashboard_stats():
             WHERE is_deleted = 0
             """
         ).fetchone()[0]
-        
-        # Get current month's payments
+
         current_month = datetime.now().strftime('%Y-%m')
         monthly_paid = conn.execute(
             """

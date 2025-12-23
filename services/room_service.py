@@ -156,7 +156,6 @@ def delete_room(room_id: int):
         if not room_exists:
             raise ValueError("Phòng không tồn tại")
 
-        # Check for active contracts
         active_contract = conn.execute(
             """
             SELECT 1 FROM contract 
