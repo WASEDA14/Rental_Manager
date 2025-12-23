@@ -1,76 +1,38 @@
-# db.py
+# database/db.py
 import sqlite3
 from pathlib import Path
+import os
+import sys
 
-# Đường dẫn database
-BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "rental_manager.db"
-SCHEMA_PATH = BASE_DIR / "schema.sql"
+# Đường dẫn đúng dù chạy từ source hay từ .exe
+if getattr(sys, "frozen", False):
+    # Đang chạy từ file .exe → lấy thư mục tạm
+    BASE_PATH = Path(sys._MEIPASS)
+else:
+    # Đang chạy từ source → lấy thư mục hiện tại
+    BASE_PATH = Path(__file__).parent.parent
+
+DB_PATH = BASE_PATH / "rental_manager.db"
+SCHEMA_PATH = BASE_PATH / "database" / "schema.sql"
 
 
-def get_db() -> sqlite3.Connection:
-    """
-    Mỗi lần gọi -> mở 1 connection mới
-    Dùng xong -> đóng ngay (qua context manager)
-    Cách này là CHUẨN với SQLite desktop app
-    """
-    BASE_DIR.mkdir(parents=True, exist_ok=True)
-
-    is_new_db = not DB_PATH.exists()
-
-    conn = sqlite3.connect(
-        DB_PATH,
-        timeout=10  # tránh treo vô hạn
-    )
+# Kết nối DB
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-
-    # Pragmas an toàn
-    conn.execute("PRAGMA foreign_keys = ON")
-    conn.execute("PRAGMA journal_mode = WAL")
-    conn.execute("PRAGMA synchronous = NORMAL")
-
-    # Tạo schema nếu DB mới
-    if is_new_db:
-        with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
-            conn.executescript(f.read())
-        conn.commit()
-
     return conn
 
 
-def list_tables():
-    """In ra danh sách bảng + số dòng (debug)"""
-    with get_db() as conn:
-        cursor = conn.cursor()
+# Khởi tạo DB từ schema.sql
+def init_db():
+    if not SCHEMA_PATH.exists():
+        raise FileNotFoundError(f"Không tìm thấy schema.sql tại: {SCHEMA_PATH}")
 
-        cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'"
-        )
-        tables = cursor.fetchall()
-
-        print("\n=== Database Tables ===")
-        if not tables:
-            print("No tables found.")
-            return
-
-        for i, row in enumerate(tables, 1):
-            table_name = row["name"]
-            print(f"\n{i}. Table: {table_name}")
-            print("-" * 40)
-
-            cursor.execute(f"PRAGMA table_info({table_name})")
-            columns = cursor.fetchall()
-            for col in columns:
-                print(
-                    f"  - {col['name']} {col['type']} "
-                    f"{'NOT NULL' if col['notnull'] else ''} "
-                    f"{'PK' if col['pk'] else ''}"
-                )
-
-            cursor.execute(f"SELECT COUNT(*) AS cnt FROM {table_name}")
-            count = cursor.fetchone()["cnt"]
-            print(f"  Rows: {count}")
+    with open(SCHEMA_PATH, encoding="utf-8") as f:
+        get_db().executescript(f.read())
+    get_db().commit()
 
 
-if __name__ == "__main__":
-    list_tables()
+# Tự động tạo DB nếu chưa có
+if not DB_PATH.exists():
+    init_db()
