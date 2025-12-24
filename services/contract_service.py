@@ -38,7 +38,7 @@ def create_contract(data: dict):
                 room_id, tenant_id, start_ymd, end_ymd,
                 rent, deposit_amount, electric_meter_start, water_meter_start,
                 deposit_ymd, note
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 data["room_id"],
