@@ -131,8 +131,6 @@ class loginTab(ctk.CTkFrame):
 
         result = authenticate_user(user, pwd)
         if result:
-            # Since authenticate_user returns a SQLite row object, we can access columns by index
-            # The query only selects 'user_name', so that's all we can access
             user_data = {
                 'login_id': user,  # We already have this from the input
                 'user_name': result[0] if result else None  # First (and only) column is user_name

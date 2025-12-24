@@ -9,7 +9,7 @@ class MainWindow(ctk.CTk):
     def __init__(self):
         super().__init__()
         self.title("Rental Manager")
-        self.geometry("1500x850")
+        self.geometry("1600x850")
         self.resizable(True, True)
         self.show_login()
 

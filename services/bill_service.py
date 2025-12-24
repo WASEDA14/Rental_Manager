@@ -10,7 +10,7 @@ def get_all_bills():
     with get_db() as conn:
         return conn.execute(
             """
-            SELECT b.*, r.room_name, t.full_name, c.rent as contract_rent
+            SELECT b.*, r.room_name, t.full_name, c.rent as contract_rent, b.paid_status
             FROM bill b
             JOIN contract c ON b.contract_id = c.contract_id
             JOIN room r ON c.room_id = r.room_id

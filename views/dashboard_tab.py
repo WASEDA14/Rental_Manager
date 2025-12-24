@@ -3,12 +3,6 @@ from views.bill_tab import billTab
 from views.contract_tab import contractTab
 from views.room_tab import roomTab
 from views.tenant_tab import tenantTab
-from controllers.dashboard_controller import DashboardController
-
-
-
-
-
 
 class Card(ctk.CTkFrame):
     def __init__(self, parent, title: str, value: str, color: str):
@@ -34,13 +28,13 @@ class DashboardView(ctk.CTkFrame):
         super().__init__(parent, fg_color="transparent")
         self.parent = parent
         self.controller = controller
-        if controller is not None:
-            self.controller.refresh_data()
 
-
-        # Lazy tab initialization flags
         self.tabs = {}
         self.setup_ui()
+
+        if self.controller:
+            self.controller.view = self
+            self.controller.refresh_data()
 
     def setup_ui(self):
         self.setup_sidebar()
@@ -48,9 +42,7 @@ class DashboardView(ctk.CTkFrame):
         self.show_dashboard()
 
     def setup_sidebar(self):
-        self.sidebar = ctk.CTkFrame(self, width=240, corner_radius=0,
-                                    fg_color=("#f0f2f5", "#1a1a1a"),
-                                    border_width=1, border_color=("#e0e0e0", "#2d2d2d"))
+        self.sidebar = ctk.CTkFrame(self, width=240, corner_radius=0,fg_color=("#f0f2f5", "#1a1a1a"), border_width=1, border_color=("#e0e0e0", "#2d2d2d"))
         self.sidebar.pack(side="left", fill="y")
         self.sidebar.pack_propagate(False)
 
@@ -62,7 +54,7 @@ class DashboardView(ctk.CTkFrame):
                      text_color=("#2b2b2b", "#ffffff")).pack(pady=(10, 20))
 
         nav_frame = ctk.CTkFrame(sidebar_content, fg_color="transparent")
-        nav_frame.pack(fill="x", expand=True)
+        nav_frame.pack(fill="x")
 
         nav_buttons = [
             ("Dashboard", self.show_dashboard),
@@ -85,7 +77,7 @@ class DashboardView(ctk.CTkFrame):
         # Logout
         logout_frame = ctk.CTkFrame(sidebar_content, fg_color="transparent")
         logout_frame.pack(fill="x", side="bottom")
-        ctk.CTkButton(logout_frame, text="Logout", command=self.logout,
+        ctk.CTkButton(logout_frame, text="Logout", command=self.log_out,
                        height=40, corner_radius=8,
                        font=ctk.CTkFont(weight="bold"),
                        fg_color=("#e74c3c", "#c0392b"),
@@ -111,15 +103,16 @@ class DashboardView(ctk.CTkFrame):
 
         self.room_card = Card(self.cards_frame, "Rooms", "0/0", "#3498db")
         self.tenant_card = Card(self.cards_frame, "Tenants", "0", "#f1c40f")
-        self.payment_card = Card(self.cards_frame, "Payments", "0 VND", "#27ae60")
+        self.payment_card = Card(self.cards_frame, "Payments", "0/0", "#27ae60")
+
 
         self.room_card.grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
         self.tenant_card.grid(row=0, column=1, padx=8, pady=8, sticky="nsew")
         self.payment_card.grid(row=0, column=2, padx=8, pady=8, sticky="nsew")
 
     def lazy_load_tab(self, name, cls):
-        # Always create a new instance of the tab when requested
-        self.tabs[name] = cls(self.content)
+        if name not in self.tabs:
+         self.tabs[name] = cls(self.content)
         return self.tabs[name]
 
     def hide_all(self):
@@ -166,9 +159,9 @@ class DashboardView(ctk.CTkFrame):
     def reload_tenant_card(self, count):
         self.tenant_card.update_value(str(count))
 
-    def reload_payment_card(self, count):
-        self.payment_card.update_value(str(count))
+    def reload_payment_card(self, paid, total):
+        self.payment_card.update_value(f"{paid}/{total}")
 
-    def logout(self):
+    def log_out(self):
         if hasattr(self.parent, 'show_login'):
             self.parent.show_login()

@@ -128,7 +128,6 @@ class contractTab(ctk.CTkFrame):
         ctk.CTkButton(toolbar, text="Xóa", command=self.on_delete, fg_color="#e74c3c").pack(side="right", padx=6)
         ctk.CTkButton(toolbar, text="Kết Thúc HĐ", command=self.on_end_contract, fg_color="#8e44ad").pack(side="right",
                                                                                                           padx=6)
-
         # Treeview
         table_frame = ctk.CTkFrame(self)
         table_frame.pack(fill="both", expand=True, padx=12, pady=6)

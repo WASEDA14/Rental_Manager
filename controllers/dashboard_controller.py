@@ -12,6 +12,6 @@ class DashboardController:
                 total=stats['total_rooms']
             )
             self.view.reload_tenant_card(count=stats['total_tenants'])
-            self.view.reload_payment_card(amount=stats['monthly_paid'])
+            self.view.reload_payment_card(paid=stats['paid_bills'], total=stats['total_bills'])
         except Exception as e:
-            print(f"Error refreshing dashboard data: {e}")
+            print(f"Lỗi reload: {e}")
