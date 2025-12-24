@@ -18,8 +18,7 @@ def get_dashboard_stats():
                 """
             )
             room_stats = cursor.fetchone() or {}
-            
-            # Get tenant count
+
             cursor.execute(
                 """
                 SELECT COUNT(DISTINCT tenant_id) as count
@@ -47,13 +46,6 @@ def get_dashboard_stats():
             occupied_rooms = int(room_stats.get('occupied_rooms', 0) or 0)
             paid_bills = int(bill_stats.get('paid_bills', 0) or 0)
             total_bills = int(bill_stats.get('total_bills', 0) or 0)
-            
-            # Debug print
-            print(f"[DEBUG] Room stats: {room_stats}")
-            print(f"[DEBUG] Tenant count: {tenant_count}")
-            print(f"[DEBUG] Bill stats: {bill_stats}")
-            print(f"[DEBUG] Current month: {current_month}")
-            
             return {
                 'total_rooms': total_rooms,
                 'occupied_rooms': occupied_rooms,
