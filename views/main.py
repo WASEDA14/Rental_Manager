@@ -15,7 +15,6 @@ class MainWindow(ctk.CTk):
 
     def show_login(self):
         """Show the login screen"""
-        # Clear any existing widgets
         for widget in self.winfo_children():
             widget.destroy()
             
@@ -31,8 +30,7 @@ class MainWindow(ctk.CTk):
         # Clear login screen
         for widget in self.winfo_children():
             widget.destroy()
-            
-        # Set window properties for main app
+
         self.title("Rental Manager")
         self.geometry("1200x800")
         self.resizable(True, True)

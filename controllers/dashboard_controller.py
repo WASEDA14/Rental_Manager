@@ -1,7 +1,7 @@
 from services.dashboard_service import get_dashboard_stats
 
 class DashboardController:
-    def __init__(self, view=None):
+    def __init__(self, view):
         self.view = view
     
     def refresh_data(self):
