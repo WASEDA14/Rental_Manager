@@ -303,7 +303,7 @@ class contractTab(ctk.CTkFrame):
         try:
             create_contract(data)
             messagebox.showinfo("Thành công", "Tạo hợp đồng mới thành công!")
-            self.reload()  # Reload để cập nhật trạng thái phòng
+            self._reload()  # Reload để cập nhật trạng thái phòng
         except Exception as e:
             messagebox.showerror("Lỗi hệ thống", str(e))
 
@@ -328,7 +328,7 @@ class contractTab(ctk.CTkFrame):
         try:
             update_contract(self._selected_id, data)
             messagebox.showinfo("Thành công", "Cập nhật hợp đồng thành công!")
-            self.reload()
+            self._reload()
         except Exception as e:
             messagebox.showerror("Lỗi hệ thống", str(e))
 
@@ -337,7 +337,7 @@ class contractTab(ctk.CTkFrame):
         if messagebox.askyesno("Xác nhận", "Xóa hợp đồng này? (Phòng sẽ trống)"):
             try:
                 delete_contract(self._selected_id)
-                self.reload()
+                self._reload()
             except Exception as e:
                 messagebox.showerror("Lỗi", str(e))
 
