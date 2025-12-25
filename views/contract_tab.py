@@ -32,6 +32,8 @@ class contractTab(ctk.CTkFrame):
         self.start_date_var = ctk.StringVar()
         self.end_date_var = ctk.StringVar()
         self.deposit_date_var = ctk.StringVar()
+        import datetime
+        self.deposit_date_var.set(datetime.date.today().strftime("%Y-%m-%d"))
 
         self.elec_start_var = ctk.StringVar(value="0")
         self.water_start_var = ctk.StringVar(value="0")
@@ -74,9 +76,8 @@ class contractTab(ctk.CTkFrame):
         entry_deposit.bind("<KeyRelease>",lambda e: format_money(self, e))
 
         ctk.CTkLabel(form, text="Ngày Cọc").grid(row=1, column=4, padx=6, pady=6, sticky="w")
-        DateEntry(form, textvariable=self.deposit_date_var, width=16, date_pattern="yyyy-mm-dd").grid(row=1, column=5,
-                                                                                                      padx=6, pady=6,
-                                                                                                      sticky="w")
+        self.deposit_date_entry = DateEntry(form, textvariable=self.deposit_date_var, width=16, date_pattern="yyyy-mm-dd")
+        self.deposit_date_entry.grid(row=1, column=5, padx=6, pady=6, sticky="w")
 
 
         # --- Row 2 ---
@@ -238,7 +239,9 @@ class contractTab(ctk.CTkFrame):
         self.deposit_var.set("")
         self.start_date_var.set("")
         self.end_date_var.set("")
-        self.deposit_date_var.set("")
+        # Set deposit date to today when clearing the form
+        import datetime
+        self.deposit_date_var.set(datetime.date.today().strftime("%Y-%m-%d"))
         self.elec_start_var.set("0")
         self.water_start_var.set("0")
         self.note_var.set("")

@@ -234,10 +234,23 @@ class tenantTab(ctk.CTkFrame):
         self.tenants_cache = get_all_tenant()
         self.render_table(self.tenants_cache)
         
+    def _set_form_mode(self, mode):
+        """Set form mode: 'create' or 'edit'"""
+        if mode == "create":
+            self.current_tenant_id = None
+            self.btn_add.configure(state="normal")
+            self.btn_update.configure(state="disabled")
+            self.btn_delete.configure(state="disabled")
+            self._clear_form()
+        elif mode == "edit":
+            self.btn_add.configure(state="disabled")
+            self.btn_update.configure(state="normal")
+            self.btn_delete.configure(state="normal")
+            
     def _reload(self):
         """Reload data from database"""
         self._load_data()
-        self._clear_form()
+        self._set_form_mode("create")
         
     def _clear_form(self):
         """Clear all form fields"""
@@ -392,6 +405,7 @@ class tenantTab(ctk.CTkFrame):
             create_tenant(data)
             messagebox.showinfo("Thành công", "Thêm khách hàng thành công!")
             self._reload()
+            self._set_form_mode("create")  # Ensure we're in create mode after adding
             
         except Exception as e:
             messagebox.showerror("Lỗi", f"Lỗi khi thêm khách hàng: {str(e)}")
@@ -433,7 +447,6 @@ class tenantTab(ctk.CTkFrame):
             messagebox.showerror("Lỗi", f"Lỗi khi cập nhật thông tin: {str(e)}")
 
     def on_delete_tenant(self):
-        # print(f"[DEBUG] on_delete called. Current tenant_id: {self.current_tenant_id}")
         if not self.current_tenant_id:
             messagebox.showwarning("Lỗi", "Vui lòng chọn khách hàng cần xóa!")
             return
@@ -445,6 +458,7 @@ class tenantTab(ctk.CTkFrame):
             delete_tenant(self.current_tenant_id)
             messagebox.showinfo("Thành công", "Đã xóa khách hàng thành công!")
             self._reload()
+            self._set_form_mode("create")  # Reset to create mode after delete
         except Exception as e:
             messagebox.showerror("Lỗi", f"Không thể xóa khách hàng: {str(e)}")
 
