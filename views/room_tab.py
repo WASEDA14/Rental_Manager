@@ -1,9 +1,7 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from services.room_service import get_all_rooms, create_room, update_room, delete_room
-from views.bill_tab import format_currency
-
-from utils.format import parse_currency
+from utils.format import parse_currency, format_currency, format_money
 
 STATUS_MAP = {
     "Trống": 0,
@@ -17,12 +15,11 @@ STATUS_MAP_REV = {v: k for k, v in STATUS_MAP.items()}
 class roomTab(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color="transparent")
-        # self.user_id = None
         self.current_room_id = None
 
         # Biến cache để lưu danh sách phòng (giúp check trùng tên nhanh hơn)
         self.rooms_cache = []
-
+        
         self._build_ui()
         self._load_data()
 
@@ -60,19 +57,19 @@ class roomTab(ctk.CTkFrame):
                                                                                    pady=(0, 5), padx=(30, 0))
         self.entry_rent = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15))
         self.entry_rent.grid(row=1, column=3, sticky="ew", pady=(0, 20), padx=(30, 0))
-        self.entry_rent.bind("<KeyRelease>", self._format_money)
+        self.entry_rent.bind("<KeyRelease>", lambda e: format_money(self, e))
 
         ctk.CTkLabel(form, text="Giá điện (VNĐ/kWh)", font=("Inter", 14, "bold")).grid(row=2, column=0, sticky="w",
                                                                                        pady=(0, 5))
         self.entry_elec = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15))
         self.entry_elec.grid(row=3, column=0, sticky="ew", pady=(0, 20))
-        self.entry_elec.bind("<KeyRelease>", self._format_money)
+        self.entry_elec.bind("<KeyRelease>", lambda e: format_money(self, e))
 
         ctk.CTkLabel(form, text="Giá nước (VNĐ/m³)", font=("Inter", 14, "bold")).grid(row=2, column=1, sticky="w",
                                                                                       pady=(0, 5), padx=(30, 0))
         self.entry_water = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15))
         self.entry_water.grid(row=3, column=1, sticky="ew", pady=(0, 20), padx=(30, 0))
-        self.entry_water.bind("<KeyRelease>", self._format_money)
+        self.entry_water.bind("<KeyRelease>", lambda e: format_money(self, e))
 
         ctk.CTkLabel(form, text="Trạng thái", font=("Inter", 14, "bold")).grid(row=2, column=2, sticky="w", pady=(0, 5),
                                                                                padx=(30, 0))
@@ -160,20 +157,20 @@ class roomTab(ctk.CTkFrame):
         )
         self.btn_search.grid(row=0, column=3, sticky="e", padx=(0, 10), pady=12)
 
-        self.btn_clear_search = ctk.CTkButton(
-            search_frame,
-            text="Xóa",
-            height=38,
-            corner_radius=7,
-            font=("Inter", 14, "bold"),
-            fg_color="#282D33",
-            hover_color="#1F2327",
-            command=self.clear_search,
-            width=80,
-        )
-        self.btn_clear_search.grid(row=0, column=4, sticky="e", padx=(0, 20), pady=12)
-
-        self.search_entry.bind("<Return>", lambda _e: self.apply_search())
+        # self.btn_clear_search = ctk.CTkButton(
+        #     search_frame,
+        #     text="Xóa",
+        #     height=38,
+        #     corner_radius=7,
+        #     font=("Inter", 14, "bold"),
+        #     fg_color="#282D33",
+        #     hover_color="#1F2327",
+        #     command=self.clear_search,
+        #     width=80,
+        # )
+        # self.btn_clear_search.grid(row=0, column=4, sticky="e", padx=(0, 20), pady=12)
+        #
+        # self.search_entry.bind("<Return>", lambda _e: self.apply_search())
 
         table_frame = ctk.CTkFrame(self)
         table_frame.pack(fill="both", expand=True, padx=50, pady=(0, 40))
@@ -200,44 +197,7 @@ class roomTab(ctk.CTkFrame):
 
         self.tree.bind("<<TreeviewSelect>>", self.on_select)
 
-    def _format_money(self, event):
-        """Format số tiền có dấu chấm phân cách khi nhập"""
-        w = event.widget
-        current = w.get()
-
-        # Allow backspace and delete
-        if event.keysym in ('BackSpace', 'Delete', 'Left', 'Right', 'Home', 'End'):
-            return
-
-        # Allow only digits and control characters
-        if event.char and not event.char.isdigit() and event.char not in ('\b', '\t'):
-            return 'break'
-
-        # Get current cursor position
-        cursor_pos = w.index('insert')
-
-        # Format the number
-        try:
-            # Get the raw value (remove all non-digit characters)
-            raw = ''.join(c for c in current if c.isdigit())
-            if not raw:  # If empty, allow it
-                return
-
-            # Format the number with thousand separators
-            num = int(raw)
-            formatted = format_currency(num)
-
-            # Update the entry
-            w.delete(0, 'end')
-            w.insert(0, formatted)
-
-            # Set cursor position
-            w.icursor(cursor_pos + (len(formatted) - len(current)))
-        except ValueError:
-            # If conversion fails, revert to empty
-            w.delete(0, 'end')
-
-        return 'break'
+        # format_money is imported from utils.format
 
     def _load_data(self):
         """Tải dữ liệu từ DB lên bảng"""
@@ -322,14 +282,14 @@ class roomTab(ctk.CTkFrame):
         filtered = [r for r in self.rooms_cache if match_room(r)]
         self.render_table(filtered)
 
-    def clear_search(self):
-        if hasattr(self, "search_entry"):
-            self.search_entry.delete(0, "end")
-        if hasattr(self, "search_mode"):
-            self.search_mode.set("Tên phòng")
-        if hasattr(self, "search_status"):
-            self.search_status.set("Tất cả")
-        self.render_table(self.rooms_cache)
+    # def clear_search(self):
+    #     if hasattr(self, "search_entry"):
+    #         self.search_entry.delete(0, "end")
+    #     if hasattr(self, "search_mode"):
+    #         self.search_mode.set("Tên phòng")
+    #     if hasattr(self, "search_status"):
+    #         self.search_status.set("Tất cả")
+    #     self.render_table(self.rooms_cache)
 
     def _get_form_data(self):
         name = self.entry_name.get().strip()

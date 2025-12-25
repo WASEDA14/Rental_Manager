@@ -91,11 +91,6 @@ class tenantTab(ctk.CTkFrame):
                       command=self.apply_search)\
             .pack(side="left", padx=6)
 
-        ctk.CTkButton(action, text="Xóa", width=80,
-                      fg_color="gray",
-                      command=self.clear_search)\
-            .pack(side="left", padx=6)
-
         ctk.CTkButton(action, text="Xóa khách hàng",
                       fg_color="#e74c3c",
                       command=self.on_delete_tenant) \
@@ -190,10 +185,6 @@ class tenantTab(ctk.CTkFrame):
             return query in haystack
 
         self.render_table([r for r in self.tenants_cache if match(r)])
-
-    def clear_search(self):
-        self.search_var.set("")
-        self.render_table(self.tenants_cache)
 
     # =========================================================
     # Events

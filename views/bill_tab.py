@@ -76,7 +76,7 @@ class billTab(ctk.CTkFrame):
         self.cb_contract.grid(row=1, column=1, padx=5, pady=5, sticky="w", columnspan=2)
         self.cb_contract.bind("<<ComboboxSelected>>", self.on_contract_select)
 
-        ctk.CTkLabel(form_frame, text="Tháng (MM/YYYY):", text_color="black").grid(row=1, column=3, padx=5, pady=5,
+        ctk.CTkLabel(form_frame, text="Kỳ thanh toán:", text_color="black").grid(row=1, column=3, padx=5, pady=5,
                                                                                    sticky="e")
         ctk.CTkEntry(form_frame, textvariable=self.bill_month_var, width=100).grid(row=1, column=4, padx=5, pady=5,
                                                                                    sticky="w")
@@ -89,7 +89,7 @@ class billTab(ctk.CTkFrame):
 
         ctk.CTkLabel(form_frame, text="Tiền phòng cơ bản:", text_color="black").grid(row=2, column=3, padx=5, pady=5,
                                                                                      sticky="e")
-        ctk.CTkEntry(form_frame, textvariable=self.room_rent_var, width=120).grid(row=2, column=4, padx=5, pady=5,
+        ctk.CTkEntry(form_frame, textvariable=self.room_rent_var,state="readonly",fg_color="#eee", width=120).grid(row=2, column=4, padx=5, pady=5,
                                                                                   sticky="w")
 
         # --- KHỐI ĐIỆN ---
@@ -100,7 +100,7 @@ class billTab(ctk.CTkFrame):
                                                                                                            padx=10)
 
         ctk.CTkLabel(elec_frame, text="Cũ:", text_color="black").pack(side="left", padx=2)
-        ctk.CTkEntry(elec_frame, textvariable=self.elec_prev_var, width=60).pack(side="left", padx=2)
+        ctk.CTkEntry(elec_frame, textvariable=self.elec_prev_var,state="readonly",fg_color="#eee", width=60).pack(side="left", padx=2)
 
         ctk.CTkLabel(elec_frame, text="Mới:", text_color="black").pack(side="left", padx=2)
         e_elec = ctk.CTkEntry(elec_frame, textvariable=self.elec_curr_var, width=60)
@@ -122,7 +122,7 @@ class billTab(ctk.CTkFrame):
                                                                                                            padx=10)
 
         ctk.CTkLabel(water_frame, text="Cũ:", text_color="black").pack(side="left", padx=2)
-        ctk.CTkEntry(water_frame, textvariable=self.water_prev_var, width=60).pack(side="left", padx=2)
+        ctk.CTkEntry(water_frame, textvariable=self.water_prev_var,state="readonly",fg_color="#eee", width=60).pack(side="left", padx=2)
 
         ctk.CTkLabel(water_frame, text="Mới:", text_color="black").pack(side="left", padx=2)
         e_water = ctk.CTkEntry(water_frame, textvariable=self.water_curr_var, width=60)
@@ -192,7 +192,7 @@ class billTab(ctk.CTkFrame):
         self.tree.heading("code", text="Mã HĐ")
         self.tree.heading("room", text="Phòng")
         self.tree.heading("tenant", text="Khách thuê")
-        self.tree.heading("month", text="Tháng")
+        self.tree.heading("month", text="Kỳ thanh toán")
         self.tree.heading("total", text="Tổng tiền")
         self.tree.heading("status", text="Trạng thái")
         self.tree.heading("note", text="Ghi chú")

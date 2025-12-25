@@ -60,8 +60,9 @@ class DashboardView(ctk.CTkFrame):
             ("Dashboard", self.show_dashboard),
             ("Room", self.show_room),
             ("Tenant", self.show_tenant),
-            ("Bill", self.show_bill),
-            ("Contract", self.show_contract)
+            ("Contract", self.show_contract),
+            ("Bill", self.show_bill)
+
         ]
 
         for text, command in nav_buttons:
