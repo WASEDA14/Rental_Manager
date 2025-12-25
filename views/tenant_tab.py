@@ -105,6 +105,11 @@ class tenantTab(ctk.CTkFrame):
                       fg_color="#27ae60",
                       command=self.on_create_tenant)\
             .pack(side="right", padx=6)
+            
+        ctk.CTkButton(action, text="Làm mới",
+                      fg_color="#7f8c8d",
+                      command=self.reset_form)\
+            .pack(side="right", padx=6)
 
     def _build_table(self):
         frame = ctk.CTkFrame(self)

@@ -58,96 +58,114 @@ class contractTab(ctk.CTkFrame):
         form.pack(fill="x", padx=12, pady=(12, 6))
 
         # --- Row 0 ---
-        ctk.CTkLabel(form, text="Phòng *").grid(row=0, column=0, padx=6, pady=6, sticky="w")
+        ctk.CTkLabel(form, text="Phòng *").grid(row=0, column=0, sticky="w")
         self.cb_room = ctk.CTkComboBox(form, width=160, variable=self.room_var, command=self.on_room_select)
-        self.cb_room.grid(row=0, column=1, padx=6, pady=6)
+        self.cb_room.grid(row=0, column=1, padx=6)
 
-        ctk.CTkLabel(form, text="Khách Thuê *").grid(row=0, column=2, padx=6, pady=6, sticky="w")
+        ctk.CTkLabel(form, text="Khách thuê *").grid(row=0, column=2, sticky="w")
         self.cb_tenant = ctk.CTkComboBox(form, width=160, variable=self.tenant_var, command=self.on_tenant_select)
-        self.cb_tenant.grid(row=0, column=3, padx=6, pady=6)
+        self.cb_tenant.grid(row=0, column=3, padx=6)
 
         # --- Row 1 ---
-        ctk.CTkLabel(form, text="Giá Thuê (VND)").grid(row=1, column=0, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.rent_var,state="readonly",fg_color="#eee", width=160).grid(row=1, column=1, padx=6, pady=6)
+        ctk.CTkLabel(form, text="Giá thuê").grid(row=1, column=0, sticky="w")
+        ctk.CTkEntry(form, textvariable=self.rent_var, state="readonly", fg_color="#eee", width=160).grid(row=1, column=1, padx=6)
 
-        ctk.CTkLabel(form, text="Tiền Cọc (VND)").grid(row=1, column=2, padx=6, pady=6, sticky="w")
+        ctk.CTkLabel(form, text="Tiền cọc").grid(row=1, column=2, sticky="w")
         entry_deposit = ctk.CTkEntry(form, textvariable=self.deposit_var, width=160)
-        entry_deposit.grid(row=1, column=3, padx=6, pady=6)
-        entry_deposit.bind("<KeyRelease>",lambda e: format_money(self, e))
+        entry_deposit.grid(row=1, column=3, padx=6)
+        entry_deposit.bind("<KeyRelease>", lambda e: format_money(self, e))
 
-        ctk.CTkLabel(form, text="Ngày Cọc").grid(row=1, column=4, padx=6, pady=6, sticky="w")
+        ctk.CTkLabel(form, text="Ngày cọc").grid(row=1, column=4, sticky="w")
         self.deposit_date_entry = DateEntry(form, textvariable=self.deposit_date_var, width=16, date_pattern="yyyy-mm-dd")
-        self.deposit_date_entry.grid(row=1, column=5, padx=6, pady=6, sticky="w")
-
+        self.deposit_date_entry.grid(row=1, column=5, padx=6, sticky="w")
 
         # --- Row 2 ---
-        ctk.CTkLabel(form, text="Ngày Bắt Đầu").grid(row=2, column=0, padx=6, pady=6, sticky="w")
-        DateEntry(form, textvariable=self.start_date_var, width=16, date_pattern="yyyy-mm-dd").grid(row=2, column=1,
-                                                                                                    padx=6, pady=6,
-                                                                                                    sticky="w")
+        ctk.CTkLabel(form, text="Ngày bắt đầu").grid(row=2, column=0, sticky="w")
+        DateEntry(form, textvariable=self.start_date_var, width=16, date_pattern="yyyy-mm-dd").grid(row=2, column=1, padx=6, sticky="w")
 
-        ctk.CTkLabel(form, text="Ngày Kết Thúc").grid(row=2, column=2, padx=6, pady=6, sticky="w")
-        DateEntry(form, textvariable=self.end_date_var, width=16, date_pattern="yyyy-mm-dd").grid(row=2, column=3,
-                                                                                                  padx=6, pady=6,
-                                                                                                  sticky="w")
+        ctk.CTkLabel(form, text="Ngày kết thúc").grid(row=2, column=2, sticky="w")
+        DateEntry(form, textvariable=self.end_date_var, width=16, date_pattern="yyyy-mm-dd").grid(row=2, column=3, padx=6, sticky="w")
 
         # --- Row 3 ---
-        ctk.CTkLabel(form, text="Điện Đầu (kWh)").grid(row=3, column=0, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.elec_start_var, width=160).grid(row=3, column=1, padx=6, pady=6)
+        ctk.CTkLabel(form, text="Điện đầu (kWh)").grid(row=3, column=0, sticky="w")
+        ctk.CTkEntry(form, textvariable=self.elec_start_var, width=160).grid(row=3, column=1, padx=6)
 
-        ctk.CTkLabel(form, text="Nước Đầu (m³)").grid(row=3, column=2, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.water_start_var, width=160).grid(row=3, column=3, padx=6, pady=6)
+        ctk.CTkLabel(form, text="Nước đầu (m³)").grid(row=3, column=2, sticky="w")
+        ctk.CTkEntry(form, textvariable=self.water_start_var, width=160).grid(row=3, column=3, padx=6)
 
         # --- Row 4 ---
-        ctk.CTkLabel(form, text="Ghi Chú").grid(row=4, column=0, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.note_var, width=450).grid(row=4, column=1, columnspan=5, padx=6, pady=6,
-                                                                       sticky="we")
+        ctk.CTkLabel(form, text="Ghi chú").grid(row=4, column=0, sticky="w")
+        ctk.CTkEntry(form, textvariable=self.note_var, width=500).grid(row=4, column=1, columnspan=6, padx=6, sticky="we")
+
+        # Action buttons and search
+        action = ctk.CTkFrame(form, fg_color="transparent")
+        action.grid(row=5, column=0, columnspan=8, pady=(10, 0), sticky="ew")
+
+        ctk.CTkLabel(action, text="Tìm kiếm").pack(side="left")
+        ctk.CTkEntry(action, textvariable=self.search_var, width=200).pack(side="left", padx=6)
+        ctk.CTkButton(action, text="Tìm", width=60, command=self.reload).pack(side="left")
+
+        ctk.CTkButton(action, text="Xuất hợp đồng", fg_color="#3498db", command=self.on_export_pdf).pack(side="right", padx=6)
+        ctk.CTkButton(action, text="Kết thúc HĐ", fg_color="#8e44ad", command=self.on_end_contract).pack(side="right", padx=6)
+        ctk.CTkButton(action, text="Xóa", fg_color="#e74c3c", command=self.on_delete).pack(side="right", padx=6)
+        ctk.CTkButton(action, text="Cập nhật", fg_color="#f39c12", command=self.on_update).pack(side="right", padx=6)
+        ctk.CTkButton(action, text="Thêm mới", fg_color="#27ae60", command=self.on_create).pack(side="right", padx=6)
+        ctk.CTkButton(action, text="Làm mới", fg_color="#7f8c8d", command=self.on_clear).pack(side="right", padx=6)
 
     def _build_table(self):
-        # Search & Actions Toolbar
-        toolbar = ctk.CTkFrame(self, fg_color="transparent")
-        toolbar.pack(fill="x", padx=12, pady=(6, 0))
-
-        ctk.CTkEntry(toolbar, textvariable=self.search_var, placeholder_text="Tìm kiếm...", width=200).pack(side="left")
-        ctk.CTkButton(toolbar, text="Tìm", command=self.reload, width=60).pack(side="left", padx=6)
-        ctk.CTkButton(toolbar, text="Làm mới", command=self._reload, width=60, fg_color="gray").pack(side="left",
-                                                                                                          padx=6)
-
-        ctk.CTkButton(toolbar, text="Xuất hợp đồng", command=self.on_export_pdf, fg_color="#3498db").pack(side="right", padx=6)
-        ctk.CTkButton(toolbar, text="Tạo Mới", command=self.on_create, fg_color="#27ae60").pack(side="right", padx=6)
-        ctk.CTkButton(toolbar, text="Cập Nhật", command=self.on_update, fg_color="#f39c12").pack(side="right", padx=6)
-        ctk.CTkButton(toolbar, text="Xóa", command=self.on_delete, fg_color="#e74c3c").pack(side="right", padx=6)
-        ctk.CTkButton(toolbar, text="Kết Thúc HĐ", command=self.on_end_contract, fg_color="#8e44ad").pack(side="right",
-                                                                                                          padx=6)
-        # Treeview
+        # Treeview frame
         table_frame = ctk.CTkFrame(self)
         table_frame.pack(fill="both", expand=True, padx=12, pady=6)
 
+        # Define columns and headers
         cols = ("id", "room", "tenant", "start", "end", "rent", "status")
+        headers = {
+            "id": "ID",
+            "room": "Phòng",
+            "tenant": "Khách thuê",
+            "start": "Bắt đầu",
+            "end": "Kết thúc",
+            "rent": "Giá thuê",
+            "status": "Trạng thái"
+        }
+        
+        # Configure column widths and anchors
+        widths = {
+            "id": 40,
+            "room": 80,
+            "tenant": 150,
+            "start": 100,
+            "end": 100,
+            "rent": 100,
+            "status": 100
+        }
+        anchors = {
+            "id": "center",
+            "room": "center",
+            "tenant": "w",
+            "start": "center",
+            "end": "center",
+            "rent": "e",
+            "status": "center"
+        }
+
+        # Create and configure treeview
         self.tree = ttk.Treeview(table_frame, columns=cols, show="headings", height=14)
+        
+        # Set up columns and headers
+        for col in cols:
+            self.tree.heading(col, text=headers[col])
+            self.tree.column(col, width=widths[col], anchor=anchors[col])
 
-        self.tree.heading("id", text="ID")
-        self.tree.heading("room", text="Phòng")
-        self.tree.heading("tenant", text="Khách Thuê")
-        self.tree.heading("start", text="Bắt Đầu")
-        self.tree.heading("end", text="Kết Thúc")
-        self.tree.heading("rent", text="Giá Thuê")
-        self.tree.heading("status", text="Trạng Thái")
-
-        self.tree.column("id", width=40, anchor="center")
-        self.tree.column("room", width=80, anchor="center")
-        self.tree.column("tenant", width=150)
-        self.tree.column("start", width=100, anchor="center")
-        self.tree.column("end", width=100, anchor="center")
-        self.tree.column("rent", width=100, anchor="e")
-        self.tree.column("status", width=100, anchor="center")
-
+        # Add scrollbar
         sb = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscroll=sb.set)
+        self.tree.configure(yscrollcommand=sb.set)
 
+        # Pack treeview and scrollbar
         self.tree.pack(side="left", fill="both", expand=True)
         sb.pack(side="right", fill="y")
 
+        # Bind selection event
         self.tree.bind("<<TreeviewSelect>>", self.on_pick)
 
     def _load_combobox_data(self):

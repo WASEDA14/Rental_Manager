@@ -15,6 +15,7 @@ from services.bill_service import (
     export_bill_to_pdf
 )
 
+
 class billTab(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent, fg_color="transparent")
@@ -58,7 +59,6 @@ class billTab(ctk.CTkFrame):
         self.other_fee_var = ctk.StringVar(value="0")
         self.total_amount_var = ctk.StringVar(value="0")
 
-
     def _build_ui(self):
         # === 1. FORM NHẬP LIỆU ===
         form_frame = ctk.CTkFrame(self, fg_color="white", corner_radius=10)
@@ -77,7 +77,7 @@ class billTab(ctk.CTkFrame):
         self.cb_contract.bind("<<ComboboxSelected>>", self.on_contract_select)
 
         ctk.CTkLabel(form_frame, text="Kỳ thanh toán:", text_color="black").grid(row=1, column=3, padx=5, pady=5,
-                                                                                   sticky="e")
+                                                                                 sticky="e")
         ctk.CTkEntry(form_frame, textvariable=self.bill_month_var, width=100).grid(row=1, column=4, padx=5, pady=5,
                                                                                    sticky="w")
 
@@ -89,8 +89,9 @@ class billTab(ctk.CTkFrame):
 
         ctk.CTkLabel(form_frame, text="Tiền phòng cơ bản:", text_color="black").grid(row=2, column=3, padx=5, pady=5,
                                                                                      sticky="e")
-        ctk.CTkEntry(form_frame, textvariable=self.room_rent_var,state="readonly",fg_color="#eee", width=120).grid(row=2, column=4, padx=5, pady=5,
-                                                                                  sticky="w")
+        ctk.CTkEntry(form_frame, textvariable=self.room_rent_var, state="readonly", fg_color="#eee", width=120).grid(
+            row=2, column=4, padx=5, pady=5,
+            sticky="w")
 
         # --- KHỐI ĐIỆN ---
         elec_frame = ctk.CTkFrame(form_frame, fg_color="#f0f9ff", border_width=1, border_color="#ccc")
@@ -100,7 +101,8 @@ class billTab(ctk.CTkFrame):
                                                                                                            padx=10)
 
         ctk.CTkLabel(elec_frame, text="Cũ:", text_color="black").pack(side="left", padx=2)
-        ctk.CTkEntry(elec_frame, textvariable=self.elec_prev_var,state="readonly",fg_color="#eee", width=60).pack(side="left", padx=2)
+        ctk.CTkEntry(elec_frame, textvariable=self.elec_prev_var, state="readonly", fg_color="#eee", width=60).pack(
+            side="left", padx=2)
 
         ctk.CTkLabel(elec_frame, text="Mới:", text_color="black").pack(side="left", padx=2)
         e_elec = ctk.CTkEntry(elec_frame, textvariable=self.elec_curr_var, width=60)
@@ -122,7 +124,8 @@ class billTab(ctk.CTkFrame):
                                                                                                            padx=10)
 
         ctk.CTkLabel(water_frame, text="Cũ:", text_color="black").pack(side="left", padx=2)
-        ctk.CTkEntry(water_frame, textvariable=self.water_prev_var,state="readonly",fg_color="#eee", width=60).pack(side="left", padx=2)
+        ctk.CTkEntry(water_frame, textvariable=self.water_prev_var, state="readonly", fg_color="#eee", width=60).pack(
+            side="left", padx=2)
 
         ctk.CTkLabel(water_frame, text="Mới:", text_color="black").pack(side="left", padx=2)
         e_water = ctk.CTkEntry(water_frame, textvariable=self.water_curr_var, width=60)
@@ -159,14 +162,16 @@ class billTab(ctk.CTkFrame):
 
         ctk.CTkButton(btn_frame, text="Tính toán", command=self.on_recalc, fg_color="#6c757d", width=80).pack(
             side="left", padx=5)
-        ctk.CTkButton(btn_frame, text="Làm mới", command=self.on_clear_form, fg_color="#17a2b8", width=80).pack(side="left",
-                                                                                                           padx=5)
+        ctk.CTkButton(btn_frame, text="Làm mới", command=self.on_clear_form, fg_color="#17a2b8", width=80).pack(
+            side="left",
+            padx=5)
         ctk.CTkButton(btn_frame, text="Tạo Hóa Đơn", command=self.on_create_bill, fg_color="#28a745", width=100).pack(
             side="left", padx=5)
         ctk.CTkButton(btn_frame, text="Cập Nhật", command=self.on_update_bill, fg_color="#ffc107", text_color="black",
                       width=100).pack(side="left", padx=5)
-        ctk.CTkButton(btn_frame, text="Xóa", command=self.on_delete_bill, fg_color="#dc3545", width=80).pack(side="left",
-                                                                                                        padx=5)
+        ctk.CTkButton(btn_frame, text="Xóa", command=self.on_delete_bill, fg_color="#dc3545", width=80).pack(
+            side="left",
+            padx=5)
         ctk.CTkButton(btn_frame, text="Thanh toán", command=self.on_mark_paid, fg_color="#007bff", width=100).pack(
             side="left", padx=5)
         ctk.CTkButton(btn_frame, text="Xuất hóa đơn", command=self._on_export_pdf, fg_color="#3498db", width=80).pack(
@@ -267,20 +272,19 @@ class billTab(ctk.CTkFrame):
             b_room = b[-4]
             b_tenant = b[-3]
 
-
             status_display = {
                 'paid': 'Đã thanh toán',
                 'unpaid': 'Chưa thanh toán',
                 'cancelled': 'Đã hủy'
             }.get(b_status, b_status)
 
-            if filter_kw and (filter_kw not in str(b_code).lower() and 
-                             filter_kw not in b_room.lower() and 
-                             filter_kw not in b_tenant.lower()):
+            if filter_kw and (filter_kw not in str(b_code).lower() and
+                              filter_kw not in b_room.lower() and
+                              filter_kw not in b_tenant.lower()):
                 continue
 
             self.tree.insert("", "end", values=(
-                b_id, b_code, b_room, b_tenant, b_month, 
+                b_id, b_code, b_room, b_tenant, b_month,
                 format_currency(b_total), status_display, b_note
             ))
 
@@ -472,7 +476,7 @@ class billTab(ctk.CTkFrame):
         if not self._selected_bill_id:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn hóa đơn cần xuất!")
             return
-            
+
         try:
             pdf_path = export_bill_to_pdf(self._selected_bill_id)
             if pdf_path and os.path.exists(pdf_path):
@@ -490,22 +494,22 @@ class billTab(ctk.CTkFrame):
         self.room_name_var.set("")
         self.bill_month_var.set("")
         self.note_var.set("")
-        
+
         # Reset các trường số
         self.elec_prev_var.set("0")
         self.elec_curr_var.set("")
         self.elec_price_var.set("0")
         self.elec_total_var.set("0")
-        
+
         self.water_prev_var.set("0")
         self.water_curr_var.set("")
         self.water_price_var.set("0")
         self.water_total_var.set("0")
-        
+
         self.room_rent_var.set("0")
         self.other_fee_var.set("0")
         self.total_amount_var.set("0")
-        
+
         vars_to_clear = [
             self.tenant_name_var, self.bill_month_var, self.note_var,
             self.elec_prev_var, self.elec_curr_var, self.elec_price_var, self.elec_total_var,

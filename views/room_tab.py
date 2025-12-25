@@ -15,6 +15,7 @@ STATUS_MAP_REV = {v: k for k, v in STATUS_MAP.items()}
 class roomTab(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master, fg_color="transparent")
+        self.search_mode = None
         self.current_room_id = None
 
         # Biến cache để lưu danh sách phòng (giúp check trùng tên nhanh hơn)
@@ -24,198 +25,192 @@ class roomTab(ctk.CTkFrame):
         self._load_data()
 
     def _build_ui(self):
-        # Title and action buttons
-        title_frame = ctk.CTkFrame(self, fg_color="transparent")
-        title_frame.pack(fill="x", padx=20, pady=(10, 10))
+        # Main form
+        self._build_form()
+        # Table
+        self._build_table()
         
-        ctk.CTkLabel(
-            title_frame,
-            text="Quản lý phòng",
-            font=ctk.CTkFont(size=24, weight="bold")
-        ).pack(side="left")
-        
-        # Action buttons
-        btn_frame = ctk.CTkFrame(title_frame, fg_color="transparent")
-        btn_frame.pack(side="right")
-        
-        self.btn_refresh = ctk.CTkButton(
-            btn_frame, 
-            text="Làm mới",
-            command=self.reset_form,
-            width=100,
-            height=36,
-            corner_radius=8
-        )
-        self.btn_refresh.pack(side="left", padx=5)
-        
-        self.btn_add = ctk.CTkButton(
-            btn_frame,
-            text="Thêm mới",
-            command=self.add_room,
-            width=100,
-            height=36,
-            corner_radius=8,
-            fg_color="#28a745",
-            hover_color="#218838"
-        )
-        self.btn_add.pack(side="left", padx=5)
-        
-        self.btn_update = ctk.CTkButton(
-            btn_frame,
-            text="Cập nhật",
-            command=self.update_room,
-            width=100,
-            height=36,
-            corner_radius=8,
-            fg_color="#17a2b8",
-            hover_color="#138496",
-            state="disabled"
-        )
-        self.btn_update.pack(side="left", padx=5)
-        
-        self.btn_delete = ctk.CTkButton(
-            btn_frame,
-            text="Xóa",
-            command=self.delete_room,
-            width=100,
-            height=36,
-            corner_radius=8,
-            fg_color="#dc3545",
-            hover_color="#c82333",
-            state="disabled"
-        )
-        self.btn_delete.pack(side="left", padx=5)
+    def _build_form(self):
+        form = ctk.CTkFrame(self)
+        form.pack(fill="x", padx=12, pady=(12, 6))
 
-        # Form frame
-        form_frame = ctk.CTkFrame(self, fg_color="white", corner_radius=10)
-        form_frame.pack(fill="x", padx=20, pady=(0, 20))
-        
-        form = ctk.CTkFrame(form_frame, fg_color="transparent")
-        form.pack(fill="x", padx=20, pady=20)
-        form.grid_columnconfigure((0, 1, 2, 3), weight=1, uniform="form_cols")
+        # Row 0: Room Info
+        ctk.CTkLabel(form, text="Tên phòng *").grid(row=0, column=0, sticky="w")
+        self.entry_name = ctk.CTkEntry(form, width=160)
+        self.entry_name.grid(row=0, column=1, padx=6, sticky="w")
 
-        # Form fields - Row 1
-        ctk.CTkLabel(form, text="Tên phòng *").grid(row=0, column=0, sticky="w", padx=5, pady=5)
-        self.entry_name = ctk.CTkEntry(form, height=36, corner_radius=6)
-        self.entry_name.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
+        ctk.CTkLabel(form, text="Tầng").grid(row=0, column=2, sticky="w")
+        self.entry_floor = ctk.CTkEntry(form, width=100)
+        self.entry_floor.grid(row=0, column=3, padx=6, sticky="w")
 
-        ctk.CTkLabel(form, text="Số tầng").grid(row=0, column=1, sticky="w", padx=5, pady=5)
-        self.entry_floor = ctk.CTkEntry(form, height=36, corner_radius=6)
-        self.entry_floor.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
+        # Row 1: Room Details
+        ctk.CTkLabel(form, text="Diện tích (m²)").grid(row=1, column=0, sticky="w")
+        self.entry_area = ctk.CTkEntry(form, width=160)
+        self.entry_area.grid(row=1, column=1, padx=6, sticky="w")
 
-        ctk.CTkLabel(form, text="Diện tích (m²)").grid(row=0, column=2, sticky="w", padx=5, pady=5)
-        self.entry_area = ctk.CTkEntry(form, height=36, corner_radius=6)
-        self.entry_area.grid(row=1, column=2, sticky="ew", padx=5, pady=5)
-
-        ctk.CTkLabel(form, text="Giá thuê (VNĐ)").grid(row=0, column=3, sticky="w", padx=5, pady=5)
-        self.entry_rent = ctk.CTkEntry(form, height=36, corner_radius=6)
-        self.entry_rent.grid(row=1, column=3, sticky="ew", padx=5, pady=5)
-        self.entry_rent.bind("<KeyRelease>", lambda e: format_money(self, e))
-
-        # Form fields - Row 2
-        ctk.CTkLabel(form, text="Giá điện (VNĐ/kWh)").grid(row=2, column=0, sticky="w", padx=5, pady=5)
-        self.entry_elec = ctk.CTkEntry(form, height=36, corner_radius=6)
-        self.entry_elec.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
-        self.entry_elec.bind("<KeyRelease>", lambda e: format_money(self, e))
-
-        ctk.CTkLabel(form, text="Giá nước (VNĐ/m³)").grid(row=2, column=1, sticky="w", padx=5, pady=5)
-        self.entry_water = ctk.CTkEntry(form, height=36, corner_radius=6)
-        self.entry_water.grid(row=3, column=1, sticky="ew", padx=5, pady=5)
-        self.entry_water.bind("<KeyRelease>", lambda e: format_money(self, e))
-
-        ctk.CTkLabel(form, text="Trạng thái").grid(row=2, column=2, sticky="w", padx=5, pady=5)
+        ctk.CTkLabel(form, text="Trạng thái").grid(row=1, column=2, sticky="w")
         self.combo_status = ctk.CTkComboBox(
             form, 
             values=list(STATUS_MAP.keys()),
-            height=36, 
-            corner_radius=6,
+            width=100,
             state="readonly"
         )
         self.combo_status.set("Trống")
-        self.combo_status.grid(row=3, column=2, sticky="ew", padx=5, pady=5)
+        self.combo_status.grid(row=1, column=3, padx=6, sticky="w")
 
-        ctk.CTkLabel(form, text="Ghi chú").grid(row=2, column=3, sticky="w", padx=5, pady=5)
-        self.entry_note = ctk.CTkEntry(form, height=36, corner_radius=6)
-        self.entry_note.grid(row=3, column=3, sticky="ew", padx=5, pady=5)
+        # Row 2: Pricing
+        ctk.CTkLabel(form, text="Giá thuê").grid(row=2, column=0, sticky="w")
+        self.entry_rent = ctk.CTkEntry(form, width=160)
+        self.entry_rent.grid(row=2, column=1, padx=6, sticky="w")
+        self.entry_rent.bind("<KeyRelease>", lambda e: format_money(self, e))
 
-        # Separator between form and search
-        ctk.CTkFrame(self, height=1, fg_color="#e0e0e0").pack(fill="x", padx=20, pady=(0, 10))
+        ctk.CTkLabel(form, text="Giá điện").grid(row=2, column=2, sticky="w")
+        self.entry_elec = ctk.CTkEntry(form, width=100)
+        self.entry_elec.grid(row=2, column=3, padx=6, sticky="w")
+        self.entry_elec.bind("<KeyRelease>", lambda e: format_money(self, e))
 
-        # Search and filter section
-        search_frame = ctk.CTkFrame(self, fg_color="transparent")
-        search_frame.pack(fill="x", padx=20, pady=(0, 10))
-        
-        # Search entry
-        self.search_entry = ctk.CTkEntry(
-            search_frame,
-            placeholder_text="Tìm kiếm...",
-            height=36,
-            corner_radius=6
-        )
-        self.search_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        # Row 3: More Pricing
+        ctk.CTkLabel(form, text="Giá nước").grid(row=3, column=0, sticky="w")
+        self.entry_water = ctk.CTkEntry(form, width=160)
+        self.entry_water.grid(row=3, column=1, padx=6, sticky="w")
+        self.entry_water.bind("<KeyRelease>", lambda e: format_money(self, e))
+
+        ctk.CTkLabel(form, text="Ghi chú").grid(row=3, column=2, sticky="w")
+        self.entry_note = ctk.CTkEntry(form, width=300)
+        self.entry_note.grid(row=3, column=3, padx=6, sticky="we")
+
+        # Action buttons and search
+        action = ctk.CTkFrame(form, fg_color="transparent")
+        action.grid(row=4, column=0, columnspan=8, pady=(10, 0), sticky="ew")
+
+        ctk.CTkLabel(action, text="Tìm kiếm").pack(side="left")
+        self.search_entry = ctk.CTkEntry(action, width=200)
+        self.search_entry.pack(side="left", padx=6)
         self.search_entry.bind("<Return>", lambda e: self.apply_search())
         
-        # Search mode
-        self.search_mode = ctk.CTkComboBox(
-            search_frame,
-            values=["Tên phòng", "Tầng", "Diện tích", "Giá thuê", "Tất cả"],
-            height=36,
-            corner_radius=6,
-            state="readonly",
-            width=150
-        )
-        self.search_mode.set("Tất cả")
-        self.search_mode.pack(side="left", padx=(0, 10))
-        
-        # Status filter
         self.search_status = ctk.CTkComboBox(
-            search_frame,
+            action,
             values=["Tất cả"] + list(STATUS_MAP.keys()),
-            height=36,
-            corner_radius=6,
-            state="readonly",
-            width=120
+            width=120,
+            state="readonly"
         )
         self.search_status.set("Tất cả")
-        self.search_status.pack(side="left", padx=(0, 10))
+        self.search_status.pack(side="left", padx=6)
         
-        # Search button
-        self.btn_search = ctk.CTkButton(
-            search_frame,
-            text="Tìm kiếm",
-            command=self.apply_search,
-            height=36,
-            corner_radius=6,
-            width=120
-        )
-        self.btn_search.pack(side="left", padx=(0, 10))
+        ctk.CTkButton(action, text="Tìm", width=60, command=self.apply_search).pack(side="left")
+        
+        ctk.CTkButton(action, text="Xóa", fg_color="#e74c3c", command=self.delete_room).pack(side="right", padx=6)
+        ctk.CTkButton(action, text="Cập nhật", fg_color="#f39c12", command=self.update_room).pack(side="right", padx=6)
+        ctk.CTkButton(action, text="Thêm mới", fg_color="#27ae60", command=self.add_room).pack(side="right", padx=6)
+        ctk.CTkButton(action, text="Làm mới", fg_color="#7f8c8d", command=self.reset_form).pack(side="right", padx=6)
 
+    def _build_table(self, columns=None):
+        # Treeview frame
         table_frame = ctk.CTkFrame(self)
-        table_frame.pack(fill="both", expand=True, padx=50, pady=(0, 40))
+        table_frame.pack(fill="both", expand=True, padx=12, pady=6)
 
-        columns = ("id", "name", "floor", "area", "rent", "elec", "water", "status", "note")
-        self.tree = ttk.Treeview(table_frame, columns=columns, show="headings", height=22)
+        # Define columns and headers
+        cols = ("id", "name", "floor", "area", "rent", "elec", "water", "status", "note")
+        headers = {
+            "id": "ID",
+            "name": "Tên phòng",
+            "floor": "Tầng",
+            "area": "Diện tích",
+            "rent": "Giá thuê",
+            "elec": "Giá điện",
+            "water": "Giá nước",
+            "status": "Trạng thái",
+            "note": "Ghi chú"
+        }
+        
+        # Configure column widths and anchors
+        widths = {
+            "id": 40,
+            "name": 120,
+            "floor": 60,
+            "area": 80,
+            "rent": 100,
+            "elec": 100,
+            "water": 100,
+            "status": 100,
+            "note": 200
+        }
+        anchors = {
+            "id": "center",
+            "name": "w",
+            "floor": "center",
+            "area": "center",
+            "rent": "e",
+            "elec": "e",
+            "water": "e",
+            "status": "center",
+            "note": "w"
+        }
 
-        headers = ["ID", "Tên phòng", "Tầng", "Diện tích", "Giá thuê", "Giá điện", "Giá nước", "Trạng thái", "Ghi chú"]
-        widths = [50, 150, 80, 100, 150, 120, 120, 120, 250]
+        # Create and configure treeview
+        self.tree = ttk.Treeview(table_frame, columns=cols, show="headings", height=14)
+        
+        # Set up columns and headers
+        for col in cols:
+            self.tree.heading(col, text=headers[col])
+            self.tree.column(col, width=widths[col], anchor=anchors[col])
 
-        for col, text, w in zip(columns, headers, widths):
-            self.tree.heading(col, text=text)
-            self.tree.column(col, width=w, anchor="center" if col not in ["name", "note"] else "w")
+        # Add scrollbar
+        sb = ttk.Scrollbar(table_frame, orient="vertical", command=self.tree.yview)
+        self.tree.configure(yscrollcommand=sb.set)
+
+        # Pack treeview and scrollbar
+        self.tree.pack(side="left", fill="both", expand=True)
+        sb.pack(side="right", fill="y")
+
+        # Bind selection event
+        self.tree.bind("<<TreeviewSelect>>", self.on_select_room)
 
         # Style cho bảng
         style = ttk.Style()
         style.configure("Treeview", font=("Inter", 13), rowheight=40)
         style.configure("Treeview.Heading", font=("Inter", 13, "bold"))
-
-        scroll = ctk.CTkScrollbar(table_frame, command=self.tree.yview)
-        self.tree.configure(yscrollcommand=scroll.set)
-        self.tree.pack(side="left", fill="both", expand=True, padx=20, pady=20)
-        scroll.pack(side="right", fill="y", padx=(0, 20), pady=20)
-
-        self.tree.bind("<<TreeviewSelect>>", self.on_select)
-
-        # format_money is imported from utils.format
+        
+    def on_select_room(self, event):
+        """Handle row selection in the room table"""
+        selected = self.tree.selection()
+        if not selected:
+            return
+            
+        # Get the selected item
+        item = self.tree.item(selected[0])
+        values = item['values']
+        
+        if not values:
+            return
+            
+        # Update form fields with selected room data
+        self.current_room_id = values[0]  # ID
+        self.entry_name.delete(0, 'end')
+        self.entry_name.insert(0, values[1])  # Name
+        self.entry_floor.delete(0, 'end')
+        self.entry_floor.insert(0, values[2])  # Floor
+        self.entry_area.delete(0, 'end')
+        self.entry_area.insert(0, values[3])  # Area
+        self.entry_rent.delete(0, 'end')
+        self.entry_rent.insert(0, values[4])  # Rent
+        self.entry_elec.delete(0, 'end')
+        self.entry_elec.insert(0, values[5])  # Electricity price
+        self.entry_water.delete(0, 'end')
+        self.entry_water.insert(0, values[6])  # Water price
+        
+        # Set status
+        status_text = values[7]  # Status text
+        for key, value in STATUS_MAP.items():
+            if key == status_text:
+                self.combo_status.set(key)
+                break
+                
+        self.entry_note.delete(0, 'end')
+        if len(values) > 8:  # Note is optional
+            self.entry_note.insert(0, values[8])
+            
+        # Buttons are already managed in the action bar, no need to enable/disable here
 
     def _load_data(self):
         """Tải dữ liệu từ DB lên bảng"""
@@ -373,47 +368,13 @@ class roomTab(ctk.CTkFrame):
 
         self.combo_status.set("Trống")
 
-        self.btn_add.configure(state="normal")
-        self.btn_update.configure(state="disabled")
-        self.btn_delete.configure(state="disabled")
+        # Buttons are managed in the action bar, no need to enable/disable them here
+        # as they are always visible in the new layout
 
-        # Bỏ chọn trên bảng
+        # Clear selection in the table
         if self.tree.selection():
             self.tree.selection_remove(self.tree.selection()[0])
 
-    def on_select(self, event):
-        sel = self.tree.selection()
-        if not sel: return
-
-        # Lấy dữ liệu dòng được chọn
-        v = self.tree.item(sel[0])["values"]
-        self.current_room_id = v[0]  # ID phòng
-
-        # Fill dữ liệu lên form
-        self.entry_name.delete(0, "end");
-        self.entry_name.insert(0, v[1])
-
-        self.entry_floor.delete(0, "end")
-        if v[2] != "-": self.entry_floor.insert(0, v[2])
-
-        self.entry_area.delete(0, "end")
-        if v[3] != "-": self.entry_area.insert(0, v[3])
-
-        self.entry_rent.delete(0, "end");
-        self.entry_rent.insert(0, v[4])
-        self.entry_elec.delete(0, "end");
-        self.entry_elec.insert(0, v[5])
-        self.entry_water.delete(0, "end");
-        self.entry_water.insert(0, v[6])
-
-        self.combo_status.set(v[7])
-
-        self.entry_note.delete(0, "end")
-        self.entry_note.insert(0, v[8])
-
-        self.btn_add.configure(state="disabled")
-        self.btn_update.configure(state="normal")
-        self.btn_delete.configure(state="normal")
 
     def add_room(self):
         data = self._get_form_data()
