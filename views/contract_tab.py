@@ -2,7 +2,7 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
-import os
+from utils.format import format_currency, parse_currency, format_money
 from services.contract_service import (
     get_all_contracts,
     create_contract,
@@ -14,15 +14,6 @@ from services.contract_service import (
     get_contract_by_id,
     export_contract_to_pdf
 )
-# from services.room_service import update_roomStatus
-
-# Helper format tiền tệ
-def format_currency(value):
-    try:
-        return f"{int(value):,}".replace(",", ".")
-    except (ValueError, TypeError):
-        return "0"
-
 
 class contractTab(ctk.CTkFrame):
     def __init__(self, parent):
@@ -50,14 +41,13 @@ class contractTab(ctk.CTkFrame):
         # ===== UI Layout =====
         self._build_form()
         self._build_table()
-        self._build_actions()
+        # self._build_actions()
 
         # Load Data
         self._load_combobox_data()
         self.reload()
 
     def initialize(self):
-        """Initialize or refresh the tab data"""
         self._load_combobox_data()
         self.reload()
 
@@ -74,20 +64,20 @@ class contractTab(ctk.CTkFrame):
         self.cb_tenant = ctk.CTkComboBox(form, width=160, variable=self.tenant_var, command=self.on_tenant_select)
         self.cb_tenant.grid(row=0, column=3, padx=6, pady=6)
 
-        # ctk.CTkLabel(form, text="Tên hợp đồng").grid(row=0, column=4, padx=6, pady=6, sticky="w")
-        # ctk.CTkEntry(form, textvariable=self.contract_name_var, width=160).grid(row=0, column=5, padx=6, pady=6)
-
         # --- Row 1 ---
         ctk.CTkLabel(form, text="Giá Thuê (VND)").grid(row=1, column=0, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.rent_var, width=160).grid(row=1, column=1, padx=6, pady=6)
+        ctk.CTkEntry(form, textvariable=self.rent_var,state="readonly",fg_color="#eee", width=160).grid(row=1, column=1, padx=6, pady=6)
 
         ctk.CTkLabel(form, text="Tiền Cọc (VND)").grid(row=1, column=2, padx=6, pady=6, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.deposit_var, width=160).grid(row=1, column=3, padx=6, pady=6)
+        entry_deposit = ctk.CTkEntry(form, textvariable=self.deposit_var, width=160)
+        entry_deposit.grid(row=1, column=3, padx=6, pady=6)
+        entry_deposit.bind("<KeyRelease>",lambda e: format_money(self, e))
 
         ctk.CTkLabel(form, text="Ngày Cọc").grid(row=1, column=4, padx=6, pady=6, sticky="w")
         DateEntry(form, textvariable=self.deposit_date_var, width=16, date_pattern="yyyy-mm-dd").grid(row=1, column=5,
                                                                                                       padx=6, pady=6,
                                                                                                       sticky="w")
+
 
         # --- Row 2 ---
         ctk.CTkLabel(form, text="Ngày Bắt Đầu").grid(row=2, column=0, padx=6, pady=6, sticky="w")
@@ -119,7 +109,7 @@ class contractTab(ctk.CTkFrame):
 
         ctk.CTkEntry(toolbar, textvariable=self.search_var, placeholder_text="Tìm kiếm...", width=200).pack(side="left")
         ctk.CTkButton(toolbar, text="Tìm", command=self.reload, width=60).pack(side="left", padx=6)
-        ctk.CTkButton(toolbar, text="Tải lại", command=self._full_reload, width=60, fg_color="gray").pack(side="left",
+        ctk.CTkButton(toolbar, text="Làm mới", command=self._reload, width=60, fg_color="gray").pack(side="left",
                                                                                                           padx=6)
 
         ctk.CTkButton(toolbar, text="Xuất hợp đồng", command=self.on_export_pdf, fg_color="#3498db").pack(side="right", padx=6)
@@ -158,14 +148,6 @@ class contractTab(ctk.CTkFrame):
         sb.pack(side="right", fill="y")
 
         self.tree.bind("<<TreeviewSelect>>", self.on_pick)
-
-    def _build_actions(self):
-        # Nút Clear ở dưới cùng (hoặc gộp vào toolbar)
-        bottom = ctk.CTkFrame(self, fg_color="transparent")
-        bottom.pack(fill="x", padx=12, pady=(0, 12))
-        ctk.CTkButton(bottom, text="Làm Mới Form", command=self.on_clear, fg_color="#34495e").pack(side="right")
-
-    # ===== Logic Load Data =====
 
     def _load_combobox_data(self):
         # 1. Load Available Rooms
@@ -206,8 +188,7 @@ class contractTab(ctk.CTkFrame):
                 format_currency(rent), status.capitalize()
             ))
 
-    def _full_reload(self):
-        """Reload cả bảng và combobox"""
+    def _reload(self):
         self._load_combobox_data()
         self.reload()
         self.on_clear()
@@ -218,7 +199,7 @@ class contractTab(ctk.CTkFrame):
         # Tự động điền giá thuê khi chọn phòng
         if choice in self.rooms_map:
             rent = self.rooms_map[choice]["rent"]
-            self.rent_var.set(str(int(rent)))
+            self.rent_var.set(format_currency(rent))
 
     def on_tenant_select(self, choice):
         # Tự động điền người liên hệ là tên khách thuê
@@ -231,16 +212,12 @@ class contractTab(ctk.CTkFrame):
         item = self.tree.item(sel[0])
         self._selected_id = int(item["values"][0])
 
-        all_contracts = get_all_contracts()
-        contract = next((c for c in all_contracts if c[0] == self._selected_id), None)
-
+        contract = get_contract_by_id(self._selected_id)
         if contract:
-
             self.room_var.set(contract['room_name'])
             self.tenant_var.set(contract['full_name'])
-            # self.contract_name_var.set(contract['contract_name'])
-            self.rent_var.set(str(int(contract['rent'])))
-            self.deposit_var.set(str(int(contract['deposit_amount'])))
+            self.rent_var.set(format_currency(contract['rent']))
+            self.deposit_var.set(format_currency(contract['deposit_amount']))
             self.start_date_var.set(contract['start_ymd'])
             self.end_date_var.set(contract['end_ymd'])
             self.deposit_date_var.set(contract['deposit_ymd'])
@@ -283,8 +260,8 @@ class contractTab(ctk.CTkFrame):
             return None
 
         try:
-            rent = int(self.rent_var.get().replace(".", "").replace(",", ""))
-            deposit = int(self.deposit_var.get().replace(".", "").replace(",", "") or 0)
+            rent = parse_currency(self.rent_var.get())
+            deposit = parse_currency(self.deposit_var.get() or 0)
             elec = int(self.elec_start_var.get() or 0)
             water = int(self.water_start_var.get() or 0)
         except ValueError:
@@ -309,7 +286,6 @@ class contractTab(ctk.CTkFrame):
         return {
             "room_id": room_id,
             "tenant_id": tenant_id,
-            # "contract_name": self.contract_name_var.get(),
             "start_ymd": self.start_date_var.get(),
             "end_ymd": self.end_date_var.get(),
             "rent": rent,
@@ -327,7 +303,7 @@ class contractTab(ctk.CTkFrame):
         try:
             create_contract(data)
             messagebox.showinfo("Thành công", "Tạo hợp đồng mới thành công!")
-            self._full_reload()  # Reload để cập nhật trạng thái phòng
+            self.reload()  # Reload để cập nhật trạng thái phòng
         except Exception as e:
             messagebox.showerror("Lỗi hệ thống", str(e))
 
@@ -361,7 +337,7 @@ class contractTab(ctk.CTkFrame):
         if messagebox.askyesno("Xác nhận", "Xóa hợp đồng này? (Phòng sẽ trống)"):
             try:
                 delete_contract(self._selected_id)
-                self._full_reload()
+                self.reload()
             except Exception as e:
                 messagebox.showerror("Lỗi", str(e))
 
@@ -385,6 +361,6 @@ class contractTab(ctk.CTkFrame):
             try:
                 end_contract(self._selected_id)
                 messagebox.showinfo("Thành công", "Đã kết thúc hợp đồng!")
-                self._full_reload()
+                self.reload()
             except Exception as e:
                 messagebox.showerror("Lỗi", f"Lỗi khi kết thúc hợp đồng: {str(e)}")
