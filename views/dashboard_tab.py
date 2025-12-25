@@ -3,6 +3,7 @@ from views.bill_tab import billTab
 from views.contract_tab import contractTab
 from views.room_tab import roomTab
 from views.tenant_tab import tenantTab
+from views.report_tab import ReportTab
 
 class Card(ctk.CTkFrame):
     def __init__(self, parent, title: str, value: str, color: str):
@@ -28,13 +29,13 @@ class DashboardView(ctk.CTkFrame):
         super().__init__(parent, fg_color="transparent")
         self.parent = parent
         self.controller = controller
-
+        self.active_button = None  # To keep track of the active button
         self.tabs = {}
+        self.nav_buttons = []  # Initialize nav_buttons list
         self.setup_ui()
 
         if self.controller:
             self.controller.view = self
-            self.controller.refresh_data()
 
     def setup_ui(self):
         self.setup_sidebar()
@@ -56,24 +57,37 @@ class DashboardView(ctk.CTkFrame):
         nav_frame = ctk.CTkFrame(sidebar_content, fg_color="transparent")
         nav_frame.pack(fill="x")
 
-        nav_buttons = [
+        self.nav_buttons = [
             ("Dashboard", self.show_dashboard),
             ("Room", self.show_room),
             ("Tenant", self.show_tenant),
             ("Contract", self.show_contract),
-            ("Bill", self.show_bill)
-
+            ("Bill", self.show_bill),
+            ("Report", self.show_report)
         ]
 
-        for text, command in nav_buttons:
-            btn = ctk.CTkButton(nav_frame, text=text, command=command,
-                                anchor="w", height=40, corner_radius=8,
-                                font=ctk.CTkFont(weight="normal"),
-                                fg_color=("#ffffff", "#2b2b2b"),
-                                text_color=("#2b2b2b", "#ffffff"),
-                                hover_color=("#e9e9e9", "#3a3a3a"),
-                                border_width=1, border_color=("#e0e0e0", "#3a3a3a"))
+        # First pass: create all buttons
+        for text, command in self.nav_buttons:
+            btn = ctk.CTkButton(
+                nav_frame, 
+                text=text, 
+                command=lambda t=text, c=command: self.on_nav_button_click(t, c),
+                anchor="w", 
+                height=40, 
+                corner_radius=8,
+                font=ctk.CTkFont(weight="normal"),
+                fg_color=("#ffffff", "#2b2b2b"),
+                text_color=("#2b2b2b", "#ffffff"),
+                hover_color=("#e9e9e9", "#3a3a3a"),
+                border_width=1, 
+                border_color=("#e0e0e0", "#3a3a3a")
+            )
             btn.pack(fill="x", pady=4)
+            setattr(self, f"{text.lower()}_button", btn)
+        
+        # Set Dashboard as active after all buttons are created
+        if hasattr(self, 'dashboard_button'):
+            self.set_active_button(self.dashboard_button)
 
         # Logout
         logout_frame = ctk.CTkFrame(sidebar_content, fg_color="transparent")
@@ -121,9 +135,29 @@ class DashboardView(ctk.CTkFrame):
         for tab in self.tabs.values():
             tab.pack_forget()
 
+    def on_nav_button_click(self, button_text, command):
+        button = getattr(self, f"{button_text.lower()}_button")
+        self.set_active_button(button)
+        command()
+        
+    def set_active_button(self, button):
+        for text, _ in self.nav_buttons:
+            btn = getattr(self, f"{text.lower()}_button")
+            btn.configure(
+                fg_color=("#ffffff", "#2b2b2b"),
+                text_color=("#2b2b2b", "#ffffff")
+            )
+        button.configure(
+            fg_color=("#e0e0e0", "#3a3a3a"),
+            text_color=("#000000", "#ffffff")
+        )
+        self.active_button = button
+        
     def show_dashboard(self):
         self.hide_all()
         self.dashboard_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        if self.controller:
+            self.controller.refresh_data()
 
     def show_room(self):
         self.hide_all()
@@ -142,6 +176,13 @@ class DashboardView(ctk.CTkFrame):
     def show_bill(self):
         self.hide_all()
         tab = self.lazy_load_tab("bill", billTab)
+        if hasattr(tab, 'initialize'):
+            tab.initialize()
+        tab.pack(fill="both", expand=True, padx=20, pady=20)
+        
+    def show_report(self):
+        self.hide_all()
+        tab = self.lazy_load_tab("report", ReportTab)
         if hasattr(tab, 'initialize'):
             tab.initialize()
         tab.pack(fill="both", expand=True, padx=20, pady=20)

@@ -40,75 +40,158 @@ class tenantTab(ctk.CTkFrame):
     # UI
     # =========================================================
     def _build_form(self):
-        form = ctk.CTkFrame(self)
-        form.pack(fill="x", padx=12, pady=(12, 6))
-
-        ctk.CTkLabel(form, text="Tên khách").grid(row=0, column=0, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.full_name_var, width=160)\
-            .grid(row=0, column=1, padx=6)
-
-        ctk.CTkLabel(form, text="SĐT").grid(row=0, column=2, sticky="w")
-        enTry_phone = ctk.CTkEntry(form, textvariable=self.phone_var, width=140)
-        enTry_phone.grid(row=0, column=3, padx=6)
+        form = ctk.CTkFrame(self, fg_color="transparent")
+        form.pack(fill="x", padx=20, pady=(10, 0))
+        
+        # Form fields
+        fields_frame = ctk.CTkFrame(form, fg_color="white", corner_radius=10)
+        fields_frame.pack(fill="x", pady=(0, 10))
+        
+        # Grid configuration for form fields
+        fields_frame.grid_columnconfigure((0, 2, 4), minsize=20)
+        fields_frame.grid_columnconfigure((1, 3, 5), weight=1)
+        
+        # Row 0
+        ctk.CTkLabel(fields_frame, text="Tên khách *").grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        ctk.CTkEntry(fields_frame, textvariable=self.full_name_var, height=36, corner_radius=6).grid(
+            row=0, column=1, padx=5, pady=5, sticky="ew")
+            
+        ctk.CTkLabel(fields_frame, text="SĐT").grid(row=0, column=2, padx=10, pady=10, sticky="w")
+        enTry_phone = ctk.CTkEntry(fields_frame, textvariable=self.phone_var, height=36, corner_radius=6)
+        enTry_phone.grid(row=0, column=3, padx=5, pady=5, sticky="ew")
         enTry_phone.configure(validate="key",
                            validatecommand=(enTry_phone.register(
                                lambda s: s.isdigit() or s == ""), "%P"))
-
-        ctk.CTkLabel(form, text="Giới tính").grid(row=0, column=4, sticky="w")
+        
+        ctk.CTkLabel(fields_frame, text="Giới tính").grid(row=0, column=4, padx=10, pady=10, sticky="w")
         ctk.CTkComboBox(
-            form, values=["Nam", "Nữ", "Khác"],
-            variable=self.sex_var, width=100
-        ).grid(row=0, column=5, padx=6)
-
-        ctk.CTkLabel(form, text="CCCD/CMND").grid(row=1, column=0, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.id_number_var, width=160)\
-            .grid(row=1, column=1, padx=6)
-
-        ctk.CTkLabel(form, text="Ngày sinh").grid(row=1, column=2, sticky="w")
-        DateEntry(
-            form,
-            textvariable=self.birth_var,
-            date_pattern="yyyy-mm-dd",
-            width=16
-        ).grid(row=1, column=3, padx=6)
-
-        ctk.CTkLabel(form, text="Địa chỉ").grid(row=1, column=4, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.address_var, width=200)\
-            .grid(row=1, column=5, padx=6, columnspan=2)
-
-        ctk.CTkLabel(form, text="Ghi chú").grid(row=2, column=0, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.note_var, width=500)\
-            .grid(row=2, column=1, columnspan=6, padx=6, sticky="we")
-
-        action = ctk.CTkFrame(form, fg_color="transparent")
-        action.grid(row=3, column=0, columnspan=8, pady=(10, 0), sticky="ew")
-
-        ctk.CTkLabel(action, text="Search").pack(side="left")
-        ctk.CTkEntry(action, textvariable=self.search_var, width=160)\
-            .pack(side="left", padx=6)
-
-        ctk.CTkButton(action, text="Tìm", width=80,
-                      command=self.apply_search)\
-            .pack(side="left", padx=6)
-
-        ctk.CTkButton(action, text="Xóa khách hàng",
-                      fg_color="#e74c3c",
-                      command=self.on_delete_tenant) \
-            .pack(side="right", padx=6)
-
-        ctk.CTkButton(action, text="Cập nhật",
-                      fg_color="#f39c12",
-                      command=self.on_update_tenant)\
-            .pack(side="right", padx=6)
-
-        ctk.CTkButton(action, text="Thêm",
-                      fg_color="#27ae60",
-                      command=self.on_create_tenant)\
-            .pack(side="right", padx=6)
+            fields_frame, 
+            values=["Nam", "Nữ", "Khác"],
+            variable=self.sex_var, 
+            height=36,
+            corner_radius=6,
+            width=100
+        ).grid(row=0, column=5, padx=5, pady=5, sticky="w")
+        
+        # Row 1
+        ctk.CTkLabel(fields_frame, text="CCCD/CMND *").grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        ctk.CTkEntry(fields_frame, textvariable=self.id_number_var, height=36, corner_radius=6).grid(
+            row=1, column=1, padx=5, pady=5, sticky="ew")
+            
+        ctk.CTkLabel(fields_frame, text="Ngày sinh (dd/mm/yyyy)").grid(row=1, column=2, padx=10, pady=10, sticky="w")
+        self.birth_entry = ctk.CTkEntry(fields_frame, height=36, corner_radius=6, placeholder_text="dd/mm/yyyy")
+        self.birth_entry.grid(row=1, column=3, padx=5, pady=5, sticky="ew")
+        self.birth_entry.bind("<FocusOut>", self._validate_birth_date)
+        
+        ctk.CTkLabel(fields_frame, text="Địa chỉ").grid(row=1, column=4, padx=10, pady=10, sticky="w")
+        ctk.CTkEntry(fields_frame, textvariable=self.address_var, height=36, corner_radius=6).grid(
+            row=1, column=5, padx=5, pady=5, sticky="ew")
+        
+        # Row 2
+        ctk.CTkLabel(fields_frame, text="Ghi chú").grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        ctk.CTkEntry(fields_frame, textvariable=self.note_var, height=36, corner_radius=6).grid(
+            row=2, column=1, columnspan=5, padx=5, pady=5, sticky="ew")
+        
+        # Action buttons
+        action_frame = ctk.CTkFrame(form, fg_color="transparent")
+        action_frame.pack(fill="x", pady=(0, 10))
+        
+        # Search frame
+        search_frame = ctk.CTkFrame(action_frame, fg_color="transparent")
+        search_frame.pack(side="left", fill="x", expand=True)
+        
+        ctk.CTkLabel(search_frame, text="Tìm kiếm:").pack(side="left", padx=(0, 5))
+        ctk.CTkEntry(
+            search_frame, 
+            textvariable=self.search_var, 
+            height=36, 
+            corner_radius=6,
+            placeholder_text="Nhập từ khóa..."
+        ).pack(side="left", fill="x", expand=True, padx=(0, 5))
+        
+        ctk.CTkButton(
+            search_frame, 
+            text="Tìm", 
+            width=80,
+            height=36,
+            corner_radius=6,
+            command=self.apply_search
+        ).pack(side="left", padx=(0, 5))
+        
+        # Action buttons frame
+        btn_frame = ctk.CTkFrame(action_frame, fg_color="transparent")
+        btn_frame.pack(side="right")
+        
+        # Create mode buttons
+        self.btn_refresh = ctk.CTkButton(
+            btn_frame, 
+            text="Làm mới",
+            command=self._reload,
+            width=100,
+            height=36,
+            corner_radius=6,
+            fg_color="#6c757d"
+        )
+        self.btn_refresh.pack(side="left", padx=5)
+        
+        self.btn_add = ctk.CTkButton(
+            btn_frame,
+            text="Thêm mới",
+            command=self.on_create_tenant,
+            width=100,
+            height=36,
+            corner_radius=6,
+            fg_color="#28a745",
+            hover_color="#218838"
+        )
+        self.btn_add.pack(side="left", padx=5)
+        
+        # Edit mode buttons (initially hidden)
+        self.btn_update = ctk.CTkButton(
+            btn_frame,
+            text="Cập nhật",
+            command=self.on_update_tenant,
+            width=100,
+            height=36,
+            corner_radius=6,
+            fg_color="#17a2b8",
+            hover_color="#138496",
+            state="disabled"
+        )
+        self.btn_update.pack(side="left", padx=5)
+        
+        self.btn_delete = ctk.CTkButton(
+            btn_frame,
+            text="Xóa",
+            command=self.on_delete_tenant,
+            width=100,
+            height=36,
+            corner_radius=6,
+            fg_color="#dc3545",
+            hover_color="#c82333",
+            state="disabled"
+        )
+        self.btn_delete.pack(side="left", padx=5)
+        
+        # Set initial form mode
+        self._set_form_mode("create")
 
     def _build_table(self):
         frame = ctk.CTkFrame(self)
         frame.pack(fill="both", expand=True, padx=12, pady=6)
+
+        # Add refresh button above the table
+        btn_frame = ctk.CTkFrame(frame, fg_color="transparent")
+        btn_frame.pack(fill="x", pady=(0, 5))
+        
+        ctk.CTkButton(
+            btn_frame, 
+            text="Làm mới dữ liệu",
+            command=self._reload,
+            width=150,
+            height=30,
+            corner_radius=6
+        ).pack(side="right")
 
         cols = ("id", "name", "sex", "phone", "idno", "address", "birth", "note")
         self.tree = ttk.Treeview(frame, columns=cols, show="headings", height=14)
@@ -150,6 +233,66 @@ class tenantTab(ctk.CTkFrame):
     def _load_data(self):
         self.tenants_cache = get_all_tenant()
         self.render_table(self.tenants_cache)
+        
+    def _set_form_mode(self, mode):
+        """Set form mode: 'create' or 'edit'"""
+        if mode == "create":
+            self.current_tenant_id = None
+            self.btn_add.configure(state="normal")
+            self.btn_update.configure(state="disabled")
+            self.btn_delete.configure(state="disabled")
+            self._clear_form()
+        elif mode == "edit":
+            self.btn_add.configure(state="disabled")
+            self.btn_update.configure(state="normal")
+            self.btn_delete.configure(state="normal")
+            
+    def _reload(self):
+        """Reload data from database"""
+        self._load_data()
+        self._set_form_mode("create")
+        
+    def _clear_form(self):
+        """Clear all form fields"""
+        self.current_tenant_id = None
+        self.full_name_var.set("")
+        self.phone_var.set("")
+        self.id_number_var.set("")
+        self.address_var.set("")
+        self.birth_var.set("")
+        self.birth_entry.delete(0, "end")
+        self.sex_var.set("Nam")
+        self.note_var.set("")
+        
+    def _validate_birth_date(self, event=None):
+        """Validate and format birth date to dd/mm/yyyy"""
+        date_str = self.birth_entry.get().strip()
+        if not date_str:
+            return
+            
+        # Try to parse the date
+        try:
+            # If it's already in yyyy-mm-dd format, convert to dd/mm/yyyy
+            if '-' in date_str:
+                from datetime import datetime
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                formatted_date = date_obj.strftime("%d/%m/%Y")
+                self.birth_var.set(date_str)  # Keep original for storage
+                self.birth_entry.delete(0, "end")
+                self.birth_entry.insert(0, formatted_date)
+            # If it's in dd/mm/yyyy, validate it
+            elif '/' in date_str:
+                day, month, year = map(int, date_str.split('/'))
+                if not (1 <= month <= 12 and 1 <= day <= 31 and 1900 <= year <= 2100):
+                    raise ValueError("Invalid date")
+                # Convert to yyyy-mm-dd for storage
+                formatted_date = f"{year:04d}-{month:02d}-{day:02d}"
+                self.birth_var.set(formatted_date)
+        except (ValueError, IndexError):
+            messagebox.showerror("Lỗi", "Định dạng ngày không hợp lệ. Vui lòng nhập theo định dạng dd/mm/yyyy")
+            self.birth_entry.focus_set()
+            return False
+        return True
 
     def render_table(self, tenants):
         self.tree.delete(*self.tree.get_children())
@@ -196,8 +339,37 @@ class tenantTab(ctk.CTkFrame):
 
         v = self.tree.item(sel[0], "values")
         self.current_tenant_id = int(v[0])
-
-        self.full_name_var.set(v[1])
+        
+        # Get the full tenant data
+        tenant = next((t for t in self.tenants_cache if t["tenant_id"] == self.current_tenant_id), None)
+        if not tenant:
+            return
+            
+        # Update form fields
+        self.full_name_var.set(tenant.get("full_name", ""))
+        self.phone_var.set(tenant.get("phone", ""))
+        self.id_number_var.set(tenant.get("id_number", ""))
+        self.address_var.set(tenant.get("address", ""))
+        
+        # Format birth date for display
+        birth = tenant.get("birth", "")
+        if birth:
+            try:
+                from datetime import datetime
+                date_obj = datetime.strptime(birth, "%Y-%m-%d")
+                formatted_date = date_obj.strftime("%d/%m/%Y")
+                self.birth_var.set(birth)  # Store in yyyy-mm-dd format
+                self.birth_entry.delete(0, "end")
+                self.birth_entry.insert(0, formatted_date)
+            except (ValueError, TypeError):
+                self.birth_var.set("")
+                self.birth_entry.delete(0, "end")
+        
+        self.sex_var.set(self._get_sex_str(tenant.get("sex", 0)))
+        self.note_var.set(tenant.get("note", ""))
+        
+        # Update button states
+        self._set_form_mode("edit")
         self.sex_var.set(v[2])
         self.phone_var.set(v[3])
         self.id_number_var.set(v[4])
@@ -206,68 +378,75 @@ class tenantTab(ctk.CTkFrame):
         self.note_var.set(v[7])
 
     def on_create_tenant(self):
-        data = self._collect_data()
-        if not data:
-            return
-        if not data["full_name"]:
-            messagebox.showwarning("Lỗi", "Vui lòng nhập tên khách hàng!")
-            return
-        phone = self.phone_var.get().strip()
-        if phone and (len(phone) < 10 or len(phone) > 11):
-            messagebox.showwarning("Lỗi", "Số điện thoại tối thiểu 10 ký tự và tối đa 11 ký tự")
-            return
-        if not data["id_number"]:
-            messagebox.showwarning("Lỗi", "Vui lòng nhập CCCD/CMND!")
-            return
-        id_number = self.id_number_var.get().strip()
-        if id_number and len(id_number) != 12:
-            messagebox.showwarning("Lỗi", "CCCD phải đúng 12 ký tự")
-            return
-        if any(r["id_number"].upper() == data["id_number"].upper() for r in self.tenants_cache):
-            messagebox.showwarning("Lỗi", f"Khách hàng đã tồn tại!")
-            return
         try:
-            create_tenant(validate_tenant(data))
-            messagebox.showinfo("OK", "Thêm khách hàng thành công")
-            self.reset_form()
-            self._load_data()
+            # Validate birth date first
+            if not self._validate_birth_date():
+                return
+                
+            data = {
+                "full_name": self.full_name_var.get().strip(),
+                "phone": self.phone_var.get().strip(),
+                "id_number": self.id_number_var.get().strip(),
+                "address": self.address_var.get().strip(),
+                "birth": self.birth_var.get().strip(),
+                "sex": self._get_sex_int(self.sex_var.get()),
+                "note": self.note_var.get().strip()
+            }
+            
+            # Validate required fields
+            if not data["full_name"]:
+                messagebox.showerror("Lỗi", "Vui lòng nhập họ tên")
+                return
+                
+            if not data["id_number"]:
+                messagebox.showerror("Lỗi", "Vui lòng nhập số CMND/CCCD")
+                return
+                
+            create_tenant(data)
+            messagebox.showinfo("Thành công", "Thêm khách hàng thành công!")
+            self._reload()
+            self._set_form_mode("create")  # Ensure we're in create mode after adding
+            
         except Exception as e:
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Lỗi", f"Lỗi khi thêm khách hàng: {str(e)}")
 
     def on_update_tenant(self):
         if not self.current_tenant_id:
-            messagebox.showwarning("Chưa chọn", "Chọn khách hàng trước")
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn khách hàng cần cập nhật")
             return
-        data = self._collect_data()
-        if not data:
-            return
-        if not data["full_name"]:
-            messagebox.showwarning("Lỗi", "Vui lòng nhập tên khách hàng!")
-            return
-        phone = self.phone_var.get().strip()
-        if phone and (len(phone) < 10 or len(phone) > 11):
-            messagebox.showwarning("Lỗi", "Số điện thoại tối thiểu 10 ký tự và tối đa 11 ký tự")
-            return
-        if not data["id_number"]:
-            messagebox.showwarning("Lỗi", "Vui lòng nhập CCCD/CMND!")
-            return
-        id_number = self.id_number_var.get().strip()
-        if id_number and len(id_number) != 12:
-            messagebox.showwarning("Lỗi", "CCCD phải đúng 12 ký tự")
-            return
-        if any(r["id_number"].upper() == data["id_number"].upper() for r in self.tenants_cache if r["tenant_id"] != self.current_tenant_id):
-            messagebox.showwarning("Lỗi", f"Khách hàng đã tồn tại!")
-            return
+            
         try:
-            update_tenant(self.current_tenant_id, validate_tenant(data))
-            messagebox.showinfo("OK", "Đã cập nhật")
-            self.reset_form()
-            self._load_data()
+            # Validate birth date first
+            if not self._validate_birth_date():
+                return
+                
+            data = {
+                "full_name": self.full_name_var.get().strip(),
+                "phone": self.phone_var.get().strip(),
+                "id_number": self.id_number_var.get().strip(),
+                "address": self.address_var.get().strip(),
+                "birth": self.birth_var.get().strip(),
+                "sex": self._get_sex_int(self.sex_var.get()),
+                "note": self.note_var.get().strip()
+            }
+            
+            # Validate required fields
+            if not data["full_name"]:
+                messagebox.showerror("Lỗi", "Vui lòng nhập họ tên")
+                return
+                
+            if not data["id_number"]:
+                messagebox.showerror("Lỗi", "Vui lòng nhập số CMND/CCCD")
+                return
+                
+            update_tenant(self.current_tenant_id, data)
+            messagebox.showinfo("Thành công", "Cập nhật thông tin khách hàng thành công!")
+            self._reload()
+            
         except Exception as e:
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Lỗi", f"Lỗi khi cập nhật thông tin: {str(e)}")
 
     def on_delete_tenant(self):
-        # print(f"[DEBUG] on_delete called. Current tenant_id: {self.current_tenant_id}")
         if not self.current_tenant_id:
             messagebox.showwarning("Lỗi", "Vui lòng chọn khách hàng cần xóa!")
             return
@@ -278,8 +457,8 @@ class tenantTab(ctk.CTkFrame):
         try:
             delete_tenant(self.current_tenant_id)
             messagebox.showinfo("Thành công", "Đã xóa khách hàng thành công!")
-            self.reset_form()
-            self._load_data()
+            self._reload()
+            self._set_form_mode("create")  # Reset to create mode after delete
         except Exception as e:
             messagebox.showerror("Lỗi", f"Không thể xóa khách hàng: {str(e)}")
 

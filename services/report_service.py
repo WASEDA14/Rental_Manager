@@ -111,4 +111,3 @@ def get_revenue_last_6_months():
             result.insert(0, {"month": "—", "revenue": 0})
 
         return result
-    return result

@@ -1,13 +1,12 @@
 from database.db import get_db
 from datetime import datetime
 
+
 def get_dashboard_stats():
     try:
         with get_db() as conn:
-            # Set row factory to return dictionaries
-            conn.row_factory = lambda cursor, row: {}
-
             cursor = conn.cursor()
+            print("Executing room stats query...")
             cursor.execute(
                 """
                 SELECT 
@@ -17,8 +16,10 @@ def get_dashboard_stats():
                 WHERE is_deleted = 0
                 """
             )
-            room_stats = cursor.fetchone() or {}
+            room_stats = dict(cursor.fetchone() or {})
+            print(f"Room stats: {room_stats}")
 
+            print("Executing tenant count query...")
             cursor.execute(
                 """
                 SELECT COUNT(DISTINCT tenant_id) as count
@@ -26,9 +27,11 @@ def get_dashboard_stats():
                 WHERE is_deleted = 0
                 """
             )
-            tenant_count = (cursor.fetchone() or {}).get('count', 0)
+            tenant_count = dict(cursor.fetchone() or {}).get('count', 0)
+            print(f"Tenant count: {tenant_count}")
 
             current_month = datetime.now().strftime('%Y-%m')
+            print(f"Current month: {current_month}")
             cursor.execute(
                 """
                 SELECT 
@@ -40,13 +43,15 @@ def get_dashboard_stats():
                 """,
                 (current_month,)
             )
-            bill_stats = cursor.fetchone() or {}
+            bill_stats = dict(cursor.fetchone() or {})
+            print(f"Bill stats: {bill_stats}")
 
             total_rooms = int(room_stats.get('total_rooms', 0) or 0)
             occupied_rooms = int(room_stats.get('occupied_rooms', 0) or 0)
             paid_bills = int(bill_stats.get('paid_bills', 0) or 0)
             total_bills = int(bill_stats.get('total_bills', 0) or 0)
-            return {
+
+            result = {
                 'total_rooms': total_rooms,
                 'occupied_rooms': occupied_rooms,
                 'available_rooms': total_rooms - occupied_rooms,
@@ -54,6 +59,8 @@ def get_dashboard_stats():
                 'paid_bills': paid_bills,
                 'total_bills': total_bills
             }
+            print(f"Returning dashboard stats: {result}")
+            return result
     except Exception as e:
         print(f"[ERROR] in get_dashboard_stats: {str(e)}")
         return {

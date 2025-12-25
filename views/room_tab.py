@@ -24,153 +24,171 @@ class roomTab(ctk.CTkFrame):
         self._load_data()
 
     def _build_ui(self):
+        # Title and action buttons
+        title_frame = ctk.CTkFrame(self, fg_color="transparent")
+        title_frame.pack(fill="x", padx=20, pady=(10, 10))
+        
         ctk.CTkLabel(
-            self,
-            text="QUẢN LÝ PHÒNG TRỌ",
-            font=("Inter", 28, "bold"),
-            text_color="#0041DE",
-        ).pack(pady=(30, 20))
+            title_frame,
+            text="Quản lý phòng",
+            font=ctk.CTkFont(size=24, weight="bold")
+        ).pack(side="left")
+        
+        # Action buttons
+        btn_frame = ctk.CTkFrame(title_frame, fg_color="transparent")
+        btn_frame.pack(side="right")
+        
+        self.btn_refresh = ctk.CTkButton(
+            btn_frame, 
+            text="Làm mới",
+            command=self.reset_form,
+            width=100,
+            height=36,
+            corner_radius=8
+        )
+        self.btn_refresh.pack(side="left", padx=5)
+        
+        self.btn_add = ctk.CTkButton(
+            btn_frame,
+            text="Thêm mới",
+            command=self.add_room,
+            width=100,
+            height=36,
+            corner_radius=8,
+            fg_color="#28a745",
+            hover_color="#218838"
+        )
+        self.btn_add.pack(side="left", padx=5)
+        
+        self.btn_update = ctk.CTkButton(
+            btn_frame,
+            text="Cập nhật",
+            command=self.update_room,
+            width=100,
+            height=36,
+            corner_radius=8,
+            fg_color="#17a2b8",
+            hover_color="#138496",
+            state="disabled"
+        )
+        self.btn_update.pack(side="left", padx=5)
+        
+        self.btn_delete = ctk.CTkButton(
+            btn_frame,
+            text="Xóa",
+            command=self.delete_room,
+            width=100,
+            height=36,
+            corner_radius=8,
+            fg_color="#dc3545",
+            hover_color="#c82333",
+            state="disabled"
+        )
+        self.btn_delete.pack(side="left", padx=5)
 
-        form_frame = ctk.CTkFrame(self, fg_color="white", corner_radius=20)
-        form_frame.pack(fill="x", padx=50, pady=(0, 25))
-
+        # Form frame
+        form_frame = ctk.CTkFrame(self, fg_color="white", corner_radius=10)
+        form_frame.pack(fill="x", padx=20, pady=(0, 20))
+        
         form = ctk.CTkFrame(form_frame, fg_color="transparent")
-        form.pack(fill="x", padx=60, pady=35)
-        form.grid_columnconfigure((0, 1, 2, 3), weight=1)
+        form.pack(fill="x", padx=20, pady=20)
+        form.grid_columnconfigure((0, 1, 2, 3), weight=1, uniform="form_cols")
 
-        ctk.CTkLabel(form, text="Tên phòng *", font=("Inter", 14, "bold")).grid(row=0, column=0, sticky="w",
-                                                                                pady=(0, 5))
-        self.entry_name = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15))
-        self.entry_name.grid(row=1, column=0, sticky="ew", pady=(0, 20))
+        # Form fields - Row 1
+        ctk.CTkLabel(form, text="Tên phòng *").grid(row=0, column=0, sticky="w", padx=5, pady=5)
+        self.entry_name = ctk.CTkEntry(form, height=36, corner_radius=6)
+        self.entry_name.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
 
-        ctk.CTkLabel(form, text="Số tầng", font=("Inter", 14, "bold")).grid(row=0, column=1, sticky="w", pady=(0, 5),
-                                                                            padx=(30, 0))
-        self.entry_floor = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15))
-        self.entry_floor.grid(row=1, column=1, sticky="ew", pady=(0, 20), padx=(30, 0))
+        ctk.CTkLabel(form, text="Số tầng").grid(row=0, column=1, sticky="w", padx=5, pady=5)
+        self.entry_floor = ctk.CTkEntry(form, height=36, corner_radius=6)
+        self.entry_floor.grid(row=1, column=1, sticky="ew", padx=5, pady=5)
 
-        ctk.CTkLabel(form, text="Diện tích (m²)", font=("Inter", 14, "bold")).grid(row=0, column=2, sticky="w",
-                                                                                   pady=(0, 5), padx=(30, 0))
-        self.entry_area = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15))
-        self.entry_area.grid(row=1, column=2, sticky="ew", pady=(0, 20), padx=(30, 0))
+        ctk.CTkLabel(form, text="Diện tích (m²)").grid(row=0, column=2, sticky="w", padx=5, pady=5)
+        self.entry_area = ctk.CTkEntry(form, height=36, corner_radius=6)
+        self.entry_area.grid(row=1, column=2, sticky="ew", padx=5, pady=5)
 
-        ctk.CTkLabel(form, text="Giá thuê (VNĐ)", font=("Inter", 14, "bold")).grid(row=0, column=3, sticky="w",
-                                                                                   pady=(0, 5), padx=(30, 0))
-        self.entry_rent = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15))
-        self.entry_rent.grid(row=1, column=3, sticky="ew", pady=(0, 20), padx=(30, 0))
+        ctk.CTkLabel(form, text="Giá thuê (VNĐ)").grid(row=0, column=3, sticky="w", padx=5, pady=5)
+        self.entry_rent = ctk.CTkEntry(form, height=36, corner_radius=6)
+        self.entry_rent.grid(row=1, column=3, sticky="ew", padx=5, pady=5)
         self.entry_rent.bind("<KeyRelease>", lambda e: format_money(self, e))
 
-        ctk.CTkLabel(form, text="Giá điện (VNĐ/kWh)", font=("Inter", 14, "bold")).grid(row=2, column=0, sticky="w",
-                                                                                       pady=(0, 5))
-        self.entry_elec = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15))
-        self.entry_elec.grid(row=3, column=0, sticky="ew", pady=(0, 20))
+        # Form fields - Row 2
+        ctk.CTkLabel(form, text="Giá điện (VNĐ/kWh)").grid(row=2, column=0, sticky="w", padx=5, pady=5)
+        self.entry_elec = ctk.CTkEntry(form, height=36, corner_radius=6)
+        self.entry_elec.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
         self.entry_elec.bind("<KeyRelease>", lambda e: format_money(self, e))
 
-        ctk.CTkLabel(form, text="Giá nước (VNĐ/m³)", font=("Inter", 14, "bold")).grid(row=2, column=1, sticky="w",
-                                                                                      pady=(0, 5), padx=(30, 0))
-        self.entry_water = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15))
-        self.entry_water.grid(row=3, column=1, sticky="ew", pady=(0, 20), padx=(30, 0))
+        ctk.CTkLabel(form, text="Giá nước (VNĐ/m³)").grid(row=2, column=1, sticky="w", padx=5, pady=5)
+        self.entry_water = ctk.CTkEntry(form, height=36, corner_radius=6)
+        self.entry_water.grid(row=3, column=1, sticky="ew", padx=5, pady=5)
         self.entry_water.bind("<KeyRelease>", lambda e: format_money(self, e))
 
-        ctk.CTkLabel(form, text="Trạng thái", font=("Inter", 14, "bold")).grid(row=2, column=2, sticky="w", pady=(0, 5),
-                                                                               padx=(30, 0))
-        self.combo_status = ctk.CTkComboBox(form, values=list(STATUS_MAP.keys()), height=40, corner_radius=7,
-                                            font=("Inter", 15), state="readonly")
+        ctk.CTkLabel(form, text="Trạng thái").grid(row=2, column=2, sticky="w", padx=5, pady=5)
+        self.combo_status = ctk.CTkComboBox(
+            form, 
+            values=list(STATUS_MAP.keys()),
+            height=36, 
+            corner_radius=6,
+            state="readonly"
+        )
         self.combo_status.set("Trống")
-        self.combo_status.grid(row=3, column=2, sticky="ew", pady=(0, 20), padx=(30, 0))
+        self.combo_status.grid(row=3, column=2, sticky="ew", padx=5, pady=5)
 
-        ctk.CTkLabel(form, text="Ghi chú", font=("Inter", 14, "bold")).grid(row=2, column=3, sticky="w", pady=(0, 5),
-                                                                            padx=(30, 0))
-        self.entry_note = ctk.CTkEntry(form, height=40, corner_radius=7, font=("Inter", 15))
-        self.entry_note.grid(row=3, column=3, sticky="ew", pady=(0, 20), padx=(30, 0))
+        ctk.CTkLabel(form, text="Ghi chú").grid(row=2, column=3, sticky="w", padx=5, pady=5)
+        self.entry_note = ctk.CTkEntry(form, height=36, corner_radius=6)
+        self.entry_note.grid(row=3, column=3, sticky="ew", padx=5, pady=5)
 
-        btn_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
-        btn_frame.pack(fill="x", padx=60, pady=(10, 30))
-        btn_right = ctk.CTkFrame(btn_frame, fg_color="transparent")
-        btn_right.pack(side="right")
+        # Separator between form and search
+        ctk.CTkFrame(self, height=1, fg_color="#e0e0e0").pack(fill="x", padx=20, pady=(0, 10))
 
-        self.btn_add = ctk.CTkButton(btn_right, text="Thêm Phòng", height=44, corner_radius=7,
-                                     font=("Inter", 15, "bold"), fg_color="#00B63E", hover_color="#02A037",
-                                     command=self.add_room)
-        self.btn_add.pack(side="right", padx=8)
-
-        self.btn_update = ctk.CTkButton(btn_right, text="Cập Nhật", height=44, corner_radius=7,
-                                        font=("Inter", 15, "bold"), fg_color="#0067F7", hover_color="#225CD8",
-                                        command=self.update_room)
-
-        self.btn_update.configure(state="disabled")
-        self.btn_update.pack(side="right", padx=8)
-
-        self.btn_delete = ctk.CTkButton(btn_right, text="Xóa Phòng", height=44, corner_radius=7,
-                                        font=("Inter", 15, "bold"), fg_color="#F50002", hover_color="#C91D1D",
-                                        command=self.delete_room)
-
-        self.btn_delete.configure(state="disabled")
-        self.btn_delete.pack(side="right", padx=8)
-
-        self.btn_reset = ctk.CTkButton(btn_right, text="Làm Mới", height=44, corner_radius=7,
-                                       font=("Inter", 15, "bold"), fg_color="#282D33", hover_color="#1F2327",
-                                       command=self.reset_form)
-        self.btn_reset.pack(side="right", padx=8)
-
-        search_frame = ctk.CTkFrame(self, fg_color="white", corner_radius=12)
-        search_frame.pack(fill="x", padx=50, pady=(0, 10))
-        search_frame.grid_columnconfigure(0, weight=1)
-
-        self.search_entry = ctk.CTkEntry(search_frame, height=38, corner_radius=7,
-                                         font=("Inter", 14))
-        self.search_entry.grid(row=0, column=0, sticky="ew", padx=(20, 10), pady=12)
-
+        # Search and filter section
+        search_frame = ctk.CTkFrame(self, fg_color="transparent")
+        search_frame.pack(fill="x", padx=20, pady=(0, 10))
+        
+        # Search entry
+        self.search_entry = ctk.CTkEntry(
+            search_frame,
+            placeholder_text="Tìm kiếm...",
+            height=36,
+            corner_radius=6
+        )
+        self.search_entry.pack(side="left", fill="x", expand=True, padx=(0, 10))
+        self.search_entry.bind("<Return>", lambda e: self.apply_search())
+        
+        # Search mode
         self.search_mode = ctk.CTkComboBox(
             search_frame,
-            values=["Tên phòng", "Tầng", "Diện tích", "Gía thuê", "Tất cả"],
-            height=38,
-            corner_radius=7,
-            font=("Inter", 14),
+            values=["Tên phòng", "Tầng", "Diện tích", "Giá thuê", "Tất cả"],
+            height=36,
+            corner_radius=6,
             state="readonly",
-            width=170,
+            width=150
         )
-        self.search_mode.set("Tên phòng")
-        self.search_mode.grid(row=0, column=1, sticky="e", padx=(0, 10), pady=12)
-
+        self.search_mode.set("Tất cả")
+        self.search_mode.pack(side="left", padx=(0, 10))
+        
+        # Status filter
         self.search_status = ctk.CTkComboBox(
             search_frame,
             values=["Tất cả"] + list(STATUS_MAP.keys()),
-            height=38,
-            corner_radius=7,
-            font=("Inter", 14),
+            height=36,
+            corner_radius=6,
             state="readonly",
-            width=140,
+            width=120
         )
         self.search_status.set("Tất cả")
-        self.search_status.grid(row=0, column=2, sticky="e", padx=(0, 10), pady=12)
-
+        self.search_status.pack(side="left", padx=(0, 10))
+        
+        # Search button
         self.btn_search = ctk.CTkButton(
             search_frame,
-            text="Tìm",
-            height=38,
-            corner_radius=7,
-            font=("Inter", 14, "bold"),
-            fg_color="#0067F7",
-            hover_color="#225CD8",
+            text="Tìm kiếm",
             command=self.apply_search,
-            width=80,
+            height=36,
+            corner_radius=6,
+            width=120
         )
-        self.btn_search.grid(row=0, column=3, sticky="e", padx=(0, 10), pady=12)
-
-        # self.btn_clear_search = ctk.CTkButton(
-        #     search_frame,
-        #     text="Xóa",
-        #     height=38,
-        #     corner_radius=7,
-        #     font=("Inter", 14, "bold"),
-        #     fg_color="#282D33",
-        #     hover_color="#1F2327",
-        #     command=self.clear_search,
-        #     width=80,
-        # )
-        # self.btn_clear_search.grid(row=0, column=4, sticky="e", padx=(0, 20), pady=12)
-        #
-        # self.search_entry.bind("<Return>", lambda _e: self.apply_search())
+        self.btn_search.pack(side="left", padx=(0, 10))
 
         table_frame = ctk.CTkFrame(self)
         table_frame.pack(fill="both", expand=True, padx=50, pady=(0, 40))
