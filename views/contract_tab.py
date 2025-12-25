@@ -20,7 +20,7 @@ class contractTab(ctk.CTkFrame):
         super().__init__(parent)
         self._selected_id = None
 
-        # Cache dữ liệu cho Combobox (ID -> Data)
+        # Cache dữ liệu cho Combobox
         self.rooms_map = {}
         self.tenants_map = {}
 
@@ -113,7 +113,6 @@ class contractTab(ctk.CTkFrame):
         ctk.CTkButton(action, text="Làm mới", fg_color="#7f8c8d", command=self.on_clear).pack(side="right", padx=6)
 
     def _build_table(self):
-        # Treeview frame
         table_frame = ctk.CTkFrame(self)
         table_frame.pack(fill="both", expand=True, padx=12, pady=6)
 
@@ -186,13 +185,9 @@ class contractTab(ctk.CTkFrame):
         self.tree.delete(*self.tree.get_children())
 
         for r in rows:
-            # r index: 0:id, ..., -2: room_name, -1: tenant_name (check lại BE SQL)
-            # BE: SELECT c.*, r.room_name, t.full_name
-            # c.* giả sử có 14 cột. r.room_name là cột kế cuối, t.full_name là cột cuối.
-
             # Để an toàn, truy cập bằng index âm hoặc key nếu trả về dict-like row
             c_id = r[0]
-            room_name = r['room_name']  # Nếu dùng sqlite3.Row
+            room_name = r['room_name']
             tenant_name = r['full_name']
             start_date = r['start_ymd']
             end_date = r['end_ymd']
@@ -212,16 +207,12 @@ class contractTab(ctk.CTkFrame):
         self.reload()
         self.on_clear()
 
-    # ===== Event Handlers =====
-
     def on_room_select(self, choice):
-        # Tự động điền giá thuê khi chọn phòng
         if choice in self.rooms_map:
             rent = self.rooms_map[choice]["rent"]
             self.rent_var.set(format_currency(rent))
 
     def on_tenant_select(self, choice):
-        # Tự động điền người liên hệ là tên khách thuê
         self.tenant_var.set(choice)
 
     def on_pick(self, _):
@@ -268,11 +259,8 @@ class contractTab(ctk.CTkFrame):
         self.cb_room.configure(state="normal")
         self.cb_tenant.configure(state="normal")
 
-        # Bỏ chọn bảng
         if self.tree.selection():
             self.tree.selection_remove(self.tree.selection()[0])
-
-    # ===== CRUD Actions =====
 
     def _get_form_data(self):
         # Validate cơ bản
@@ -336,11 +324,6 @@ class contractTab(ctk.CTkFrame):
         data = self._get_form_data()
         if not data: return
 
-        # Khi update, room_id và tenant_id có thể bị None do logic combobox map
-        # Cần giữ nguyên ID cũ nếu không chọn mới. (Ở đây code BE yêu cầu room_id, tenant_id)
-        # Để đơn giản, bản demo này hạn chế đổi phòng/khách khi update.
-        # Nếu muốn đổi, cần load lại list available room + current room.
-
         # Fix nhanh: Lấy room_id/tenant_id từ DB cũ nếu data trả về None
         old_contract = get_contract_by_id(self._selected_id)  # tuple
         if data["room_id"] is None: data["room_id"] = old_contract[1]
@@ -364,7 +347,7 @@ class contractTab(ctk.CTkFrame):
 
     def on_export_pdf(self):
         if not self._selected_id:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn hợp đồng để xuất PDF!")
+            messagebox.showwarning("Lỗi", "Vui lòng chọn hợp đồng để xuất PDF!")
             return
         try:
             pdf_path = export_contract_to_pdf(self._selected_id)
@@ -375,7 +358,7 @@ class contractTab(ctk.CTkFrame):
 
     def on_end_contract(self):
         if not self._selected_id:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn hợp đồng để kết thúc!")
+            messagebox.showwarning("Lỗi", "Vui lòng chọn hợp đồng để kết thúc!")
             return
 
         if messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn kết thúc hợp đồng này?"):
