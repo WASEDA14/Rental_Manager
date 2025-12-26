@@ -64,7 +64,7 @@ class ReportTab(ctk.CTkFrame):
         if total == 0:
             self._no_data(ax, "Chưa có dữ liệu phòng")
         else:
-            labels = ["Đang thuê", "Trống", "Bảo trì"]
+            labels = ["Đang thuê", "Trống", "Đang chuẩn bị"]
             colors = ["#0067F7", "#00B63E", "#f59e0b"]
             bars = ax.bar(
                 labels,
@@ -219,14 +219,18 @@ class ReportTab(ctk.CTkFrame):
             ax.set_xticklabels(labels, fontsize=10, fontweight="bold")
             ax.set_title("HỢP ĐỒNG", fontsize=13, fontweight="bold", pad=12)
             ax.grid(True, axis="y", linestyle="--", alpha=0.4)
-            ax.set_ylim(0, max(values) * 1.3 or 1)
 
+            # Set y-axis limits with a minimum height
+            max_val = max(values) if max(values) > 0 else 1
+            ax.set_ylim(0, max_val * 1.3)
+
+            # Add value labels on top of bars
             for bar in bars:
                 h = int(bar.get_height())
                 if h > 0:
                     ax.text(
                         bar.get_x() + bar.get_width() / 2,
-                        h + max(values) * 0.02,
+                        h + max_val * 0.02,
                         str(h),
                         ha="center",
                         va="bottom",

@@ -2,7 +2,6 @@
 from database.db import get_db
 from datetime import datetime, timedelta
 
-
 def get_room_report():
     with get_db() as conn:
         total = conn.execute("SELECT COUNT(*) FROM room WHERE is_deleted = 0").fetchone()[0]
@@ -19,7 +18,6 @@ def get_room_report():
             "available": available,
             "maintenance": maintenance,
         }
-
 
 def get_tenant_report():
     with get_db() as conn:
@@ -55,7 +53,7 @@ def get_contract_report():
         new_this_month = conn.execute(
             """
             SELECT COUNT(*) FROM contract 
-            WHERE strftime('%Y-%m', start_ymd) = ? AND contract_status = 'active' AND is_deleted = 0
+            WHERE strftime('%Y/%m/%d', start_ymd) = ? AND contract_status = 'active' AND is_deleted = 0
         """,
             (this_month,),
         ).fetchone()[0]

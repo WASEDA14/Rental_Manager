@@ -114,7 +114,7 @@ class DashboardView(ctk.CTkFrame):
                      font=ctk.CTkFont(size=24, weight="bold")).pack(anchor="w", pady=(0, 20))
 
         self.cards_frame = ctk.CTkFrame(self.dashboard_frame, fg_color="transparent")
-        self.cards_frame.pack(fill="x", pady=(0, 20))
+        self.cards_frame.pack(fill="x", pady=(0, 20), anchor="center")
 
         for i in range(3):
             self.cards_frame.grid_columnconfigure(i, weight=1, uniform="cards")
