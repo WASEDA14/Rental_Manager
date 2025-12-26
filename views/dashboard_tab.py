@@ -7,6 +7,7 @@ from views.room_tab import roomTab
 from views.tenant_tab import tenantTab
 from views.report_tab import ReportTab
 
+
 class Card(ctk.CTkFrame):
     def __init__(self, parent, title: str, value: str, color: str):
         super().__init__(parent, corner_radius=12)
@@ -46,7 +47,8 @@ class DashboardView(ctk.CTkFrame):
         self.show_dashboard()
 
     def setup_sidebar(self):
-        self.sidebar = ctk.CTkFrame(self, width=240, corner_radius=0,fg_color=("#f0f2f5", "#1a1a1a"), border_width=1, border_color=("#e0e0e0", "#2d2d2d"))
+        self.sidebar = ctk.CTkFrame(self, width=240, corner_radius=0, fg_color=("#f0f2f5", "#1a1a1a"), border_width=1,
+                                    border_color=("#e0e0e0", "#2d2d2d"))
         self.sidebar.pack(side="left", fill="y")
         self.sidebar.pack_propagate(False)
 
@@ -72,22 +74,22 @@ class DashboardView(ctk.CTkFrame):
         # First pass: create all buttons
         for text, command in self.nav_buttons:
             btn = ctk.CTkButton(
-                nav_frame, 
-                text=text, 
+                nav_frame,
+                text=text,
                 command=lambda t=text, c=command: self.on_nav_button_click(t, c),
-                anchor="w", 
-                height=40, 
+                anchor="w",
+                height=40,
                 corner_radius=8,
                 font=ctk.CTkFont(weight="normal"),
                 fg_color=("#ffffff", "#2b2b2b"),
                 text_color=("#2b2b2b", "#ffffff"),
                 hover_color=("#e9e9e9", "#3a3a3a"),
-                border_width=1, 
+                border_width=1,
                 border_color=("#e0e0e0", "#3a3a3a")
             )
             btn.pack(fill="x", pady=4)
             setattr(self, f"{text.lower()}_button", btn)
-        
+
         # Set Dashboard as active after all buttons are created
         if hasattr(self, 'dashboard_button'):
             self.set_active_button(self.dashboard_button)
@@ -96,11 +98,11 @@ class DashboardView(ctk.CTkFrame):
         logout_frame = ctk.CTkFrame(sidebar_content, fg_color="transparent")
         logout_frame.pack(fill="x", side="bottom")
         ctk.CTkButton(logout_frame, text="Logout", command=self.log_out,
-                       height=40, corner_radius=8,
-                       font=ctk.CTkFont(weight="bold"),
-                       fg_color=("#e74c3c", "#c0392b"),
-                       hover_color=("#c0392b", "#e74c3c"),
-                       text_color=("#ffffff", "#ffffff")).pack(fill="x", pady=(10, 0))
+                      height=40, corner_radius=8,
+                      font=ctk.CTkFont(weight="bold"),
+                      fg_color=("#e74c3c", "#c0392b"),
+                      hover_color=("#c0392b", "#e74c3c"),
+                      text_color=("#ffffff", "#ffffff")).pack(fill="x", pady=(10, 0))
 
     def setup_content(self):
         self.content = ctk.CTkFrame(self, fg_color="transparent")
@@ -122,7 +124,6 @@ class DashboardView(ctk.CTkFrame):
         self.room_card = Card(self.cards_frame, "Rooms", "0/0", "#3498db")
         self.tenant_card = Card(self.cards_frame, "Tenants", "0", "#f1c40f")
         self.payment_card = Card(self.cards_frame, "Payments", "0/0", "#27ae60")
-
 
         self.room_card.grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
         self.tenant_card.grid(row=0, column=1, padx=8, pady=8, sticky="nsew")
@@ -147,7 +148,7 @@ class DashboardView(ctk.CTkFrame):
         button = getattr(self, f"{button_text.lower()}_button")
         self.set_active_button(button)
         command()
-        
+
     def set_active_button(self, button):
         for text, _ in self.nav_buttons:
             btn = getattr(self, f"{text.lower()}_button")
@@ -160,7 +161,7 @@ class DashboardView(ctk.CTkFrame):
             text_color=("#000000", "#ffffff")
         )
         self.active_button = button
-        
+
     def show_dashboard(self):
         self.hide_all()
         self.dashboard_frame.pack(fill="both", expand=True, padx=20, pady=20)
@@ -187,7 +188,7 @@ class DashboardView(ctk.CTkFrame):
         if hasattr(tab, 'initialize'):
             tab.initialize()
         tab.pack(fill="both", expand=True, padx=20, pady=20)
-        
+
     def show_report(self):
         self.hide_all()
         user_id = getattr(self.controller, 'current_user_id', None) if self.controller else None
@@ -202,7 +203,6 @@ class DashboardView(ctk.CTkFrame):
         if hasattr(tab, 'initialize'):
             tab.initialize()
         tab.pack(fill="both", expand=True, padx=20, pady=20)
-
 
     def reload_room_card(self, occupied, total):
         self.room_card.update_value(f"{occupied}/{total}")
