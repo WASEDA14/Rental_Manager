@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from services.room_service import get_all_rooms, create_room, update_room, delete_room
-from utils.format import parse_currency, format_currency, format_money
+from utils.format import parse_currency, format_currency, parse_currency
 
 STATUS_MAP = {
     "Trống": 0,
@@ -62,18 +62,18 @@ class roomTab(ctk.CTkFrame):
         ctk.CTkLabel(form, text="Giá thuê").grid(row=2, column=0, sticky="w")
         self.entry_rent = ctk.CTkEntry(form, width=160)
         self.entry_rent.grid(row=2, column=1, padx=6, sticky="w")
-        self.entry_rent.bind("<KeyRelease>", lambda e: format_money(self, e))
+        self.entry_rent.bind("<KeyRelease>", lambda e: parse_currency(self, e))
 
         ctk.CTkLabel(form, text="Giá điện").grid(row=2, column=2, sticky="w")
         self.entry_elec = ctk.CTkEntry(form, width=100)
         self.entry_elec.grid(row=2, column=3, padx=6, sticky="w")
-        self.entry_elec.bind("<KeyRelease>", lambda e: format_money(self, e))
+        self.entry_elec.bind("<KeyRelease>", lambda e: parse_currency(self, e))
 
         # Row 3: More Pricing
         ctk.CTkLabel(form, text="Giá nước").grid(row=3, column=0, sticky="w")
         self.entry_water = ctk.CTkEntry(form, width=160)
         self.entry_water.grid(row=3, column=1, padx=6, sticky="w")
-        self.entry_water.bind("<KeyRelease>", lambda e: format_money(self, e))
+        self.entry_water.bind("<KeyRelease>", lambda e: parse_currency(self, e))
 
         ctk.CTkLabel(form, text="Ghi chú").grid(row=3, column=2, sticky="w")
         self.entry_note = ctk.CTkEntry(form, width=300)

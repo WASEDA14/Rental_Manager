@@ -23,23 +23,32 @@ def get_tenant_report():
     with get_db() as conn:
         active = conn.execute(
             """
-            SELECT COUNT(DISTINCT t.tenant_id) 
+           SELECT COUNT(DISTINCT t.tenant_id) 
             FROM tenant t
             JOIN contract c ON t.tenant_id = c.tenant_id
-            WHERE c.contract_status = 'active' AND c.is_deleted = 0 AND t.is_deleted = 0
-        """
+            WHERE c.contract_status = 'active' 
+              AND c.is_deleted = 0 
+              AND t.is_deleted = 0
+            """
         ).fetchone()[0]
 
         this_month = datetime.now().strftime("%Y-%m")
-        new_this_month = conn.execute(
+        new_this_month_result = conn.execute(
             """
-            SELECT COUNT(DISTINCT t.tenant_id)
+               SELECT 
+                COUNT(DISTINCT t.tenant_id) as count,
+                GROUP_CONCAT(DATE(c.start_ymd)) as dates
             FROM tenant t
             JOIN contract c ON t.tenant_id = c.tenant_id
-            WHERE strftime('%Y-%m', c.start_ymd) = ? AND c.contract_status = 'active' AND c.is_deleted = 0
-        """,
+            WHERE c.contract_status = 'active' 
+              AND c.is_deleted = 0
+              AND strftime('%Y-%m', c.start_ymd) = ?
+            GROUP BY 1=1
+          """,
             (this_month,),
-        ).fetchone()[0]
+        ).fetchone()
+        
+        new_this_month = new_this_month_result[0] if new_this_month_result else 0
 
         return {"active": active, "new_this_month": new_this_month}
 

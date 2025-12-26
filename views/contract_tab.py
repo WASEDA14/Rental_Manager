@@ -47,12 +47,13 @@ class contractTab(ctk.CTkFrame):
         # self._build_actions()
 
         # Load Data
+        self.initialize()
+        
+    def initialize(self):
+        self.on_clear()
         self._load_combobox_data()
         self.reload()
 
-    def initialize(self):
-        self._load_combobox_data()
-        self.reload()
 
     def _build_form(self):
         form = ctk.CTkFrame(self)
@@ -344,12 +345,7 @@ class contractTab(ctk.CTkFrame):
         data = self._get_form_data()
         if not data: return
 
-        # Khi update, room_id và tenant_id có thể bị None do logic combobox map
-        # Cần giữ nguyên ID cũ nếu không chọn mới. (Ở đây code BE yêu cầu room_id, tenant_id)
-        # Để đơn giản, bản demo này hạn chế đổi phòng/khách khi update.
-        # Nếu muốn đổi, cần load lại list available room + current room.
 
-        # Fix nhanh: Lấy room_id/tenant_id từ DB cũ nếu data trả về None
         old_contract = get_contract_by_id(self._selected_id)  # tuple
         if data["room_id"] is None: data["room_id"] = old_contract[1]
         if data["tenant_id"] is None: data["tenant_id"] = old_contract[2]

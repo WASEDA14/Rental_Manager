@@ -16,6 +16,17 @@ class ReportTab(ctk.CTkFrame):
     def __init__(self, master, user_id):
         super().__init__(master, fg_color="transparent")
         self._create_header()
+        self.main_frame = None
+        self._create_charts()
+        
+    def initialize(self):
+        """Called when the tab is shown to refresh data"""
+        self.refresh_data()
+        
+    def refresh_data(self):
+        """Refresh all charts with latest data"""
+        if hasattr(self, 'main_frame'):
+            self.main_frame.destroy()
         self._create_charts()
 
     def _create_header(self):
@@ -37,10 +48,11 @@ class ReportTab(ctk.CTkFrame):
         ).pack(pady=(0, 20))
 
     def _create_charts(self):
-        main = ctk.CTkFrame(self, fg_color="transparent")
-        main.pack(fill="both", expand=True, padx=35, pady=10)
-        main.grid_rowconfigure((0, 1), weight=1)
-        main.grid_columnconfigure((0, 1), weight=1)
+        self.main_frame = ctk.CTkFrame(self, fg_color="transparent")
+        self.main_frame.pack(fill="both", expand=True, padx=35, pady=10)
+        self.main_frame.grid_rowconfigure((0, 1), weight=1)
+        self.main_frame.grid_columnconfigure((0, 1), weight=1)
+        main = self.main_frame  # For backward compatibility with existing code
 
         room = get_room_report()
         tenant = get_tenant_report()
