@@ -20,7 +20,7 @@ class roomTab(ctk.CTkFrame):
 
         # Biến cache để lưu danh sách phòng (giúp check trùng tên nhanh hơn)
         self.rooms_cache = []
-        
+
         self._build_ui()
         self._load_data()
 
@@ -29,7 +29,7 @@ class roomTab(ctk.CTkFrame):
         self._build_form()
         # Table
         self._build_table()
-        
+
     def _build_form(self):
         form = ctk.CTkFrame(self)
         form.pack(fill="x", padx=12, pady=(12, 6))
@@ -50,7 +50,7 @@ class roomTab(ctk.CTkFrame):
 
         ctk.CTkLabel(form, text="Trạng thái").grid(row=1, column=2, sticky="w")
         self.combo_status = ctk.CTkComboBox(
-            form, 
+            form,
             values=list(STATUS_MAP.keys()),
             width=100,
             state="readonly"
@@ -87,7 +87,7 @@ class roomTab(ctk.CTkFrame):
         self.search_entry = ctk.CTkEntry(action, width=200)
         self.search_entry.pack(side="left", padx=6)
         self.search_entry.bind("<Return>", lambda e: self.apply_search())
-        
+
         self.search_status = ctk.CTkComboBox(
             action,
             values=["Tất cả"] + list(STATUS_MAP.keys()),
@@ -96,9 +96,9 @@ class roomTab(ctk.CTkFrame):
         )
         self.search_status.set("Tất cả")
         self.search_status.pack(side="left", padx=6)
-        
+
         ctk.CTkButton(action, text="Tìm", width=60, command=self.apply_search).pack(side="left")
-        
+
         ctk.CTkButton(action, text="Xóa", fg_color="#e74c3c", command=self.delete_room).pack(side="right", padx=6)
         ctk.CTkButton(action, text="Cập nhật", fg_color="#f39c12", command=self.update_room).pack(side="right", padx=6)
         ctk.CTkButton(action, text="Thêm mới", fg_color="#27ae60", command=self.add_room).pack(side="right", padx=6)
@@ -122,7 +122,7 @@ class roomTab(ctk.CTkFrame):
             "status": "Trạng thái",
             "note": "Ghi chú"
         }
-        
+
         # Configure column widths and anchors
         widths = {
             "id": 40,
@@ -149,7 +149,7 @@ class roomTab(ctk.CTkFrame):
 
         # Create and configure treeview
         self.tree = ttk.Treeview(table_frame, columns=cols, show="headings", height=14)
-        
+
         # Set up columns and headers
         for col in cols:
             self.tree.heading(col, text=headers[col])
@@ -170,20 +170,20 @@ class roomTab(ctk.CTkFrame):
         style = ttk.Style()
         style.configure("Treeview", font=("Inter", 13), rowheight=40)
         style.configure("Treeview.Heading", font=("Inter", 13, "bold"))
-        
+
     def on_select_room(self, event):
         """Handle row selection in the room table"""
         selected = self.tree.selection()
         if not selected:
             return
-            
+
         # Get the selected item
         item = self.tree.item(selected[0])
         values = item['values']
-        
+
         if not values:
             return
-            
+
         # Update form fields with selected room data
         self.current_room_id = values[0]  # ID
         self.entry_name.delete(0, 'end')
@@ -198,18 +198,18 @@ class roomTab(ctk.CTkFrame):
         self.entry_elec.insert(0, values[5])  # Electricity price
         self.entry_water.delete(0, 'end')
         self.entry_water.insert(0, values[6])  # Water price
-        
+
         # Set status
         status_text = values[7]  # Status text
         for key, value in STATUS_MAP.items():
             if key == status_text:
                 self.combo_status.set(key)
                 break
-                
+
         self.entry_note.delete(0, 'end')
         if len(values) > 8:  # Note is optional
             self.entry_note.insert(0, values[8])
-            
+
         # Buttons are already managed in the action bar, no need to enable/disable here
 
     def _load_data(self):
@@ -374,7 +374,6 @@ class roomTab(ctk.CTkFrame):
         # Clear selection in the table
         if self.tree.selection():
             self.tree.selection_remove(self.tree.selection()[0])
-
 
     def add_room(self):
         data = self._get_form_data()

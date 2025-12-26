@@ -261,16 +261,17 @@ class billTab(ctk.CTkFrame):
         filter_kw = self.search_var.get().lower()
 
         for b in bills:
-            b_id = b[0]
-            b_code = b[1]
-            b_month = b[3]
-            b_total = b[11]
-            b_note = b[12]
-            b_status = b[-1]
-
-            # Cột join
-            b_room = b[-4]
-            b_tenant = b[-3]
+            # Convert row to dict for safer access
+            bill = dict(zip(b.keys(), b))
+            
+            b_id = bill['bill_id']
+            b_code = bill.get('code', '')
+            b_month = bill['bill_month']
+            b_total = bill['total_amount']
+            b_note = bill.get('note', '')
+            b_status = bill.get('paid_status', 'unpaid')
+            b_room = bill.get('room_name', '')
+            b_tenant = bill.get('tenant_name', '')
 
             status_display = {
                 'paid': 'Đã thanh toán',
@@ -279,13 +280,19 @@ class billTab(ctk.CTkFrame):
             }.get(b_status, b_status)
 
             if filter_kw and (filter_kw not in str(b_code).lower() and
-                              filter_kw not in b_room.lower() and
-                              filter_kw not in b_tenant.lower()):
+                            filter_kw not in b_room.lower() and
+                            filter_kw not in b_tenant.lower()):
                 continue
 
             self.tree.insert("", "end", values=(
-                b_id, b_code, b_room, b_tenant, b_month,
-                format_currency(b_total), status_display, b_note
+                b_id, 
+                b_code, 
+                b_room, 
+                b_tenant, 
+                b_month,  # This should now correctly show the bill month
+                format_currency(b_total), 
+                status_display, 
+                b_note
             ))
 
     def on_contract_select(self, event):

@@ -1,3 +1,5 @@
+from tkinter import messagebox
+
 import customtkinter as ctk
 from views.bill_tab import billTab
 from views.contract_tab import contractTab
@@ -25,14 +27,15 @@ class Card(ctk.CTkFrame):
 
 
 class DashboardView(ctk.CTkFrame):
-    def __init__(self, parent, controller=None):
+    def __init__(self, parent, controller=None, login_window=None):
         super().__init__(parent, fg_color="transparent")
         self.parent = parent
         self.controller = controller
-        self.active_button = None  # To keep track of the active button
+        self.active_button = None
         self.tabs = {}
-        self.nav_buttons = []  # Initialize nav_buttons list
+        self.nav_buttons = []
         self.setup_ui()
+        self.login_window = login_window
 
         if self.controller:
             self.controller.view = self
@@ -125,9 +128,14 @@ class DashboardView(ctk.CTkFrame):
         self.tenant_card.grid(row=0, column=1, padx=8, pady=8, sticky="nsew")
         self.payment_card.grid(row=0, column=2, padx=8, pady=8, sticky="nsew")
 
-    def lazy_load_tab(self, name, cls):
+    def lazy_load_tab(self, name, cls, user_id=None):
         if name not in self.tabs:
-         self.tabs[name] = cls(self.content)
+            if name == "report":
+                # For ReportTab, we always need to pass user_id, even if it's None
+                self.tabs[name] = cls(self.content, user_id)
+            else:
+                # For other tabs, use the standard initialization
+                self.tabs[name] = cls(self.content)
         return self.tabs[name]
 
     def hide_all(self):
@@ -182,7 +190,8 @@ class DashboardView(ctk.CTkFrame):
         
     def show_report(self):
         self.hide_all()
-        tab = self.lazy_load_tab("report", ReportTab)
+        user_id = getattr(self.controller, 'current_user_id', None) if self.controller else None
+        tab = self.lazy_load_tab("report", ReportTab, user_id=user_id)
         if hasattr(tab, 'initialize'):
             tab.initialize()
         tab.pack(fill="both", expand=True, padx=20, pady=20)
@@ -205,5 +214,6 @@ class DashboardView(ctk.CTkFrame):
         self.payment_card.update_value(f"{paid}/{total}")
 
     def log_out(self):
-        if hasattr(self.parent, 'show_login'):
-            self.parent.show_login()
+        if not messagebox.askyesno("Đăng xuất", "Bạn có chắc muốn đăng xuất?", parent=self):
+            return
+        self.parent.show_login()

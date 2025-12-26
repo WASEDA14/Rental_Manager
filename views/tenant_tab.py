@@ -68,7 +68,7 @@ class tenantTab(ctk.CTkFrame):
         DateEntry(
             form,
             textvariable=self.birth_var,
-            date_pattern="yyyy-mm-dd",
+            date_pattern="dd/mm/yyyy",
             width=16
         ).grid(row=1, column=3, padx=6)
 

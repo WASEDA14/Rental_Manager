@@ -47,15 +47,6 @@ class loginTab(ctk.CTkFrame):
         )
         container.pack(fill="both", expand=True, padx=40, pady=40)
 
-        # try:
-        #     logo_img = Image.open(LOGO_PNG)
-        #     logo = ctk.CTkImage(
-        #         light_image=logo_img, dark_image=logo_img, size=(200, 40)
-        #     )
-        #     ctk.CTkLabel(container, image=logo, text="").pack(pady=(50, 10))
-        # except:
-        #     ctk.CTkLabel(container, text="LOGO", font=("Inter", 50)).pack(pady=(50, 10))
-
         ctk.CTkLabel(
             container,
             text="Đăng nhập hệ thống",

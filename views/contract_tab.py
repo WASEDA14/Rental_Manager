@@ -10,17 +10,18 @@ from services.contract_service import (
     delete_contract,
     end_contract,
     get_available_rooms,
-    get_tenants_without_active_contract, 
+    get_tenants_without_active_contract,
     get_contract_by_id,
     export_contract_to_pdf
 )
+
 
 class contractTab(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent)
         self._selected_id = None
 
-        # Cache dữ liệu cho Combobox
+        # Cache dữ liệu cho Combobox (ID -> Data)
         self.rooms_map = {}
         self.tenants_map = {}
 
@@ -68,7 +69,9 @@ class contractTab(ctk.CTkFrame):
 
         # --- Row 1 ---
         ctk.CTkLabel(form, text="Giá thuê").grid(row=1, column=0, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.rent_var, state="readonly", fg_color="#eee", width=160).grid(row=1, column=1, padx=6)
+        ctk.CTkEntry(form, textvariable=self.rent_var, state="readonly", fg_color="#eee", width=160).grid(row=1,
+                                                                                                          column=1,
+                                                                                                          padx=6)
 
         ctk.CTkLabel(form, text="Tiền cọc").grid(row=1, column=2, sticky="w")
         entry_deposit = ctk.CTkEntry(form, textvariable=self.deposit_var, width=160)
@@ -76,15 +79,18 @@ class contractTab(ctk.CTkFrame):
         entry_deposit.bind("<KeyRelease>", lambda e: format_money(self, e))
 
         ctk.CTkLabel(form, text="Ngày cọc").grid(row=1, column=4, sticky="w")
-        self.deposit_date_entry = DateEntry(form, textvariable=self.deposit_date_var, width=16, date_pattern="yyyy-mm-dd")
+        self.deposit_date_entry = DateEntry(form, textvariable=self.deposit_date_var, width=16,
+                                            date_pattern="dd/mm/yyyy")
         self.deposit_date_entry.grid(row=1, column=5, padx=6, sticky="w")
 
         # --- Row 2 ---
         ctk.CTkLabel(form, text="Ngày bắt đầu").grid(row=2, column=0, sticky="w")
-        DateEntry(form, textvariable=self.start_date_var, width=16, date_pattern="yyyy-mm-dd").grid(row=2, column=1, padx=6, sticky="w")
+        DateEntry(form, textvariable=self.start_date_var, width=16, date_pattern="dd/mm/yyyy").grid(row=2, column=1,
+                                                                                                    padx=6, sticky="w")
 
         ctk.CTkLabel(form, text="Ngày kết thúc").grid(row=2, column=2, sticky="w")
-        DateEntry(form, textvariable=self.end_date_var, width=16, date_pattern="yyyy-mm-dd").grid(row=2, column=3, padx=6, sticky="w")
+        DateEntry(form, textvariable=self.end_date_var, width=16, date_pattern="dd/mm/yyyy").grid(row=2, column=3,
+                                                                                                  padx=6, sticky="w")
 
         # --- Row 3 ---
         ctk.CTkLabel(form, text="Điện đầu (kWh)").grid(row=3, column=0, sticky="w")
@@ -95,7 +101,8 @@ class contractTab(ctk.CTkFrame):
 
         # --- Row 4 ---
         ctk.CTkLabel(form, text="Ghi chú").grid(row=4, column=0, sticky="w")
-        ctk.CTkEntry(form, textvariable=self.note_var, width=500).grid(row=4, column=1, columnspan=6, padx=6, sticky="we")
+        ctk.CTkEntry(form, textvariable=self.note_var, width=500).grid(row=4, column=1, columnspan=6, padx=6,
+                                                                       sticky="we")
 
         # Action buttons and search
         action = ctk.CTkFrame(form, fg_color="transparent")
@@ -105,14 +112,17 @@ class contractTab(ctk.CTkFrame):
         ctk.CTkEntry(action, textvariable=self.search_var, width=200).pack(side="left", padx=6)
         ctk.CTkButton(action, text="Tìm", width=60, command=self.reload).pack(side="left")
 
-        ctk.CTkButton(action, text="Xuất hợp đồng", fg_color="#3498db", command=self.on_export_pdf).pack(side="right", padx=6)
-        ctk.CTkButton(action, text="Kết thúc HĐ", fg_color="#8e44ad", command=self.on_end_contract).pack(side="right", padx=6)
+        ctk.CTkButton(action, text="Xuất hợp đồng", fg_color="#3498db", command=self.on_export_pdf).pack(side="right",
+                                                                                                         padx=6)
+        ctk.CTkButton(action, text="Kết thúc HĐ", fg_color="#8e44ad", command=self.on_end_contract).pack(side="right",
+                                                                                                         padx=6)
         ctk.CTkButton(action, text="Xóa", fg_color="#e74c3c", command=self.on_delete).pack(side="right", padx=6)
         ctk.CTkButton(action, text="Cập nhật", fg_color="#f39c12", command=self.on_update).pack(side="right", padx=6)
         ctk.CTkButton(action, text="Thêm mới", fg_color="#27ae60", command=self.on_create).pack(side="right", padx=6)
         ctk.CTkButton(action, text="Làm mới", fg_color="#7f8c8d", command=self.on_clear).pack(side="right", padx=6)
 
     def _build_table(self):
+        # Treeview frame
         table_frame = ctk.CTkFrame(self)
         table_frame.pack(fill="both", expand=True, padx=12, pady=6)
 
@@ -127,7 +137,7 @@ class contractTab(ctk.CTkFrame):
             "rent": "Giá thuê",
             "status": "Trạng thái"
         }
-        
+
         # Configure column widths and anchors
         widths = {
             "id": 40,
@@ -150,7 +160,7 @@ class contractTab(ctk.CTkFrame):
 
         # Create and configure treeview
         self.tree = ttk.Treeview(table_frame, columns=cols, show="headings", height=14)
-        
+
         # Set up columns and headers
         for col in cols:
             self.tree.heading(col, text=headers[col])
@@ -185,9 +195,13 @@ class contractTab(ctk.CTkFrame):
         self.tree.delete(*self.tree.get_children())
 
         for r in rows:
+            # r index: 0:id, ..., -2: room_name, -1: tenant_name (check lại BE SQL)
+            # BE: SELECT c.*, r.room_name, t.full_name
+            # c.* giả sử có 14 cột. r.room_name là cột kế cuối, t.full_name là cột cuối.
+
             # Để an toàn, truy cập bằng index âm hoặc key nếu trả về dict-like row
             c_id = r[0]
-            room_name = r['room_name']
+            room_name = r['room_name']  # Nếu dùng sqlite3.Row
             tenant_name = r['full_name']
             start_date = r['start_ymd']
             end_date = r['end_ymd']
@@ -207,12 +221,16 @@ class contractTab(ctk.CTkFrame):
         self.reload()
         self.on_clear()
 
+    # ===== Event Handlers =====
+
     def on_room_select(self, choice):
+        # Tự động điền giá thuê khi chọn phòng
         if choice in self.rooms_map:
             rent = self.rooms_map[choice]["rent"]
             self.rent_var.set(format_currency(rent))
 
     def on_tenant_select(self, choice):
+        # Tự động điền người liên hệ là tên khách thuê
         self.tenant_var.set(choice)
 
     def on_pick(self, _):
@@ -259,8 +277,11 @@ class contractTab(ctk.CTkFrame):
         self.cb_room.configure(state="normal")
         self.cb_tenant.configure(state="normal")
 
+        # Bỏ chọn bảng
         if self.tree.selection():
             self.tree.selection_remove(self.tree.selection()[0])
+
+    # ===== CRUD Actions =====
 
     def _get_form_data(self):
         # Validate cơ bản
@@ -283,7 +304,6 @@ class contractTab(ctk.CTkFrame):
 
         room_id = self.rooms_map.get(room_name, {}).get("id")
         tenant_id = self.tenants_map.get(tenant_name)
-
 
         if self._selected_id and (room_id is None or tenant_id is None):
             pass
@@ -324,6 +344,11 @@ class contractTab(ctk.CTkFrame):
         data = self._get_form_data()
         if not data: return
 
+        # Khi update, room_id và tenant_id có thể bị None do logic combobox map
+        # Cần giữ nguyên ID cũ nếu không chọn mới. (Ở đây code BE yêu cầu room_id, tenant_id)
+        # Để đơn giản, bản demo này hạn chế đổi phòng/khách khi update.
+        # Nếu muốn đổi, cần load lại list available room + current room.
+
         # Fix nhanh: Lấy room_id/tenant_id từ DB cũ nếu data trả về None
         old_contract = get_contract_by_id(self._selected_id)  # tuple
         if data["room_id"] is None: data["room_id"] = old_contract[1]
@@ -347,18 +372,18 @@ class contractTab(ctk.CTkFrame):
 
     def on_export_pdf(self):
         if not self._selected_id:
-            messagebox.showwarning("Lỗi", "Vui lòng chọn hợp đồng để xuất PDF!")
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn hợp đồng để xuất PDF!")
             return
         try:
             pdf_path = export_contract_to_pdf(self._selected_id)
-            
+
             messagebox.showinfo("Thành công", "Đã xuất hợp đồng thành công!")
         except Exception as e:
             messagebox.showerror("Lỗi", f"Lỗi khi xuất file PDF: {str(e)}")
 
     def on_end_contract(self):
         if not self._selected_id:
-            messagebox.showwarning("Lỗi", "Vui lòng chọn hợp đồng để kết thúc!")
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn hợp đồng để kết thúc!")
             return
 
         if messagebox.askyesno("Xác nhận", "Bạn có chắc chắn muốn kết thúc hợp đồng này?"):
