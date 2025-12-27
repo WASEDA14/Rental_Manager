@@ -5,23 +5,20 @@ from PIL import Image
 from services.login_service import authenticate_user
 from views.dashboard_tab import DashboardView
 
-
-# =====================================#
-# =====================================#
 # =====================================#
 class loginTab(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.master = master
-        
+
         # Configure the main window through the master
         self.master.title("Đăng nhập hệ thống - Hệ thống quản lý nhà trọ")
         self.master.geometry("480x680")
         self.master.resizable(False, False)
-        
+
         # Center the window
         self._center_window()
-        
+
         # Configure the frame to expand
         self.pack(fill='both', expand=True, padx=20, pady=20)
 

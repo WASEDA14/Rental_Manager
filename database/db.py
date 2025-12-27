@@ -53,6 +53,31 @@ def init_db():
     conn.close()
 
 # =========================
-# 5. AUTO INIT
+# 5. ASYNC INIT
 # =========================
-init_db()
+_db_initialized = False
+
+def is_db_initialized():
+    return _db_initialized
+
+def initialize_db_async(callback=None):
+    """Initialize database in a background thread"""
+    import threading
+    
+    def init_in_thread():
+        global _db_initialized
+        try:
+            init_db()
+            _db_initialized = True
+        except Exception as e:
+            print(f"Error initializing database: {e}")
+            _db_initialized = False
+        finally:
+            if callback:
+                callback(_db_initialized)
+    
+    thread = threading.Thread(target=init_in_thread, daemon=True)
+    thread.start()
+
+# Initialize database in background on import
+initialize_db_async()

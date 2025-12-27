@@ -5,6 +5,7 @@ from views.login_tab import loginTab
 ctk.set_appearance_mode("light")
 ctk.set_default_color_theme("blue")
 
+
 class MainWindow(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -19,10 +20,10 @@ class MainWindow(ctk.CTk):
             widget.destroy()
 
         # Reset window properties
-        self.title("Đăng nhập hệ thống - Hệ thống quản lý nhà trọ")
-        self.state('normal')  # Remove maximized/zoomed state
-        self.geometry("480x680")
-        self.resizable(False, False)
+        # self.title("Đăng nhập hệ thống - Hệ thống quản lý nhà trọ")
+        # self.state('normal')  # Remove maximized/zoomed state
+        # self.geometry("480x680")
+        # self.resizable(False, False)
 
         # Force update to apply changes
         self.update_idletasks()
@@ -51,7 +52,7 @@ class MainWindow(ctk.CTk):
         # DASHBOARD
         self.dashboard = DashboardView(self)
         self.dashboard.pack(fill="both", expand=True)
-        
+
     def on_login_success(self, user):
         self.current_user = {
             'login_id': user['login_id'],
@@ -59,6 +60,7 @@ class MainWindow(ctk.CTk):
             'email': user.get('email', '')
         }
         self.show_main_app()
+
 
 if __name__ == "__main__":
     app = MainWindow()
