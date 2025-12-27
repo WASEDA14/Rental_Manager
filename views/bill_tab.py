@@ -109,15 +109,12 @@ class billTab(ctk.CTkFrame):
         self.total_amount_var = ctk.StringVar(value="0")
 
     def _build_ui(self):
-        # FORM NHẬP LIỆU ===
         form_frame = ctk.CTkFrame(self, fg_color="white", corner_radius=10)
         form_frame.pack(fill="x", padx=10, pady=10)
 
-        # Tiêu đề
         title_lbl = ctk.CTkLabel(form_frame, text="THÔNG TIN HÓA ĐƠN", font=("Arial", 16, "bold"), text_color="#333")
         title_lbl.grid(row=0, column=0, columnspan=8, pady=(10, 5))
 
-        # Hợp đồng & Tháng ---
         ctk.CTkLabel(form_frame, text="Chọn Hợp đồng/Phòng:", text_color="black").grid(row=1, column=0, padx=5, pady=5,
                                                                                        sticky="e")
 
@@ -130,7 +127,6 @@ class billTab(ctk.CTkFrame):
         ctk.CTkEntry(form_frame, textvariable=self.bill_month_var, width=100).grid(row=1, column=4, padx=5, pady=5,
                                                                                    sticky="w")
 
-        # Thông tin (Tên khách, Tiền phòng) ---
         ctk.CTkLabel(form_frame, text="Khách thuê:", text_color="black").grid(row=2, column=0, padx=5, pady=5,
                                                                               sticky="e")
         ctk.CTkEntry(form_frame, textvariable=self.tenant_name_var, state="readonly", fg_color="#eee", width=180).grid(
@@ -142,7 +138,6 @@ class billTab(ctk.CTkFrame):
             row=2, column=4, padx=5, pady=5,
             sticky="w")
 
-        # --- KHỐI ĐIỆN ---
         elec_frame = ctk.CTkFrame(form_frame, fg_color="#f0f9ff", border_width=1, border_color="#ccc")
         elec_frame.grid(row=3, column=0, columnspan=8, sticky="ew", padx=10, pady=5)
 
@@ -165,7 +160,6 @@ class billTab(ctk.CTkFrame):
         ctk.CTkLabel(elec_frame, textvariable=self.elec_total_var, text_color="#cc0000",
                      font=("Arial", 12, "bold")).pack(side="left", padx=5)
 
-        # --- KHỐI NƯỚC ---
         water_frame = ctk.CTkFrame(form_frame, fg_color="#f0fff4", border_width=1, border_color="#ccc")
         water_frame.grid(row=4, column=0, columnspan=8, sticky="ew", padx=10, pady=5)
 
@@ -188,7 +182,6 @@ class billTab(ctk.CTkFrame):
         ctk.CTkLabel(water_frame, textvariable=self.water_total_var, text_color="#cc0000",
                      font=("Arial", 12, "bold")).pack(side="left", padx=5)
 
-        # Phụ phí & Tổng tiền ---
         ctk.CTkLabel(form_frame, text="Phụ phí:", text_color="black").grid(row=5, column=0, padx=5, pady=10, sticky="e")
         e_other = ctk.CTkEntry(form_frame, textvariable=self.other_fee_var, width=100)
         e_other.grid(row=5, column=1, padx=5, pady=10, sticky="w")
@@ -205,7 +198,6 @@ class billTab(ctk.CTkFrame):
         ctk.CTkLabel(total_frame, textvariable=self.total_amount_var, font=("Arial", 16, "bold"),
                      text_color="#cc0000").pack(side="left", padx=10)
 
-        # Các nút
         btn_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
         btn_frame.grid(row=6, column=0, columnspan=8, pady=10)
         ctk.CTkEntry(btn_frame, textvariable=self.search_var, placeholder_text="Tìm theo phòng, tên khách...",
@@ -532,7 +524,6 @@ class billTab(ctk.CTkFrame):
         except Exception as e:
             messagebox.showerror("Lỗi", f"Không thể tải dữ liệu hóa đơn: {str(e)}")
 
-    # Xuất bill
     def _on_export_pdf(self):
         if not self._selected_bill_id:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn hóa đơn cần xuất!")
@@ -584,18 +575,3 @@ class billTab(ctk.CTkFrame):
 
         if self.tree.selection():
             self.tree.selection_remove(self.tree.selection()[0])
-
-    # Xuất bill
-    def _on_export_pdf(self):
-        if not self._selected_bill_id:
-            messagebox.showwarning("Cảnh báo", "Vui lòng chọn hóa đơn cần xuất!")
-            return
-
-        try:
-            pdf_path = export_bill_to_pdf(self._selected_bill_id)
-            if pdf_path and os.path.exists(pdf_path):
-                messagebox.showinfo("Thành công", "Đã xuất hóa đơn thành công")
-            else:
-                messagebox.showerror("Lỗi", "Không thể xuất hóa đơn. Vui lòng thử lại!")
-        except Exception as e:
-            messagebox.showerror("Lỗi", f"Có lỗi xảy ra khi xuất hóa đơn: {str(e)}")
