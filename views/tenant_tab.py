@@ -3,7 +3,7 @@ import customtkinter as ctk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
 
-from services.tenant_service import (
+from module.tenant_service import (
     create_tenant,
     get_all_tenant,
     update_tenant,

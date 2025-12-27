@@ -2,7 +2,7 @@
 import customtkinter as ctk
 from tkinter import messagebox
 from PIL import Image
-from services.login_service import authenticate_user
+from module.login_service import authenticate_user
 from views.dashboard_tab import DashboardView
 
 # =====================================#

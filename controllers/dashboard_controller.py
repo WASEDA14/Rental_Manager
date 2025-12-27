@@ -1,4 +1,4 @@
-from services.dashboard_service import get_dashboard_stats
+from module.dashboard_service import get_dashboard_stats
 
 
 class DashboardController:

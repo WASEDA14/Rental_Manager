@@ -6,7 +6,7 @@ import os
 import sys
 import subprocess
 from utils.format import format_currency, parse_currency, format_money
-from services.contract_service import (
+from module.contract_service import (
     get_all_contracts,
     create_contract,
     update_contract,

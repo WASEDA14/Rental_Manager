@@ -1,6 +1,6 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
-from services.room_service import get_all_rooms, create_room, update_room, delete_room
+from module.room_service import get_all_rooms, create_room, update_room, delete_room
 from utils.format import parse_currency, format_currency, parse_currency
 
 STATUS_MAP = {

@@ -3,7 +3,7 @@ from tkinter import messagebox, ttk
 import time
 import os
 from utils.format import format_currency
-from services.bill_service import (
+from module.bill_service import (
     get_all_bills,
     get_active_contracts_with_last_bill,
     get_next_bill_month,
@@ -38,6 +38,46 @@ class billTab(ctk.CTkFrame):
     def _on_visibility_change(self, event):
         if self.winfo_ismapped():  # If tab is now visible
             self.on_clear_form()
+            
+    def on_recalc(self, event=None):
+        """Tính toán tổng tiền realtime"""
+        try:
+            # Get values with proper error handling
+            e_old = float(self.elec_prev_var.get() or 0)
+            e_new = float(self.elec_curr_var.get() or 0) if self.elec_curr_var.get().strip() else 0
+            e_price = float(self.elec_price_var.get() or 0)
+
+            w_old = float(self.water_prev_var.get() or 0)
+            w_new = float(self.water_curr_var.get() or 0) if self.water_curr_var.get().strip() else 0
+            w_price = float(self.water_price_var.get() or 0)
+
+            rent = float(self.room_rent_var.get() or 0)
+            other = float(self.other_fee_var.get() or 0)
+
+            # Calculate consumption (non-negative)
+            e_used = max(0, e_new - e_old)
+            w_used = max(0, w_new - w_old)
+
+            e_total = e_used * e_price
+            w_total = w_used * w_price
+
+            total = rent + e_total + w_total + other
+
+            # Update UI
+            self.elec_total_var.set(format_currency(e_total))
+            self.water_total_var.set(format_currency(w_total))
+            self.total_amount_var.set(format_currency(total) + " VND")
+            
+            # Update the window to reflect changes immediately
+            self.update_idletasks()
+
+        except ValueError as e:
+            # Show error in console for debugging
+            print(f"Calculation error: {e}")
+            # Set default values on error
+            self.elec_total_var.set("0")
+            self.water_total_var.set("0")
+            self.total_amount_var.set("0 VND")
 
     def _init_vars(self):
         # Biến Form
@@ -168,12 +208,17 @@ class billTab(ctk.CTkFrame):
         # Các nút
         btn_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
         btn_frame.grid(row=6, column=0, columnspan=8, pady=10)
-
-        ctk.CTkButton(btn_frame, text="Tính toán", command=self.on_recalc, fg_color="#6c757d", width=80).pack(
+        ctk.CTkEntry(btn_frame, textvariable=self.search_var, placeholder_text="Tìm theo phòng, tên khách...",
+                     width=250).pack(side="left")
+        ctk.CTkButton(btn_frame, text="Tìm", command=self.on_search, width=60).pack(side="left", padx=5)
+        ctk.CTkButton(btn_frame, text="Tải lại", command=self._load_table_data, width=60, fg_color="gray").pack(
             side="left", padx=5)
-        ctk.CTkButton(btn_frame, text="Làm mới", command=self.on_clear_form, fg_color="#17a2b8", width=80).pack(
-            side="left",
-            padx=5)
+
+        # ctk.CTkButton(btn_frame, text="Tính toán", command=self.on_recalc, fg_color="#6c757d", width=80).pack(
+        #     side="left", padx=5)
+        # ctk.CTkButton(btn_frame, text="Làm mới", command=self.on_clear_form, fg_color="#17a2b8", width=80).pack(
+        #     side="left",
+        #     padx=5)
         ctk.CTkButton(btn_frame, text="Tạo Hóa Đơn", command=self.on_create_bill, fg_color="#28a745", width=100).pack(
             side="left", padx=5)
         ctk.CTkButton(btn_frame, text="Cập Nhật", command=self.on_update_bill, fg_color="#ffc107", text_color="black",
@@ -186,18 +231,19 @@ class billTab(ctk.CTkFrame):
         ctk.CTkButton(btn_frame, text="Xuất hóa đơn", command=self._on_export_pdf, fg_color="#3498db", width=80).pack(
             side="left", padx=5)
 
+
         # === 2. BẢNG DANH SÁCH HÓA ĐƠN ===
         table_frame = ctk.CTkFrame(self)
         table_frame.pack(fill="both", expand=True, padx=10, pady=5)
 
         # ô search
-        search_fr = ctk.CTkFrame(table_frame, fg_color="transparent")
-        search_fr.pack(fill="x", pady=5)
-        ctk.CTkEntry(search_fr, textvariable=self.search_var, placeholder_text="Tìm theo phòng, tên khách...",
-                     width=250).pack(side="left")
-        ctk.CTkButton(search_fr, text="Tìm", command=self.on_search, width=60).pack(side="left", padx=5)
-        ctk.CTkButton(search_fr, text="Tải lại", command=self._load_table_data, width=60, fg_color="gray").pack(
-            side="left", padx=5)
+        # search_fr = ctk.CTkFrame(table_frame, fg_color="transparent")
+        # search_fr.pack(fill="x", pady=5)
+        # ctk.CTkEntry(search_fr, textvariable=self.search_var, placeholder_text="Tìm theo phòng, tên khách...",
+        #              width=250).pack(side="left")
+        # ctk.CTkButton(search_fr, text="Tìm", command=self.on_search, width=60).pack(side="left", padx=5)
+        # ctk.CTkButton(search_fr, text="Tải lại", command=self._load_table_data, width=60, fg_color="gray").pack(
+        #     side="left", padx=5)
 
         cols = ("id", "code", "room", "tenant", "month", "total", "status", "note")
         self.tree = ttk.Treeview(table_frame, columns=cols, show="headings", height=15)
@@ -320,45 +366,11 @@ class billTab(ctk.CTkFrame):
         self.water_curr_var.set("")
 
         # Gợi ý tháng tiếp theo
-        next_month = get_next_bill_month(self._current_contract_id)
-        self.bill_month_var.set(next_month)
-
         self.on_recalc()
-
-    def on_recalc(self, event=None):
-        """Tính toán tổng tiền realtime"""
-        try:
-            e_old = float(self.elec_prev_var.get() or 0)
-            e_new = float(self.elec_curr_var.get() or 0)
-            e_price = float(self.elec_price_var.get() or 0)
-
-            w_old = float(self.water_prev_var.get() or 0)
-            w_new = float(self.water_curr_var.get() or 0)
-            w_price = float(self.water_price_var.get() or 0)
-
-            rent = float(self.room_rent_var.get() or 0)
-            other = float(self.other_fee_var.get() or 0)
-
-            # Tính tiêu thụ (không âm)
-            e_used = max(0, e_new - e_old)
-            w_used = max(0, w_new - w_old)
-
-            e_total = e_used * e_price
-            w_total = w_used * w_price
-
-            total = rent + e_total + w_total + other
-
-            # Update UI
-            self.elec_total_var.set(format_currency(e_total))
-            self.water_total_var.set(format_currency(w_total))
-            self.total_amount_var.set(format_currency(total) + " VND")
-
-        except ValueError:
-            pass
 
     def on_create_bill(self):
         if not self._current_contract_id:
-            messagebox.showwarning("Thiếu thông tin", "Vui lòng chọn hợp đồng trước!")
+            messagebox.showwarning("Lỗi", "Vui lòng chọn hợp đồng!")
             return
 
         month = self.bill_month_var.get().strip()

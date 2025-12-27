@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import numpy as np
-from services.report_service import (
+from module.report_service import (
     get_room_report,
     get_tenant_report,
     get_contract_report,
