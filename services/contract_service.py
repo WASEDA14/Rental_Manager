@@ -247,7 +247,9 @@ def get_contract_for_export(contract_id: int) -> dict:
         return contract_dict
 
 
+# Ensure the export directory exists when the module is imported
 PDF_EXPORT_DIR = Path("D:/Rental_Manager/exports/contract")
+PDF_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 def export_contract_to_pdf(contract_id: int, output_dir: str = None) -> str:
     contract_data = get_contract_for_export(contract_id)
 

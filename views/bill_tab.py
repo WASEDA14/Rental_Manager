@@ -12,7 +12,9 @@ from services.bill_service import (
     update_bill,
     delete_bill,
     mark_bill_paid,
-    export_bill_to_pdf
+    export_bill_to_pdf,
+    get_bill_by_id
+
 )
 
 
@@ -261,17 +263,16 @@ class billTab(ctk.CTkFrame):
         filter_kw = self.search_var.get().lower()
 
         for b in bills:
-            # Convert row to dict for safer access
-            bill = dict(zip(b.keys(), b))
-            
-            b_id = bill['bill_id']
-            b_code = bill.get('code', '')
-            b_month = bill['bill_month']
-            b_total = bill['total_amount']
-            b_note = bill.get('note', '')
-            b_status = bill.get('paid_status', 'unpaid')
-            b_room = bill.get('room_name', '')
-            b_tenant = bill.get('tenant_name', '')
+            b_id = b[0]
+            b_code = b[1]
+            b_month = b[3]
+            b_total = b[11]
+            b_note = b[12]
+            b_status = b[-1]
+
+            # Cột join
+            b_room = b[-4]
+            b_tenant = b[-3]
 
             status_display = {
                 'paid': 'Đã thanh toán',
@@ -280,19 +281,13 @@ class billTab(ctk.CTkFrame):
             }.get(b_status, b_status)
 
             if filter_kw and (filter_kw not in str(b_code).lower() and
-                            filter_kw not in b_room.lower() and
-                            filter_kw not in b_tenant.lower()):
+                              filter_kw not in b_room.lower() and
+                              filter_kw not in b_tenant.lower()):
                 continue
 
             self.tree.insert("", "end", values=(
-                b_id, 
-                b_code, 
-                b_room, 
-                b_tenant, 
-                b_month,  # This should now correctly show the bill month
-                format_currency(b_total), 
-                status_display, 
-                b_note
+                b_id, b_code, b_room, b_tenant, b_month,
+                format_currency(b_total), status_display, b_note
             ))
 
     def on_contract_select(self, event):
@@ -530,3 +525,57 @@ class billTab(ctk.CTkFrame):
 
         if self.tree.selection():
             self.tree.selection_remove(self.tree.selection()[0])
+
+def on_select_row(self, event):
+    sel = self.tree.selection()
+    if not sel:
+        return
+
+    try:
+        # Get selected row data
+        item = self.tree.item(sel[0])
+        val = item['values']
+
+        # Store the selected bill ID
+        self._selected_bill_id = val[0]
+
+        # Get the full bill data from the database
+        bill_data = get_bill_by_id(self._selected_bill_id)
+        if not bill_data:
+            return
+
+        # Populate basic info
+        self.tenant_name_var.set(bill_data['tenant_name'])
+        self.room_name_var.set(bill_data['room_name'])
+        self.bill_month_var.set(bill_data['bill_month'])
+        self.note_var.set(bill_data.get('note', ''))
+
+        # Set electricity values
+        self.elec_prev_var.set(str(bill_data['elec_prev']))
+        self.elec_curr_var.set(str(bill_data['elec_curr']))
+        self.elec_price_var.set(str(bill_data['elec_price']))
+        self.elec_total_var.set(format_currency(bill_data['elec_total']))
+
+        # Set water values
+        self.water_prev_var.set(str(bill_data['water_prev']))
+        self.water_curr_var.set(str(bill_data['water_curr']))
+        self.water_price_var.set(str(bill_data['water_price']))
+        self.water_total_var.set(format_currency(bill_data['water_total']))
+
+        # Set other amounts
+        self.room_rent_var.set(format_currency(bill_data['room_rent']))
+        self.other_fee_var.set(str(bill_data.get('other_fee', 0)))
+        self.total_amount_var.set(format_currency(bill_data['total_amount']))
+
+        # Set the contract ID for reference
+        self._current_contract_id = bill_data['contract_id']
+
+        # Populate contract/room selection
+        self.contract_select_var.set(bill_data['contract_id'])
+        self.room_name_var.set(bill_data['room_name'])
+
+        # Populate payment period
+        self.bill_month_var.set(bill_data['bill_month'])
+
+    except Exception as e:
+        messagebox.showerror("Lỗi", f"Không thể tải dữ liệu hóa đơn: {str(e)}")

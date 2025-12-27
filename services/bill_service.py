@@ -288,6 +288,55 @@ def mark_bill_paid(bill_id: int):
         conn.commit()
 
 
+def get_bill_by_id(bill_id: int) -> dict:
+    with get_db() as conn:
+        row =  conn.execute(
+            """
+            SELECT 
+                b.*, 
+                r.room_name, 
+                r.electric_unit_price,
+                r.water_unit_price,
+                t.full_name as tenant_name,
+                t.phone,
+                t.id_number,
+                t.address,
+                c.rent as room_rent,
+                c.contract_id
+            FROM bill b
+            JOIN contract c ON b.contract_id = c.contract_id
+            JOIN room r ON c.room_id = r.room_id
+            JOIN tenant t ON c.tenant_id = t.tenant_id
+            WHERE b.bill_id = ? AND b.is_deleted = 0
+            """,
+             (bill_id,)
+         ).fetchone()
+
+    if not row:
+        return None
+
+    bill_data = dict(row)
+
+         # Calculate derived values
+    bill_data['elec_total'] = (bill_data['elec_current'] - bill_data['elec_prev']) * bill_data[
+             'electric_unit_price']
+    bill_data['water_total'] = (bill_data['water_current'] - bill_data['water_prev']) * bill_data[
+             'water_unit_price']
+    bill_data['total_amount'] = bill_data.get('total_amount', 0) or (
+                     bill_data['room_rent'] + bill_data['elec_total'] + bill_data['water_total'] + (
+                         bill_data.get('other_fee') or 0))
+
+    bill_data['elec_prev'] = bill_data.get('elec_prev', 0)
+    bill_data['elec_curr'] = bill_data.get('elec_current', 0)
+    bill_data['water_prev'] = bill_data.get('water_prev', 0)
+    bill_data['water_curr'] = bill_data.get('water_current', 0)
+    bill_data['elec_price'] = bill_data.get('electric_unit_price', 0)
+    bill_data['water_price'] = bill_data.get('water_unit_price', 0)
+    bill_data['bill_month'] = bill_data.get('bill_date', '')
+
+    return bill_data
+
+
 def get_bill_for_export(bill_id: int) -> dict:
     """Get bill data for PDF export"""
     with get_db() as conn:
@@ -316,7 +365,10 @@ def get_bill_for_export(bill_id: int) -> dict:
         
         return bill_dict
 
+# Ensure the export directory exists when the module is imported
 PDF_EXPORT_DIR = Path("D:/Rental_Manager/exports/bill")
+PDF_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
+
 def export_bill_to_pdf(bill_id: int, output_dir: str = None) -> str:
 
     bill_data = get_bill_for_export(bill_id)

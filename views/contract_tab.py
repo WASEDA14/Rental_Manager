@@ -2,6 +2,9 @@
 import customtkinter as ctk
 from tkinter import ttk, messagebox
 from tkcalendar import DateEntry
+import os
+import sys
+import subprocess
 from utils.format import format_currency, parse_currency, format_money
 from services.contract_service import (
     get_all_contracts,
@@ -372,8 +375,20 @@ class contractTab(ctk.CTkFrame):
             return
         try:
             pdf_path = export_contract_to_pdf(self._selected_id)
-
-            messagebox.showinfo("Thành công", "Đã xuất hợp đồng thành công!")
+            
+            if pdf_path and os.path.exists(pdf_path):
+                # Mở file PDF bằng ứng dụng mặc định
+                if os.name == 'nt':  # Windows
+                    os.startfile(pdf_path)
+                elif os.name == 'posix':  # macOS and Linux
+                    if sys.platform == 'darwin':
+                        subprocess.run(['open', pdf_path], check=True)
+                    else:
+                        subprocess.run(['xdg-open', pdf_path], check=True)
+                messagebox.showinfo("Thành công", f"Xuất hợp đồng thành công:\n{pdf_path}")
+            else:
+                messagebox.showerror("Lỗi", "Không thể xuất hợp đồng. Vui lòng thử lại!")
+                
         except Exception as e:
             messagebox.showerror("Lỗi", f"Lỗi khi xuất file PDF: {str(e)}")
 
