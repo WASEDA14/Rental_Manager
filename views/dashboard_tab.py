@@ -188,6 +188,8 @@ class DashboardView(ctk.CTkFrame):
         if hasattr(tab, 'initialize'):
             tab.initialize()
         tab.pack(fill="both", expand=True, padx=20, pady=20)
+        # Clear the form when showing the bill tab
+        tab.on_clear_form()
 
     def show_report(self):
         self.hide_all()

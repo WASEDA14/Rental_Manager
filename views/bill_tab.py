@@ -16,6 +16,7 @@ from services.bill_service import (
     get_bill_by_id
 )
 
+
 class billTab(ctk.CTkFrame):
     def __init__(self, parent):
         super().__init__(parent, fg_color="transparent")
@@ -29,6 +30,14 @@ class billTab(ctk.CTkFrame):
         self._init_vars()
         self._build_ui()
         self._load_data()
+        self.on_clear_form()
+        
+        # Bind to visibility changes
+        self.bind("<Visibility>", self._on_visibility_change)
+        
+    def _on_visibility_change(self, event):
+        if self.winfo_ismapped():  # If tab is now visible
+            self.on_clear_form()
 
     def _init_vars(self):
         # Biến Form
@@ -68,7 +77,7 @@ class billTab(ctk.CTkFrame):
         title_lbl = ctk.CTkLabel(form_frame, text="THÔNG TIN HÓA ĐƠN", font=("Arial", 16, "bold"), text_color="#333")
         title_lbl.grid(row=0, column=0, columnspan=8, pady=(10, 5))
 
-        #Hợp đồng & Tháng ---
+        # Hợp đồng & Tháng ---
         ctk.CTkLabel(form_frame, text="Chọn Hợp đồng/Phòng:", text_color="black").grid(row=1, column=0, padx=5, pady=5,
                                                                                        sticky="e")
 
@@ -486,7 +495,7 @@ class billTab(ctk.CTkFrame):
             self.elec_prev_var.set(str(bill_data.get('elec_prev', 0)))
             self.elec_curr_var.set(str(bill_data.get('elec_curr', 0)))
             self.elec_price_var.set(str(bill_data.get('elec_price', 0)))
-            
+
             # Set water values
             self.water_prev_var.set(str(bill_data.get('water_prev', 0)))
             self.water_curr_var.set(str(bill_data.get('water_curr', 0)))
@@ -495,7 +504,7 @@ class billTab(ctk.CTkFrame):
             # Set other amounts
             self.room_rent_var.set(str(bill_data.get('room_rent', 0)))
             self.other_fee_var.set(str(bill_data.get('other_fee', 0)))
-            
+
             # Calculate and set totals
             self.on_recalc()
 
