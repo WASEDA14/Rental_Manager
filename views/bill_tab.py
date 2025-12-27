@@ -224,6 +224,7 @@ class billTab(ctk.CTkFrame):
     def _load_data(self):
         self._load_active_contracts()
         self._load_table_data()
+        self.on_clear_form()
 
     def _load_active_contracts(self):
         contracts = get_active_contracts_with_last_bill()
@@ -252,7 +253,6 @@ class billTab(ctk.CTkFrame):
         self.cb_contract['values'] = values
 
     def _load_table_data(self):
-        # Clear bảng
         for item in self.tree.get_children():
             self.tree.delete(item)
 
@@ -459,16 +459,57 @@ class billTab(ctk.CTkFrame):
 
     def on_select_row(self, event):
         sel = self.tree.selection()
-        if not sel: return
+        if not sel:
+            return
 
-        # Lấy row
-        item = self.tree.item(sel[0])
-        val = item['values']
+        try:
+            # Get selected row data
+            item = self.tree.item(sel[0])
+            val = item['values']
 
-        self._selected_bill_id = val[0]
-        self.tenant_name_var.set(val[3])
-        self.bill_month_var.set(val[4])
-        self.note_var.set(val[7])
+            # Store the selected bill ID
+            self._selected_bill_id = val[0]
+
+            # Get the full bill data from the database
+            bill_data = get_bill_by_id(self._selected_bill_id)
+            if not bill_data:
+                messagebox.showwarning("Lỗi", "Không tìm thấy thông tin hóa đơn")
+                return
+
+            # Populate basic info
+            self.tenant_name_var.set(bill_data.get('tenant_name', ''))
+            self.room_name_var.set(bill_data.get('room_name', ''))
+            self.bill_month_var.set(bill_data.get('bill_month', ''))
+            self.note_var.set(bill_data.get('note', ''))
+
+            # Set electricity values
+            self.elec_prev_var.set(str(bill_data.get('elec_prev', 0)))
+            self.elec_curr_var.set(str(bill_data.get('elec_curr', 0)))
+            self.elec_price_var.set(str(bill_data.get('elec_price', 0)))
+            
+            # Set water values
+            self.water_prev_var.set(str(bill_data.get('water_prev', 0)))
+            self.water_curr_var.set(str(bill_data.get('water_curr', 0)))
+            self.water_price_var.set(str(bill_data.get('water_price', 0)))
+
+            # Set other amounts
+            self.room_rent_var.set(str(bill_data.get('room_rent', 0)))
+            self.other_fee_var.set(str(bill_data.get('other_fee', 0)))
+            
+            # Calculate and set totals
+            self.on_recalc()
+
+            # Set the contract ID for reference
+            self._current_contract_id = bill_data.get('contract_id')
+
+            # Update contract selection if possible
+            for display_str, data in self.active_contracts_data.items():
+                if data['contract_id'] == self._current_contract_id:
+                    self.contract_select_var.set(display_str)
+                    break
+
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể tải dữ liệu hóa đơn: {str(e)}")
 
     # Xuất bill
     def _on_export_pdf(self):
@@ -523,56 +564,17 @@ class billTab(ctk.CTkFrame):
         if self.tree.selection():
             self.tree.selection_remove(self.tree.selection()[0])
 
-def on_select_row(self, event):
-    sel = self.tree.selection()
-    if not sel:
-        return
-
-    try:
-        # Get selected row data
-        item = self.tree.item(sel[0])
-        val = item['values']
-
-        # Store the selected bill ID
-        self._selected_bill_id = val[0]
-
-        # Get the full bill data from the database
-        bill_data = get_bill_by_id(self._selected_bill_id)
-        if not bill_data:
+    # Xuất bill
+    def _on_export_pdf(self):
+        if not self._selected_bill_id:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn hóa đơn cần xuất!")
             return
 
-        # Populate basic info
-        self.tenant_name_var.set(bill_data['tenant_name'])
-        self.room_name_var.set(bill_data['room_name'])
-        self.bill_month_var.set(bill_data['bill_month'])
-        self.note_var.set(bill_data.get('note', ''))
-
-        # Set electricity values
-        self.elec_prev_var.set(str(bill_data['elec_prev']))
-        self.elec_curr_var.set(str(bill_data['elec_curr']))
-        self.elec_price_var.set(str(bill_data['elec_price']))
-        self.elec_total_var.set(format_currency(bill_data['elec_total']))
-
-        # Set water values
-        self.water_prev_var.set(str(bill_data['water_prev']))
-        self.water_curr_var.set(str(bill_data['water_curr']))
-        self.water_price_var.set(str(bill_data['water_price']))
-        self.water_total_var.set(format_currency(bill_data['water_total']))
-
-        # Set other amounts
-        self.room_rent_var.set(format_currency(bill_data['room_rent']))
-        self.other_fee_var.set(str(bill_data.get('other_fee', 0)))
-        self.total_amount_var.set(format_currency(bill_data['total_amount']))
-
-        # Set the contract ID for reference
-        self._current_contract_id = bill_data['contract_id']
-
-        # Populate contract/room selection
-        self.contract_select_var.set(bill_data['contract_id'])
-        self.room_name_var.set(bill_data['room_name'])
-
-        # Populate payment period
-        self.bill_month_var.set(bill_data['bill_month'])
-
-    except Exception as e:
-        messagebox.showerror("Lỗi", f"Không thể tải dữ liệu hóa đơn: {str(e)}")
+        try:
+            pdf_path = export_bill_to_pdf(self._selected_bill_id)
+            if pdf_path and os.path.exists(pdf_path):
+                messagebox.showinfo("Thành công", "Đã xuất hóa đơn thành công")
+            else:
+                messagebox.showerror("Lỗi", "Không thể xuất hóa đơn. Vui lòng thử lại!")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Có lỗi xảy ra khi xuất hóa đơn: {str(e)}")
