@@ -18,16 +18,7 @@ class MainWindow(ctk.CTk):
         # Clear all widgets
         for widget in self.winfo_children():
             widget.destroy()
-
-        # Reset window properties
-        # self.title("Đăng nhập hệ thống - Hệ thống quản lý nhà trọ")
-        # self.state('normal')  # Remove maximized/zoomed state
-        # self.geometry("480x680")
-        # self.resizable(False, False)
-
-        # Force update to apply changes
         self.update_idletasks()
-
         # Center the window
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()

@@ -14,9 +14,7 @@ from services.bill_service import (
     mark_bill_paid,
     export_bill_to_pdf,
     get_bill_by_id
-
 )
-
 
 class billTab(ctk.CTkFrame):
     def __init__(self, parent):
@@ -62,15 +60,15 @@ class billTab(ctk.CTkFrame):
         self.total_amount_var = ctk.StringVar(value="0")
 
     def _build_ui(self):
-        # === 1. FORM NHẬP LIỆU ===
+        # FORM NHẬP LIỆU ===
         form_frame = ctk.CTkFrame(self, fg_color="white", corner_radius=10)
         form_frame.pack(fill="x", padx=10, pady=10)
 
-        # Tiêu đề Form
+        # Tiêu đề
         title_lbl = ctk.CTkLabel(form_frame, text="THÔNG TIN HÓA ĐƠN", font=("Arial", 16, "bold"), text_color="#333")
         title_lbl.grid(row=0, column=0, columnspan=8, pady=(10, 5))
 
-        # --- Dòng 1: Chọn Hợp đồng & Tháng ---
+        #Hợp đồng & Tháng ---
         ctk.CTkLabel(form_frame, text="Chọn Hợp đồng/Phòng:", text_color="black").grid(row=1, column=0, padx=5, pady=5,
                                                                                        sticky="e")
 
@@ -83,7 +81,7 @@ class billTab(ctk.CTkFrame):
         ctk.CTkEntry(form_frame, textvariable=self.bill_month_var, width=100).grid(row=1, column=4, padx=5, pady=5,
                                                                                    sticky="w")
 
-        # --- Dòng 2: Thông tin Readonly (Tên khách, Tiền phòng) ---
+        # Thông tin (Tên khách, Tiền phòng) ---
         ctk.CTkLabel(form_frame, text="Khách thuê:", text_color="black").grid(row=2, column=0, padx=5, pady=5,
                                                                               sticky="e")
         ctk.CTkEntry(form_frame, textvariable=self.tenant_name_var, state="readonly", fg_color="#eee", width=180).grid(
@@ -141,7 +139,7 @@ class billTab(ctk.CTkFrame):
         ctk.CTkLabel(water_frame, textvariable=self.water_total_var, text_color="#cc0000",
                      font=("Arial", 12, "bold")).pack(side="left", padx=5)
 
-        # --- Dòng 5: Phụ phí & Tổng tiền ---
+        # Phụ phí & Tổng tiền ---
         ctk.CTkLabel(form_frame, text="Phụ phí:", text_color="black").grid(row=5, column=0, padx=5, pady=10, sticky="e")
         e_other = ctk.CTkEntry(form_frame, textvariable=self.other_fee_var, width=100)
         e_other.grid(row=5, column=1, padx=5, pady=10, sticky="w")
@@ -158,7 +156,7 @@ class billTab(ctk.CTkFrame):
         ctk.CTkLabel(total_frame, textvariable=self.total_amount_var, font=("Arial", 16, "bold"),
                      text_color="#cc0000").pack(side="left", padx=10)
 
-        # --- NÚT CHỨC NĂNG FORM ---
+        # Các nút
         btn_frame = ctk.CTkFrame(form_frame, fg_color="transparent")
         btn_frame.grid(row=6, column=0, columnspan=8, pady=10)
 
@@ -183,7 +181,7 @@ class billTab(ctk.CTkFrame):
         table_frame = ctk.CTkFrame(self)
         table_frame.pack(fill="both", expand=True, padx=10, pady=5)
 
-        # Thanh tìm kiếm
+        # ô search
         search_fr = ctk.CTkFrame(table_frame, fg_color="transparent")
         search_fr.pack(fill="x", pady=5)
         ctk.CTkEntry(search_fr, textvariable=self.search_var, placeholder_text="Tìm theo phòng, tên khách...",
@@ -222,8 +220,7 @@ class billTab(ctk.CTkFrame):
 
         self.tree.bind("<<TreeviewSelect>>", self.on_select_row)
 
-    # === LOGIC LOAD DATA ===
-
+    # Load data
     def _load_data(self):
         self._load_active_contracts()
         self._load_table_data()
@@ -473,8 +470,8 @@ class billTab(ctk.CTkFrame):
         self.bill_month_var.set(val[4])
         self.note_var.set(val[7])
 
+    # Xuất bill
     def _on_export_pdf(self):
-        """Xuất hóa đơn ra file PDF"""
         if not self._selected_bill_id:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn hóa đơn cần xuất!")
             return

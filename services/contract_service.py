@@ -248,7 +248,8 @@ def get_contract_for_export(contract_id: int) -> dict:
 
 
 # Ensure the export directory exists when the module is imported
-PDF_EXPORT_DIR = Path("D:/Rental_Manager/exports/contract")
+BASE_DIR = Path(__file__).resolve().parent.parent  # root project
+PDF_EXPORT_DIR = BASE_DIR / "exports" / "contract"
 PDF_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 def export_contract_to_pdf(contract_id: int, output_dir: str = None) -> str:
     contract_data = get_contract_for_export(contract_id)
@@ -256,9 +257,7 @@ def export_contract_to_pdf(contract_id: int, output_dir: str = None) -> str:
     # Use PDF_EXPORT_DIR if output_dir is not provided
     output_dir = Path(output_dir) if output_dir else PDF_EXPORT_DIR
     output_dir.mkdir(parents=True, exist_ok=True)
-
     filename = f"HopDong_{contract_data['contract_code']}_{contract_data['tenant_name']}.pdf"
     output_path = output_dir / filename
-
     create_contract_pdf(contract_data, str(output_path))
     return str(output_path)

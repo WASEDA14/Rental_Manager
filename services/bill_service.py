@@ -366,7 +366,8 @@ def get_bill_for_export(bill_id: int) -> dict:
         return bill_dict
 
 # Ensure the export directory exists when the module is imported
-PDF_EXPORT_DIR = Path("D:/Rental_Manager/exports/bill")
+BASE_DIR = Path(__file__).resolve().parent.parent  # root project
+PDF_EXPORT_DIR = BASE_DIR / "exports" / "bill"
 PDF_EXPORT_DIR.mkdir(parents=True, exist_ok=True)
 
 def export_bill_to_pdf(bill_id: int, output_dir: str = None) -> str:
