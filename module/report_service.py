@@ -70,8 +70,11 @@ def get_contract_report():
         soon_expire = conn.execute(
             """
             SELECT COUNT(*) FROM contract 
-            WHERE end_ymd BETWEEN date('now') AND date('now', '+30 days')
-              AND contract_status = 'active' AND is_deleted = 0
+            WHERE 
+            substr(end_ymd, 7, 4) || '-' || substr(end_ymd, 4, 2) || '-' || substr(end_ymd, 1, 2)
+            BETWEEN date('now') AND date('now', '+30 days')
+            AND contract_status = 'active' 
+            AND is_deleted = 0
         """
         ).fetchone()[0]
 
