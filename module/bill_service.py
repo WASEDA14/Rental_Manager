@@ -164,67 +164,71 @@ def update_bill(bill_id: int, data: dict):
         # First, get the existing bill to ensure it exists and get contract_id
         existing_bill = conn.execute(
             """
-            SELECT contract_id, bill_month, paid_status FROM bill 
-            WHERE bill_id = ? AND is_deleted = 0
+            SELECT contract_id, bill_month, paid_status
+            FROM bill
+            WHERE bill_id = ?
+              AND is_deleted = 0
             """,
             (bill_id,)
         ).fetchone()
-        
+
         if not existing_bill:
             raise ValueError("Bill not found or has been deleted")
-            
+
         # If bill is already paid, don't allow updates to amounts
         if existing_bill['paid_status'] == 'paid':
             raise ValueError("Cannot update a paid bill")
-            
+
         # Validate bill month format (MM/YYYY)
         try:
             bill_month = data["bill_month"]
             month, year = map(int, bill_month.split('/'))
             if not (1 <= month <= 12) or year < 2000 or year > 2100:
                 raise ValueError("Invalid bill month format. Expected MM/YYYY")
-                
+
             # Check if another bill exists with the same contract and month
             if existing_bill['bill_month'] != bill_month:  # Only check if month changed
                 conflict = conn.execute(
                     """
-                    SELECT 1 FROM bill 
-                    WHERE contract_id = ? AND bill_month = ? 
-                    AND bill_id != ? AND is_deleted = 0
+                    SELECT 1
+                    FROM bill
+                    WHERE contract_id = ?
+                      AND bill_month = ?
+                      AND bill_id != ? AND is_deleted = 0
                     """,
                     (existing_bill['contract_id'], bill_month, bill_id)
                 ).fetchone()
-                
+
                 if conflict:
-                    raise ValueError(f"Another bill already exists for contract {existing_bill['contract_id']} and month {bill_month}")
-                    
+                    raise ValueError(
+                        f"Another bill already exists for contract {existing_bill['contract_id']} and month {bill_month}")
+
         except (ValueError, AttributeError):
             raise ValueError("Invalid bill month format. Expected MM/YYYY")
 
         # Calculate total amount
         total = (
-            data["room_rent_amount"]
-            + (data["elec_current"] - data["elec_prev"]) * data["electric_unit_price"]
-            + (data["water_current"] - data["water_prev"]) * data["water_unit_price"]
-            + data.get("other_fee", 0)
+                data["room_rent_amount"]
+                + (data["elec_current"] - data["elec_prev"]) * data["electric_unit_price"]
+                + (data["water_current"] - data["water_prev"]) * data["water_unit_price"]
+                + data.get("other_fee", 0)
         )
 
-        # Update the bill
+        # SỬA Ở ĐÂY: XÓA DÒNG updated_at = CURRENT_TIMESTAMP
         conn.execute(
             """
-            UPDATE bill SET
-                bill_month = ?,
-                elec_prev = ?,
-                elec_current = ?,
-                water_prev = ?,
-                water_current = ?,
+            UPDATE bill
+            SET bill_month          = ?,
+                elec_prev           = ?,
+                elec_current        = ?,
+                water_prev          = ?,
+                water_current       = ?,
                 electric_unit_price = ?,
-                water_unit_price = ?,
-                room_rent_amount = ?,
-                other_fee = ?,
-                total_amount = ?,
-                note = ?,
-                updated_at = CURRENT_TIMESTAMP
+                water_unit_price    = ?,
+                room_rent_amount    = ?,
+                other_fee           = ?,
+                total_amount        = ?,
+                note                = ?
             WHERE bill_id = ?
             """,
             (
@@ -243,7 +247,6 @@ def update_bill(bill_id: int, data: dict):
             ),
         )
         conn.commit()
-
 
 def delete_bill(bill_id: int):
     with get_db() as conn:
@@ -290,7 +293,7 @@ def mark_bill_paid(bill_id: int):
 
 def get_bill_by_id(bill_id: int) -> dict:
     with get_db() as conn:
-        row =  conn.execute(
+        row = conn.execute(
             """
             SELECT 
                 b.*, 
@@ -309,33 +312,25 @@ def get_bill_by_id(bill_id: int) -> dict:
             JOIN tenant t ON c.tenant_id = t.tenant_id
             WHERE b.bill_id = ? AND b.is_deleted = 0
             """,
-             (bill_id,)
-         ).fetchone()
+            (bill_id,)
+        ).fetchone()
 
     if not row:
         return None
 
     bill_data = dict(row)
 
-         # Calculate derived values
-    bill_data['elec_total'] = (bill_data['elec_current'] - bill_data['elec_prev']) * bill_data[
-             'electric_unit_price']
-    bill_data['water_total'] = (bill_data['water_current'] - bill_data['water_prev']) * bill_data[
-             'water_unit_price']
-    bill_data['total_amount'] = bill_data.get('total_amount', 0) or (
-                     bill_data['room_rent'] + bill_data['elec_total'] + bill_data['water_total'] + (
-                         bill_data.get('other_fee') or 0))
+    # SỬA LỖI Ở ĐÂY: dùng đúng tên cột
+    bill_data['bill_month'] = bill_data.get('bill_month', '')  # Không phải 'bill_date'
 
-    bill_data['elec_prev'] = bill_data.get('elec_prev', 0)
-    bill_data['elec_curr'] = bill_data.get('elec_current', 0)
-    bill_data['water_prev'] = bill_data.get('water_prev', 0)
-    bill_data['water_curr'] = bill_data.get('water_current', 0)
-    bill_data['elec_price'] = bill_data.get('electric_unit_price', 0)
-    bill_data['water_price'] = bill_data.get('water_unit_price', 0)
-    bill_data['bill_month'] = bill_data.get('bill_date', '')
+    # Các trường khác giữ nguyên
+    bill_data['elec_total'] = (bill_data['elec_current'] - bill_data['elec_prev']) * bill_data['electric_unit_price']
+    bill_data['water_total'] = (bill_data['water_current'] - bill_data['water_prev']) * bill_data['water_unit_price']
+    bill_data['total_amount'] = bill_data.get('total_amount', 0) or (
+        bill_data['room_rent'] + bill_data['elec_total'] + bill_data['water_total'] + (bill_data.get('other_fee') or 0)
+    )
 
     return bill_data
-
 
 def get_bill_for_export(bill_id: int) -> dict:
     """Get bill data for PDF export"""

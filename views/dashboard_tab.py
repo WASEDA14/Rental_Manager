@@ -1,5 +1,5 @@
+# -*- coding: utf-8 -*-
 from tkinter import messagebox
-
 import customtkinter as ctk
 from views.bill_tab import billTab
 from views.contract_tab import contractTab
@@ -7,24 +7,45 @@ from views.room_tab import roomTab
 from views.tenant_tab import tenantTab
 from views.report_tab import ReportTab
 
+# Import for charts
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
 
-class Card(ctk.CTkFrame):
+# Import services
+from module.dashboard_service import get_dashboard_stats
+from module.report_service import get_room_report, get_revenue_last_6_months
+
+
+class StatCard(ctk.CTkFrame):
+    """Card thống kê đẹp với viền màu nổi bật"""
+
     def __init__(self, parent, title: str, value: str, color: str):
-        super().__init__(parent, corner_radius=12)
-        self.configure(fg_color=color)
-        self._value = value
-        self._title = title
+        super().__init__(
+            parent,
+            corner_radius=16,
+            fg_color="#ffffff",
+            border_width=4,
+            border_color=color
+        )
+
+        ctk.CTkLabel(
+            self,
+            text=title,
+            font=ctk.CTkFont(size=15, weight="bold"),
+            text_color="#64748b"
+        ).pack(pady=(20, 8))
 
         self.value_label = ctk.CTkLabel(
-            self, text=self._value, font=ctk.CTkFont(size=28, weight="bold"), text_color="white"
+            self,
+            text=value,
+            font=ctk.CTkFont(size=42, weight="bold"),
+            text_color=color
         )
-        self.value_label.grid(row=0, column=0, padx=16, pady=(16, 4), sticky="w")
-
-        self.title_label = ctk.CTkLabel(self, text=self._title, text_color="white")
-        self.title_label.grid(row=1, column=0, padx=16, sticky="w")
+        self.value_label.pack(pady=(0, 25))
 
     def update_value(self, new_value):
-        self.value_label.configure(text=new_value)
+        self.value_label.configure(text=str(new_value))
 
 
 class DashboardView(ctk.CTkFrame):
@@ -35,8 +56,10 @@ class DashboardView(ctk.CTkFrame):
         self.active_button = None
         self.tabs = {}
         self.nav_buttons = []
-        self.setup_ui()
         self.login_window = login_window
+        self.chart_frames = []
+
+        self.setup_ui()
 
         if self.controller:
             self.controller.view = self
@@ -47,95 +70,268 @@ class DashboardView(ctk.CTkFrame):
         self.show_dashboard()
 
     def setup_sidebar(self):
-        self.sidebar = ctk.CTkFrame(self, width=240, corner_radius=0, fg_color=("#f0f2f5", "#1a1a1a"), border_width=1,
-                                    border_color=("#e0e0e0", "#2d2d2d"))
+        self.sidebar = ctk.CTkFrame(
+            self,
+            width=240,
+            corner_radius=0,
+            fg_color=("#f8fafc", "#1e1e1e"),
+            border_width=1,
+            border_color=("#e2e8f0", "#333333")
+        )
         self.sidebar.pack(side="left", fill="y")
         self.sidebar.pack_propagate(False)
 
         sidebar_content = ctk.CTkFrame(self.sidebar, fg_color="transparent")
-        sidebar_content.pack(fill="both", expand=True, padx=10, pady=10)
+        sidebar_content.pack(fill="both", expand=True, padx=15, pady=20)
 
-        ctk.CTkLabel(sidebar_content, text="Rental Manager",
-                     font=ctk.CTkFont(size=22, weight="bold"),
-                     text_color=("#2b2b2b", "#ffffff")).pack(pady=(10, 20))
+        ctk.CTkLabel(
+            sidebar_content,
+            text="Quản Lý Thuê Phòng",
+            font=ctk.CTkFont(size=20, weight="bold"),
+            text_color=("#1e293b", "#f1f5f9")
+        ).pack(pady=(0, 30))
 
         nav_frame = ctk.CTkFrame(sidebar_content, fg_color="transparent")
         nav_frame.pack(fill="x")
 
         self.nav_buttons = [
-            ("Dashboard", self.show_dashboard),
-            ("Room", self.show_room),
-            ("Tenant", self.show_tenant),
-            ("Contract", self.show_contract),
-            ("Bill", self.show_bill),
-            ("Report", self.show_report)
+            ("Trang Chủ", self.show_dashboard),
+            ("Phòng", self.show_room),
+            ("Khách Thuê", self.show_tenant),
+            ("Hợp Đồng", self.show_contract),
+            ("Hóa Đơn", self.show_bill),
+            ("Báo Cáo", self.show_report)
         ]
 
-        # First pass: create all buttons
         for text, command in self.nav_buttons:
             btn = ctk.CTkButton(
                 nav_frame,
                 text=text,
                 command=lambda t=text, c=command: self.on_nav_button_click(t, c),
                 anchor="w",
-                height=40,
-                corner_radius=8,
-                font=ctk.CTkFont(weight="normal"),
-                fg_color=("#ffffff", "#2b2b2b"),
-                text_color=("#2b2b2b", "#ffffff"),
-                hover_color=("#e9e9e9", "#3a3a3a"),
-                border_width=1,
-                border_color=("#e0e0e0", "#3a3a3a")
+                height=48,
+                corner_radius=12,
+                font=ctk.CTkFont(size=14),
+                fg_color="transparent",
+                hover_color=("#e0e7ff", "#374151"),
+                text_color=("#4b5563", "#d1d5db")
             )
-            btn.pack(fill="x", pady=4)
-            setattr(self, f"{text.lower()}_button", btn)
+            btn.pack(fill="x", pady=6)
+            button_attr = text.lower().replace(" ", "_")
+            setattr(self, f"{button_attr}_button", btn)
 
-        # Set Dashboard as active after all buttons are created
-        if hasattr(self, 'dashboard_button'):
-            self.set_active_button(self.dashboard_button)
+        if hasattr(self, 'trang_chủ_button'):
+            self.set_active_button(self.trang_chủ_button)
 
-        # Logout
-        logout_frame = ctk.CTkFrame(sidebar_content, fg_color="transparent")
-        logout_frame.pack(fill="x", side="bottom")
-        ctk.CTkButton(logout_frame, text="Logout", command=self.log_out,
-                      height=40, corner_radius=8,
-                      font=ctk.CTkFont(weight="bold"),
-                      fg_color=("#e74c3c", "#c0392b"),
-                      hover_color=("#c0392b", "#e74c3c"),
-                      text_color=("#ffffff", "#ffffff")).pack(fill="x", pady=(10, 0))
+        ctk.CTkButton(
+            sidebar_content,
+            text="Đăng Xuất",
+            command=self.log_out,
+            height=48,
+            corner_radius=12,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            fg_color="#ef4444",
+            hover_color="#dc2626",
+            text_color="white"
+        ).pack(side="bottom", fill="x", pady=(30, 0))
 
     def setup_content(self):
-        self.content = ctk.CTkFrame(self, fg_color="transparent")
+        self.content = ctk.CTkFrame(self, fg_color="#f8fafc")
         self.content.pack(side="right", fill="both", expand=True)
 
-        # Dashboard frame
-        self.dashboard_frame = ctk.CTkFrame(self.content, fg_color="transparent")
-        self.dashboard_frame.pack(fill="both", expand=True, padx=20, pady=20)
+        self.dashboard_frame = ctk.CTkScrollableFrame(self.content, fg_color="#f8fafc")
+        self.dashboard_frame.pack(fill="both", expand=True)
 
-        ctk.CTkLabel(self.dashboard_frame, text="Dashboard",
-                     font=ctk.CTkFont(size=24, weight="bold")).pack(anchor="w", pady=(0, 20))
+        main_container = ctk.CTkFrame(self.dashboard_frame, fg_color="transparent")
+        main_container.pack(fill="both", expand=True, padx=40, pady=40)
 
-        self.cards_frame = ctk.CTkFrame(self.dashboard_frame, fg_color="transparent")
-        self.cards_frame.pack(fill="x", pady=(0, 20), anchor="center")
+        # Header
+        header = ctk.CTkFrame(main_container, fg_color="transparent")
+        header.pack(fill="x", pady=(0, 30))
 
+        ctk.CTkLabel(
+            header,
+            text="Chào mừng quay trở lại!",
+            font=ctk.CTkFont(size=36, weight="bold"),
+            text_color="#1e293b"
+        ).pack(anchor="w")
+
+        ctk.CTkLabel(
+            header,
+            text="Tổng quan hệ thống hôm nay",
+            font=ctk.CTkFont(size=16),
+            text_color="#64748b"
+        ).pack(anchor="w", pady=(8, 0))
+
+        # Stats cards
+        stats_grid = ctk.CTkFrame(main_container, fg_color="transparent")
+        stats_grid.pack(fill="x", pady=(0, 40))
         for i in range(3):
-            self.cards_frame.grid_columnconfigure(i, weight=1, uniform="cards")
+            stats_grid.grid_columnconfigure(i, weight=1)
 
-        self.room_card = Card(self.cards_frame, "Rooms", "0/0", "#3498db")
-        self.tenant_card = Card(self.cards_frame, "Tenants", "0", "#f1c40f")
-        self.payment_card = Card(self.cards_frame, "Payments", "0/0", "#27ae60")
+        self.total_rooms_card = StatCard(stats_grid, "Tổng số phòng", "0", "#2563eb")
+        self.total_rooms_card.grid(row=0, column=0, padx=15, pady=15, sticky="nsew")
 
-        self.room_card.grid(row=0, column=0, padx=8, pady=8, sticky="nsew")
-        self.tenant_card.grid(row=0, column=1, padx=8, pady=8, sticky="nsew")
-        self.payment_card.grid(row=0, column=2, padx=8, pady=8, sticky="nsew")
+        self.occupied_rooms_card = StatCard(stats_grid, "Phòng đang thuê", "0", "#16a34a")
+        self.occupied_rooms_card.grid(row=0, column=1, padx=15, pady=15, sticky="nsew")
 
+        self.total_tenants_card = StatCard(stats_grid, "Tổng khách thuê", "0", "#7c3aed")
+        self.total_tenants_card.grid(row=0, column=2, padx=15, pady=15, sticky="nsew")
+
+        self.active_contracts_card = StatCard(stats_grid, "Hợp đồng hoạt động", "0", "#f59e0b")
+        self.active_contracts_card.grid(row=1, column=0, padx=15, pady=15, sticky="nsew")
+
+        self.expiring_contracts_card = StatCard(stats_grid, "Sắp hết hạn", "0", "#dc2626")
+        self.expiring_contracts_card.grid(row=1, column=1, padx=15, pady=15, sticky="nsew")
+
+        self.unpaid_bills_card = StatCard(stats_grid, "Hóa đơn chưa thu", "0", "#ef4444")
+        self.unpaid_bills_card.grid(row=1, column=2, padx=15, pady=15, sticky="nsew")
+
+        # Charts
+        self.charts_container = ctk.CTkFrame(main_container, fg_color="transparent")
+        self.charts_container.pack(fill="both", expand=True)
+        self.charts_container.grid_columnconfigure((0, 1), weight=1)
+        self.charts_container.grid_rowconfigure(0, weight=1)
+
+    def refresh_dashboard(self):
+        self.load_dashboard_data()
+        self.load_charts()
+
+    def load_dashboard_data(self):
+        """LẤY ĐÚNG SỐ LIỆU CHO CÁC CARD"""
+        try:
+            stats = get_dashboard_stats()
+
+            self.total_rooms_card.update_value(stats.get('total_rooms', 0))
+            self.occupied_rooms_card.update_value(stats.get('occupied_rooms', 0))
+            self.total_tenants_card.update_value(stats.get('total_tenants', 0))
+            self.active_contracts_card.update_value(stats.get('active_contracts', 0))
+            self.expiring_contracts_card.update_value(stats.get('expiring_contracts', 0))
+            self.unpaid_bills_card.update_value(stats.get('unpaid_bills', 0))
+
+        except Exception as e:
+            print(f"[Dashboard] Lỗi load data: {e}")
+            # Giữ giá trị 0 nếu lỗi
+
+    def load_charts(self):
+        for frame in self.chart_frames:
+            frame.destroy()
+        self.chart_frames.clear()
+
+        try:
+            room_data = get_room_report()
+            revenue_data = get_revenue_last_6_months()
+
+            # ĐÃ ĐỔI THÀNH BAR CHART CHO PHÒNG
+            self._create_bar_room_chart(self.charts_container, 0, 0, room_data)
+            self._create_revenue_line_chart(self.charts_container, 0, 1, revenue_data)
+        except Exception as e:
+            print(f"[Dashboard] Lỗi load chart: {e}")
+
+    # === BIỂU ĐỒ PHÒNG TRỌ - BAR CHART (CỘT DỌC) ===
+    def _create_bar_room_chart(self, parent, row, col, data):
+        container = ctk.CTkFrame(parent, fg_color="white", corner_radius=20, border_width=1, border_color="#e2e8f0")
+        container.grid(row=row, column=col, padx=25, pady=25, sticky="nsew")
+
+        title = ctk.CTkLabel(container, text="Tình trạng phòng trọ", font=ctk.CTkFont(size=20, weight="bold"), text_color="#1e293b")
+        title.pack(pady=(30, 20))
+
+        chart_frame = ctk.CTkFrame(container, fg_color="white")
+        chart_frame.pack(fill="both", expand=True, padx=30, pady=(0, 30))
+
+        fig = Figure(figsize=(8, 6), dpi=100)
+        ax = fig.add_subplot(111)
+
+        labels = ["Đang thuê", "Trống", "Bảo trì"]
+        values = [data["occupied"], data["available"], data["maintenance"]]
+        colors = ["#3b82f6", "#10b981", "#f59e0b"]
+
+        if sum(values) == 0:
+            ax.text(0.5, 0.5, "Chưa có dữ liệu phòng", transform=ax.transAxes,
+                    fontsize=18, color="#94a3b8", ha="center", va="center", weight="bold")
+            ax.axis('off')
+        else:
+            bars = ax.bar(labels, values, color=colors, width=0.6, edgecolor="white", linewidth=3)
+
+            ax.set_ylim(0, max(values) * 1.4 if max(values) > 0 else 10)
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['left'].set_color('#e2e8f0')
+            ax.spines['bottom'].set_color('#e2e8f0')
+            ax.grid(axis='y', linestyle='--', alpha=0.4, color='#e2e8f0')
+
+            for bar in bars:
+                height = int(bar.get_height())
+                if height > 0:
+                    ax.text(
+                        bar.get_x() + bar.get_width()/2,
+                        height + max(values)*0.02,
+                        str(height),
+                        ha='center',
+                        va='bottom',
+                        fontweight='bold',
+                        fontsize=20,
+                        color='#1e293b'
+                    )
+
+            ax.tick_params(axis='x', labelsize=14)
+            ax.tick_params(axis='y', labelsize=12)
+
+        self._embed_chart(fig, chart_frame)
+        self.chart_frames.append(container)
+
+    # === BIỂU ĐỒ DOANH THU ===
+    def _create_revenue_line_chart(self, parent, row, col, data):
+        container = ctk.CTkFrame(parent, fg_color="white", corner_radius=20, border_width=1, border_color="#e2e8f0")
+        container.grid(row=row, column=col, padx=25, pady=25, sticky="nsew")
+
+        title = ctk.CTkLabel(container, text="Doanh thu 6 tháng gần nhất", font=ctk.CTkFont(size=20, weight="bold"), text_color="#1e293b")
+        title.pack(pady=(30, 20))
+
+        chart_frame = ctk.CTkFrame(container, fg_color="white")
+        chart_frame.pack(fill="both", expand=True, padx=30, pady=(0, 30))
+
+        fig = Figure(figsize=(8, 6), dpi=100)
+        ax = fig.add_subplot(111)
+
+        months = [item['month'] for item in data]
+        revenues = [item['revenue'] for item in data]
+
+        if sum(revenues) == 0:
+            ax.text(0.5, 0.5, "Chưa có doanh thu", transform=ax.transAxes,
+                    fontsize=18, color="#94a3b8", ha="center", va="center", weight="bold")
+            ax.axis('off')
+        else:
+            ax.plot(months, revenues, color="#10b981", linewidth=4, marker='o', markersize=12,
+                    markerfacecolor="#10b981", markeredgecolor="white", markeredgewidth=3)
+            ax.fill_between(months, revenues, alpha=0.15, color="#10b981")
+
+            ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x/1e6:.1f}tr' if x >= 1e6 else f'{x/1e3:.0f}k'))
+
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['left'].set_color('#e2e8f0')
+            ax.spines['bottom'].set_color('#e2e8f0')
+            ax.grid(True, axis='y', linestyle='--', alpha=0.4, color='#e2e8f0')
+
+            plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha='right')
+            ax.tick_params(axis='both', colors='#64748b', labelsize=12)
+
+        self._embed_chart(fig, chart_frame)
+        self.chart_frames.append(container)
+
+    def _embed_chart(self, fig, frame):
+        fig.tight_layout(pad=4.0)
+        canvas = FigureCanvasTkAgg(fig, master=frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
+
+    # === Các hàm tab ===
     def lazy_load_tab(self, name, cls, user_id=None):
         if name not in self.tabs:
             if name == "report":
-                # For ReportTab, we always need to pass user_id, even if it's None
                 self.tabs[name] = cls(self.content, user_id)
             else:
-                # For other tabs, use the standard initialization
                 self.tabs[name] = cls(self.content)
         return self.tabs[name]
 
@@ -145,28 +341,21 @@ class DashboardView(ctk.CTkFrame):
             tab.pack_forget()
 
     def on_nav_button_click(self, button_text, command):
-        button = getattr(self, f"{button_text.lower()}_button")
+        button_attr = button_text.lower().replace(" ", "_")
+        button = getattr(self, f"{button_attr}_button")
         self.set_active_button(button)
         command()
 
-    def set_active_button(self, button):
+    def set_active_button(self, active_btn):
         for text, _ in self.nav_buttons:
-            btn = getattr(self, f"{text.lower()}_button")
-            btn.configure(
-                fg_color=("#ffffff", "#2b2b2b"),
-                text_color=("#2b2b2b", "#ffffff")
-            )
-        button.configure(
-            fg_color=("#e0e0e0", "#3a3a3a"),
-            text_color=("#000000", "#ffffff")
-        )
-        self.active_button = button
+            btn = getattr(self, f"{text.lower().replace(' ', '_')}_button")
+            btn.configure(fg_color="transparent", text_color=("#4b5563", "#d1d5db"))
+        active_btn.configure(fg_color=("#dbeafe", "#374151"), text_color=("#1e40af", "#93c5fd"))
 
     def show_dashboard(self):
         self.hide_all()
-        self.dashboard_frame.pack(fill="both", expand=True, padx=20, pady=20)
-        if self.controller:
-            self.controller.refresh_data()
+        self.dashboard_frame.pack(fill="both", expand=True)
+        self.refresh_dashboard()
 
     def show_room(self):
         self.hide_all()
@@ -188,7 +377,6 @@ class DashboardView(ctk.CTkFrame):
         if hasattr(tab, 'initialize'):
             tab.initialize()
         tab.pack(fill="both", expand=True, padx=20, pady=20)
-        # Clear the form when showing the bill tab
         tab.on_clear_form()
 
     def show_report(self):
@@ -206,16 +394,7 @@ class DashboardView(ctk.CTkFrame):
             tab.initialize()
         tab.pack(fill="both", expand=True, padx=20, pady=20)
 
-    def reload_room_card(self, occupied, total):
-        self.room_card.update_value(f"{occupied}/{total}")
-
-    def reload_tenant_card(self, count):
-        self.tenant_card.update_value(str(count))
-
-    def reload_payment_card(self, paid, total):
-        self.payment_card.update_value(f"{paid}/{total}")
-
     def log_out(self):
-        if not messagebox.askyesno("Đăng xuất", "Bạn có chắc muốn đăng xuất?", parent=self):
-            return
-        self.parent.show_login()
+        if messagebox.askyesno("Đăng xuất", "Bạn có chắc muốn đăng xuất không?", parent=self):
+            # Gọi hàm show_login từ MainWindow (parent của dashboard)
+            self.master.show_login()  # self.master chính là MainWindow

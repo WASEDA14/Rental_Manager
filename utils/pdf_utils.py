@@ -1,515 +1,293 @@
-from reportlab.lib.pagesizes import A4
+# utils/pdf_utils.py
+from reportlab.lib.pagesizes import A5, A4
 from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.units import mm, inch
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer, Image
+from reportlab.lib.units import cm
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase.cidfonts import UnicodeCIDFont
 import os
-import sys
+from datetime import datetime
 
-def register_font(font_path, font_name=None):
-    """Helper function to register a font with error handling"""
-    try:
-        if not font_name:
-            font_name = os.path.splitext(os.path.basename(font_path))[0]
-        pdfmetrics.registerFont(TTFont(font_name, font_path))
-        return font_name
-    except Exception as e:
-        print(f"Warning: Could not register font {font_path}: {str(e)}")
-        return None
+# ========================
+# ĐĂNG KÝ FONT INTER TỪ assets/fonts
+# ========================
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FONT_DIR = os.path.join(BASE_DIR, "assets", "fonts")
+INTER_REGULAR = os.path.join(FONT_DIR, "Inter.ttf")
+INTER_BOLD = os.path.join(FONT_DIR, "Inter-Bold.ttf")
 
-def get_system_fonts():
-    """Find and register system fonts with better fallbacks"""
-    # Default fallback fonts
-    default_font = 'Helvetica'
-    bold_font = 'Helvetica-Bold'
-    
-    # Common font paths by OS
-    font_paths = []
-    
-    if sys.platform.startswith('win'):
-        # Windows font paths
-        font_paths.extend([
-            ('C:/Windows/Fonts/arial.ttf', 'Arial', None),
-            ('C:/Windows/Fonts/arialbd.ttf', 'Arial-Bold', None),
-            ('C:/Windows/Fonts/ARIALUNI.TTF', 'ArialUnicode', None),  # Arial Unicode MS
-            ('C:/Windows/Fonts/times.ttf', 'Times-Roman', None),
-            ('C:/Windows/Fonts/timesbd.ttf', 'Times-Bold', None),
-            ('C:/Windows/Fonts/msyh.ttf', 'MicrosoftYaHei', None),  # Microsoft YaHei (Chinese font that supports Vietnamese)
-            ('C:/Windows/Fonts/msyhbd.ttf', 'MicrosoftYaHei-Bold', None),
-        ])
-    
-    # Try to register fonts
-    registered_fonts = {}
-    
-    for font_path, font_name, _ in font_paths:
-        if os.path.exists(font_path):
-            registered_name = register_font(font_path, font_name)
-            if registered_name:
-                registered_fonts[font_name] = registered_name
-    
-    # Set default and bold fonts based on what we found
-    if 'ArialUnicode' in registered_fonts:
-        default_font = 'ArialUnicode'
-        bold_font = 'ArialUnicode'  # We'll use fake bold if needed
-    elif 'Arial' in registered_fonts:
-        default_font = 'Arial'
-        bold_font = 'Arial-Bold' if 'Arial-Bold' in registered_fonts else 'Arial'
-    elif 'MicrosoftYaHei' in registered_fonts:
-        default_font = 'MicrosoftYaHei'
-        bold_font = 'MicrosoftYaHei-Bold' if 'MicrosoftYaHei-Bold' in registered_fonts else 'MicrosoftYaHei'
-    
-    # Try to register built-in CID fonts as last resort
-    if default_font == 'Helvetica':
-        try:
-            pdfmetrics.registerFont(UnicodeCIDFont('STSong-Light'))
-            default_font = 'STSong-Light'
-            bold_font = 'STSong-Light'
-        except:
-            pass
-    
-    return default_font, bold_font
+def register_inter_fonts():
+    if os.path.exists(INTER_REGULAR):
+        pdfmetrics.registerFont(TTFont("Inter", INTER_REGULAR))
+    if os.path.exists(INTER_BOLD):
+        pdfmetrics.registerFont(TTFont("Inter-Bold", INTER_BOLD))
 
-# Get system fonts
-DEFAULT_FONT, BOLD_FONT = get_system_fonts()
+register_inter_fonts()
 
-# Print debug info
-print(f"Using fonts - Regular: {DEFAULT_FONT}, Bold: {BOLD_FONT}")
+# ========================
+# STYLES
+# ========================
+styles = {}
 
-# Register a fake bold font if we don't have a proper bold font
-if BOLD_FONT == DEFAULT_FONT:
-    try:
-        # Create a fake bold style by using the same font with bold weight
-        from reportlab.lib.styles import _baseFontNameB
-        _baseFontNameB[DEFAULT_FONT] = f'{DEFAULT_FONT}-Bold'
-        pdfmetrics.registerFont(TTFont(f'{DEFAULT_FONT}-Bold', pdfmetrics.getFont(DEFAULT_FONT).face))
-        BOLD_FONT = f'{DEFAULT_FONT}-Bold'
-    except Exception as e:
-        print(f"Warning: Could not create fake bold font: {str(e)}")
-
-# Define styles
-styles = getSampleStyleSheet()
-
-# Function to safely add a style if it doesn't exist
-def add_style(name, **kwargs):
-    if name not in styles:
-        styles.add(ParagraphStyle(name=name, **kwargs))
-    else:
-        # Update existing style with new properties
-        style = styles[name]
-        for key, value in kwargs.items():
-            setattr(style, key, value)
-
-# First, create a base Normal style
-add_style(
-    'Normal',
-    fontName=DEFAULT_FONT,
-    fontSize=11,
-    leading=14,
-    spaceAfter=6,
-    encoding='UTF-8'
-)
-
-# Then create other styles that might inherit from it
-add_style(
-    'Title',
-    parent=styles['Normal'],
-    fontName=DEFAULT_FONT,
+styles['MainTitle'] = ParagraphStyle(
+    name='MainTitle',
+    fontName='Inter-Bold',
     fontSize=16,
-    alignment=1,  # Center aligned
-    spaceAfter=15,
-    leading=15,
-    textColor=colors.black
+    alignment=TA_CENTER,
+    spaceAfter=12,
+    textColor=colors.HexColor("#0f172a")
 )
 
-add_style(
-    'Header',
-    parent=styles['Normal'],
-    fontName=DEFAULT_FONT,
-    fontSize=12,
-    spaceAfter=10,
+styles['Info'] = ParagraphStyle(
+    name='Info',
+    fontName='Inter',
+    fontSize=9.5,
+    spaceAfter=4
+)
+
+styles['SubTitle'] = ParagraphStyle(
+    name='SubTitle',
+    fontName='Inter-Bold',
+    fontSize=11,
+    spaceAfter=8,
+    textColor=colors.HexColor("#0f172a")
+)
+
+styles['Normal'] = ParagraphStyle(
+    name='Normal',
+    fontName='Inter',
+    fontSize=10,
     leading=14,
-    textColor=colors.black
+    spaceAfter=5
 )
 
-add_style(
-    'Bold',
-    parent=styles['Normal'],
-    fontName=BOLD_FONT,
-    spaceAfter=6,
-    textColor=colors.black
-)
-
-add_style(
-    'CustomNormal',
-    parent=styles['Normal'],
-    fontName=DEFAULT_FONT,
+styles['Italic'] = ParagraphStyle(
+    name='Italic',
+    fontName='Inter',
     fontSize=10,
-    leading=12,
-    textColor=colors.black
+    fontStyle='italic',
+    alignment=TA_CENTER
 )
 
-add_style(
-    'Bold',
-    fontName=f'{DEFAULT_FONT}-Bold',
-    fontSize=10,
-    leading=12
-)
+# Contract styles
+styles['QuocHieu'] = ParagraphStyle(name='QuocHieu', fontName='Inter-Bold', fontSize=14, alignment=TA_CENTER, spaceAfter=6)
+styles['KhauHieu'] = ParagraphStyle(name='KhauHieu', fontName='Inter', fontSize=12, alignment=TA_CENTER, spaceAfter=15)
+styles['ContractTitle'] = ParagraphStyle(name='ContractTitle', fontName='Inter-Bold', fontSize=20, alignment=TA_CENTER, spaceAfter=15)
+styles['ContractMeta'] = ParagraphStyle(name='ContractMeta', fontName='Inter', fontSize=12, alignment=TA_CENTER, spaceAfter=20, textColor=colors.HexColor("#334155"))
+styles['ContractSubTitle'] = ParagraphStyle(name='ContractSubTitle', fontName='Inter-Bold', fontSize=13, spaceAfter=8)
+styles['ContractNormal'] = ParagraphStyle(name='ContractNormal', fontName='Inter', fontSize=11.5, leading=18, spaceAfter=6)
 
 def format_currency(amount):
-    """Format number as VND currency"""
+    if not amount or amount == 0:
+        return "0 VNĐ"
     return f"{int(amount):,}".replace(",", ".") + " VNĐ"
 
+# ==============================
+# BIÊN LAI THU TIỀN (HÓA ĐƠN)
+# ==============================
 def create_bill_pdf(bill_data, output_path):
-    """
-    Create a PDF bill
-    
-    Args:
-        bill_data (dict): Dictionary containing bill information
-        output_path (str): Path to save the PDF file
-    """
     doc = SimpleDocTemplate(
         output_path,
-        pagesize=A4,
-        leftMargin=20*mm,
-        rightMargin=20*mm,
-        topMargin=20*mm,
-        bottomMargin=20*mm
+        pagesize=A5,
+        topMargin=1.3*cm,
+        bottomMargin=1.5*cm,
+        leftMargin=1.5*cm,
+        rightMargin=1.5*cm
     )
-    
     elements = []
-    
-    # Add header
-    elements.append(Paragraph("HÓA ĐƠN TIỀN PHÒNG", styles['Title']))
-    
-    # Add company info
-    company_info = [
-        ["PHÒNG TRỌ GR8"],
-        ["Địa chỉ: Số 1, Đường ABC, Quận 1, TP.HCM", f"Mã hóa đơn: {bill_data.get('bill_code', '')}"],
-        ["Điện thoại: 0123 456 789", f"Ngày lập: {bill_data.get('created_date', '')}"],
-    ]
-    
-    company_table = Table(company_info, colWidths=[doc.width*0.6, doc.width*0.4])
-    company_table.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), f'{DEFAULT_FONT}'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('TOPPADDING', (0, 0), (-1, -1), 0),
-        ('BOLD', (0, 0), (0, 0), True),
-        ('FONTNAME', (0, 0), (0, 0), f'{DEFAULT_FONT}-Bold'),
-    ]))
-    elements.append(company_table)
-    elements.append(Spacer(1, 15))
-    
-    # Add customer info
-    customer_info = [
-        ["Khách hàng:", bill_data.get('tenant_name', '')],
-        ["Phòng:", bill_data.get('room_name', '')],
-        ["Số điện thoại:", bill_data.get('phone', '')],
-    ]
-    
-    customer_table = Table(customer_info, colWidths=[doc.width*0.2, doc.width*0.8])
-    customer_table.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), f'{DEFAULT_FONT}'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('TOPPADDING', (0, 0), (-1, -1), 0),
-        ('FONTNAME', (0, 0), (0, -1), f'{DEFAULT_FONT}-Bold'),
-    ]))
-    elements.append(customer_table)
-    elements.append(Spacer(1, 15))
-    
-    # Add bill details
-    details_header = ["STT", "Nội dung", "Số lượng", "Đơn giá", "Thành tiền"]
-    details_data = [details_header]
-    
-    # Add room rent
-    details_data.append([
-        "1",
-        "Tiền phòng tháng " + bill_data.get('bill_month', ''),
-        "1 tháng",
-        format_currency(bill_data.get('room_rent_amount', 0)),
-        format_currency(bill_data.get('room_rent_amount', 0))
-    ])
-    
-    # Add electricity
-    elec_usage = bill_data.get('elec_current', 0) - bill_data.get('elec_prev', 0)
-    elec_total = elec_usage * bill_data.get('electric_unit_price', 0)
-    details_data.append([
-        "2",
-        f"Tiền điện",
-        f"{elec_usage} kWh",
-        format_currency(bill_data.get('electric_unit_price', 0)),
-        format_currency(elec_total)
-    ])
-    
-    # Add water
-    water_usage = bill_data.get('water_current', 0) - bill_data.get('water_prev', 0)
-    water_total = water_usage * bill_data.get('water_unit_price', 0)
-    details_data.append([
-        "3",
-        f"Tiền nước",
-        f"{water_usage} m³",
-        format_currency(bill_data.get('water_unit_price', 0)),
-        format_currency(water_total)
-    ])
-    
-    # Add other fees if any
-    other_fee = bill_data.get('other_fee', 0)
-    if other_fee > 0:
-        details_data.append([
-            "4",
-            bill_data.get('other_fee_note', 'Phí phát sinh'),
-            "1",
-            format_currency(other_fee),
-            format_currency(other_fee)
-        ])
-    
-    # Calculate total
+
+    # Tiêu đề mới
+    elements.append(Paragraph("BIÊN LAI THU TIỀN", styles['MainTitle']))
+
+    # Thông tin biên lai
+    elements.append(Paragraph(f"Mã biên lai: <b>{bill_data.get('bill_code', '')}</b>", styles['Info']))
+    elements.append(Paragraph(f"Kỳ thanh toán: <b>{bill_data.get('bill_month', '')}</b>", styles['Info']))
+    elements.append(Paragraph(f"Ngày lập: <b>{datetime.now().strftime('%d/%m/%Y')}</b>", styles['Info']))
+    elements.append(Spacer(1, 10))
+
+    # Thông tin khách
+    elements.append(Paragraph("THÔNG TIN NGƯỜI THUÊ", styles['SubTitle']))
+    elements.append(Paragraph(f"• Họ tên: {bill_data.get('tenant_name', '')}", styles['Normal']))
+    elements.append(Paragraph(f"• Phòng: {bill_data.get('room_name', '')}", styles['Normal']))
+    elements.append(Spacer(1, 10))
+
+    # Chi tiết thanh toán - liệt kê rõ cũ/mới/giá/tổng
+    elements.append(Paragraph("CHI TIẾT THANH TOÁN", styles['SubTitle']))
+
+    # Tiền phòng
+    elements.append(Paragraph(f"Tiền thuê phòng: {format_currency(bill_data.get('room_rent_amount', 0))}", styles['Normal']))
+
+    # Điện chi tiết
+    elec_prev = bill_data.get('elec_prev', 0)
+    elec_curr = bill_data.get('elec_current', 0)
+    elec_used = elec_curr - elec_prev
+    elec_price = bill_data.get('electric_unit_price', 0)
+    elec_total = elec_used * elec_price
+
+    elements.append(Paragraph(f"Điện cũ: {elec_prev} kWh → mới: {elec_curr} kWh", styles['Normal']))
+    elements.append(Paragraph(f"Tiêu thụ: {elec_used} kWh × đơn giá {format_currency(elec_price)}/kWh", styles['Normal']))
+    elements.append(Paragraph(f"Thành tiền điện: {format_currency(elec_total)}", styles['Normal']))
+
+    # Nước chi tiết
+    water_prev = bill_data.get('water_prev', 0)
+    water_curr = bill_data.get('water_current', 0)
+    water_used = water_curr - water_prev
+    water_price = bill_data.get('water_unit_price', 0)
+    water_total = water_used * water_price
+
+    elements.append(Paragraph(f"Nước cũ: {water_prev} m³ → mới: {water_curr} m³", styles['Normal']))
+    elements.append(Paragraph(f"Tiêu thụ: {water_used} m³ × đơn giá {format_currency(water_price)}/m³", styles['Normal']))
+    elements.append(Paragraph(f"Thành tiền nước: {format_currency(water_total)}", styles['Normal']))
+
+    # Phụ phí
+    other = bill_data.get('other_fee', 0)
+    if other > 0:
+        elements.append(Paragraph(f"Phí khác: {format_currency(other)}", styles['Normal']))
+
+    # Tổng cộng
     total = bill_data.get('total_amount', 0)
-    
-    details_table = Table(details_data, colWidths=[
-        20,  # STT
-        doc.width*0.4,  # Nội dung
-        doc.width*0.15,  # Số lượng
-        doc.width*0.15,  # Đơn giá
-        doc.width*0.15   # Thành tiền
-    ])
-    
-    details_table.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), f'{DEFAULT_FONT}'),
-        ('FONTSIZE', (0, 0), (-1, -1), 9),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('TOPPADDING', (0, 0), (-1, -1), 6),
-        ('ALIGN', (2, 0), (-1, -1), 'RIGHT'),
-        ('ALIGN', (0, 0), (0, -1), 'CENTER'),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
-        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-        ('FONTNAME', (0, 0), (-1, 0), f'{DEFAULT_FONT}-Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-        ('TOPPADDING', (0, 0), (-1, 0), 8),
-    ]))
-    
-    elements.append(details_table)
-    elements.append(Spacer(1, 10))
-    
-    # Add total
-    total_row = [
-        ["TỔNG CỘNG:", format_currency(total)],
-        ["Số tiền bằng chữ:", f"({number_to_words(total)} đồng)"]
-    ]
-    
-    total_table = Table(total_row, colWidths=[doc.width*0.7, doc.width*0.3])
-    total_table.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), f'{DEFAULT_FONT}-Bold'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
-        ('FONTSIZE', (1, 0), (1, 0), 12),
-    ]))
-    elements.append(total_table)
-    elements.append(Spacer(1, 20))
-    elements.append(Paragraph(
-        "<b>Phương thức thanh toán:</b> Tiền mặt hoặc chuyển khoản vào ngày 05 hàng tháng<br/><br/>"
-        "<b>Ngân hàng:</b> Vietcombank<br/>"
-        "<b>Chi nhánh:</b> Đường Kim Cương<br/>"
-        "<b>STK:</b> 0000000001<br/>"
-        "<b>Chủ TK:</b> GR8",
-        styles['Normal']
-    ))
+    elements.append(Spacer(1, 12))
+    elements.append(Paragraph(f"TỔNG CỘNG: {format_currency(total)}", ParagraphStyle(
+        name='TotalFinal', fontName='Inter-Bold', fontSize=14, alignment=TA_RIGHT, textColor=colors.HexColor("#dc2626")
+    )))
 
-    # Build the PDF
+    # Ghi chú
+    note = bill_data.get('note', '').strip()
+    if note:
+        elements.append(Spacer(1, 10))
+        elements.append(Paragraph(f"Ghi chú: {note}", styles['Normal']))
+
+    elements.append(Spacer(1, 20))
+
+    # Chữ ký - 2 bên trái phải
+    sig_data = [
+        ["Người lập biên lai", "Người nộp tiền"],
+        ["(Ký và ghi rõ họ tên)", "(Ký và ghi rõ họ tên)"]
+    ]
+    sig_table = Table(sig_data, colWidths=[doc.width*0.5, doc.width*0.5])
+    sig_table.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,-1), 'Inter'),
+        ('FONTSIZE', (0,0), (-1,-1), 11),
+        ('FONTNAME', (0,0), (-1,0), 'Inter-Bold'),
+        ('ITALIC', (0,1), (-1,1), True),
+        ('PADDING', (0,0), (-1,-1), 12),
+    ]))
+    elements.append(sig_table)
+
     doc.build(elements)
     return output_path
 
+# ==============================
+# HỢP ĐỒNG THUÊ PHÒNG (NGẮT TRANG TỪ ĐIỀU 1)
+# ==============================
 def create_contract_pdf(contract_data, output_path):
-    """
-    Create a PDF contract
-    
-    Args:
-        contract_data (dict): Dictionary containing contract information
-        output_path (str): Path to save the PDF file
-    """
     doc = SimpleDocTemplate(
         output_path,
         pagesize=A4,
-        leftMargin=20*mm,
-        rightMargin=20*mm,
-        topMargin=20*mm,
-        bottomMargin=20*mm
+        topMargin=1.8*cm,
+        bottomMargin=2.0*cm,
+        leftMargin=2.2*cm,
+        rightMargin=2.2*cm
     )
-    
     elements = []
-    
-    # Add header
-    elements.append(Paragraph("HỢP ĐỒNG CHO THUÊ PHÒNG TRỌ", styles['Title']))
-    elements.append(Paragraph("Số: {}".format(contract_data.get('contract_code', '')), styles['Normal']))
-    elements.append(Spacer(1, 5))
-    
-    # Add parties
-    elements.append(Paragraph("BÊN CHO THUÊ (BÊN A):", styles['Header']))
-    elements.append(Paragraph("PHÒNG TRỌ GR8", styles['Bold']))
-    elements.append(Paragraph("Địa chỉ: {}".format(contract_data.get('company_address', 'Số 1, Đường ABC, Quận 1, TP.HCM')), styles['Normal']))
-    elements.append(Paragraph("Mã số thuế: 1234567890", styles['Normal']))
-    elements.append(Paragraph("Điện thoại: 0123 456 789", styles['Normal']))
-    elements.append(Spacer(1, 5))
-    
-    elements.append(Paragraph("BÊN THUÊ (BÊN B):", styles['Header']))
-    elements.append(Paragraph("Họ và tên: {}".format(contract_data.get('tenant_name', '')), styles['Bold']))
-    elements.append(Paragraph("Số CMND/CCCD: {}".format(contract_data.get('id_number', '')), styles['Normal']))
-    elements.append(Paragraph("Địa chỉ thường trú: {}".format(contract_data.get('address', '')), styles['Normal']))
-    elements.append(Paragraph("Điện thoại: {}".format(contract_data.get('phone', '')), styles['Normal']))
-    elements.append(Spacer(1, 5))
-    
-    # Add contract terms
-    elements.append(Paragraph("Hai bên cùng thỏa thuận ký kết hợp đồng thuê phòng với các điều khoản sau:", styles['Bold']))
-    elements.append(Spacer(1, 5))
-    
-    # Term 1: Property information
-    elements.append(Paragraph("Điều 1: Đối tượng hợp đồng", styles['Bold']))
-    elements.append(Paragraph("Bên A cho bên B thuê phòng: {}".format(contract_data.get('room_name', '')), styles['Normal']))
-    elements.append(Spacer(1, 5))
-    
-    # Term 2: Rental period
-    elements.append(Paragraph("Điều 2: Thời hạn hợp đồng", styles['Bold']))
-    elements.append(Paragraph("Từ ngày {} đến ngày {}".format(
-        contract_data.get('start_ymd', ''),
-        contract_data.get('end_ymd', '')
-    ), styles['Normal']))
-    elements.append(Spacer(1, 5))
-    
-    # Term 3: Rental price and payment
-    elements.append(Paragraph("Điều 3: Giá thuê và phương thức thanh toán", styles['Bold']))
-    elements.append(Paragraph("1. Giá thuê phòng: {} / tháng".format(
-        format_currency(contract_data.get('rent', 0))
-    ), styles['Normal']))
-    elements.append(Paragraph("2. Tiền đặt cọc: {}".format(
-        format_currency(contract_data.get('deposit', 0))
-    ), styles['Normal']))
-    elements.append(Paragraph("3. Phương thức thanh toán: Chuyển khoản hoặc tiền mặt vào ngày {} hàng tháng".format(
-        contract_data.get('payment_due_day', '05')
-    ), styles['Normal']))
-    elements.append(Spacer(1, 5))
-    
-    # Term 4: Rights and obligations
-    elements.append(Paragraph("Điều 4: Quyền và nghĩa vụ của các bên", styles['Bold']))
-    elements.append(Paragraph("1. Quyền và nghĩa vụ của bên A:", styles['Bold']))
-    elements.append(Paragraph("- Cung cấp phòng đúng tiêu chuẩn, tiện nghi và trang thiết bị:......................................", styles['Normal']))
-    elements.append(Paragraph("2. Quyền và nghĩa vụ của bên B:", styles['Bold']))
-    elements.append(Paragraph("- Thanh toán đầy đủ tiền phòng đúng hạn.", styles['Normal']))
-    elements.append(Paragraph("- Giữ gìn vệ sinh chung, bảo quản tài sản của phòng.", styles['Normal']))
-    elements.append(Spacer(1, 5))
-    
-    # Term 5: Other agreements
-    elements.append(Paragraph("Điều 5: Các thỏa thuận khác", styles['Bold']))
-    elements.append(Paragraph("1. Hợp đồng này có hiệu lực kể từ ngày ký.", styles['Normal']))
-    elements.append(Paragraph("2. Hợp đồng được lập thành 02 bản, mỗi bên giữ 01 bản có giá trị pháp lý như nhau.", styles['Normal']))
+
+    # Quốc hiệu
+    elements.append(Paragraph("CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM", styles['QuocHieu']))
+    elements.append(Paragraph("Độc lập - Tự do - Hạnh phúc", styles['KhauHieu']))
+    elements.append(Spacer(1, 16))
+
+    # Tiêu đề
+    elements.append(Paragraph("HỢP ĐỒNG THUÊ PHÒNG TRỌ", styles['ContractTitle']))
+    elements.append(Paragraph(f"Số hợp đồng: <b>{contract_data.get('contract_id', '')}</b>", styles['ContractMeta']))
+    elements.append(Paragraph(f"Ngày lập: <b>{datetime.now().strftime('%d/%m/%Y')}</b>", styles['ContractMeta']))
     elements.append(Spacer(1, 10))
-    
-    # Add signature
-    signature = [
-        ["Bên cho thuê", "Bên thuê"],
-        "",
-        ["(Ký, ghi rõ họ tên)", "(Ký, ghi rõ họ tên)"]
+
+    # Thông tin các bên (trang 1)
+    elements.append(Paragraph("BÊN A (BÊN CHO THUÊ)", styles['ContractSubTitle']))
+    elements.append(Paragraph("• Công ty/Tổ chức: <b>CÔNG TY QUẢN LÝ NHÀ TRỌ GR8</b>", styles['ContractNormal']))
+    elements.append(Paragraph("• Đại diện: <b>Ông NGUYỄN VĂN A</b>", styles['ContractNormal']))
+    elements.append(Paragraph("• Địa chỉ: 23 Đường ABC, Phường 5, Quận 1, TP.HCM", styles['ContractNormal']))
+    elements.append(Paragraph("• Điện thoại: <b>0123 456 789</b>", styles['ContractNormal']))
+
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph("BÊN B (BÊN THUÊ)", styles['ContractSubTitle']))
+    elements.append(Paragraph(f"• Họ và tên: <b>{contract_data.get('tenant_name', '')}</b>", styles['ContractNormal']))
+    elements.append(Paragraph(f"• CMND/CCCD: <b>{contract_data.get('id_number', 'Chưa cung cấp')}</b>", styles['ContractNormal']))
+    elements.append(Paragraph(f"• Điện thoại: <b>{contract_data.get('phone', 'Chưa cung cấp')}</b>", styles['ContractNormal']))
+    elements.append(Paragraph(f"• Địa chỉ thường trú: <b>{contract_data.get('address', 'Chưa cung cấp')}</b>", styles['ContractNormal']))
+
+    elements.append(Spacer(1, 10))
+    elements.append(Paragraph("THÔNG TIN PHÒNG THUÊ", styles['ContractSubTitle']))
+    room_info = [
+        f"• Phòng số: <b>{contract_data.get('room_name', '')}</b>",
+        f"• Giá thuê/tháng: <b>{format_currency(contract_data.get('rent', 0))}</b>",
+        f"• Tiền cọc: <b>{format_currency(contract_data.get('deposit_amount', 0))}</b>",
+        f"• Ngày nhận phòng: <b>{contract_data.get('start_ymd', '')}</b>",
+        f"• Ngày kết thúc: <b>{contract_data.get('end_ymd', '')}</b>",
+        f"• Điện ban đầu: <b>{contract_data.get('electric_meter_start', 0)}</b> kWh",
+        f"• Nước ban đầu: <b>{contract_data.get('water_meter_start', 0)}</b> m³",
+        f"• Ghi chú: {contract_data.get('note', 'Không có')}"
     ]
-    
-    signature_table = Table(signature, colWidths=[doc.width*0.5, doc.width*0.5])
-    signature_table.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), f'{DEFAULT_FONT}'),
-        ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-        ('FONTSTYLE', (0, 0), (-1, 0), 'Bold'),
-        ('FONTSIZE', (0, 0), (-1, 0), 10),
-        ('FONTSIZE', (0, -1), (-1, -1), 8),
-        ('LINEABOVE', (0, 0), (0, 0), 1, colors.black),
-        ('LINEABOVE', (1, 0), (1, 0), 1, colors.black),
-        ('SPAN', (0, 1), (0, -2)),
-        ('SPAN', (1, 1), (1, -2)),
+    for line in room_info:
+        elements.append(Paragraph(line, styles['ContractNormal']))
+
+    # NGẮT TRANG TRƯỚC ĐIỀU 1
+    elements.append(PageBreak())
+
+    # Các điều khoản (bắt đầu trang mới)
+    terms = [
+        ("ĐIỀU 1: QUYỀN VÀ NGHĨA VỤ BÊN A", [
+            "• Giao phòng đúng hạn, sạch sẽ, đầy đủ tiện nghi.",
+            "• Thu tiền thuê và cung cấp biên lai.",
+            "• Sửa chữa lớn khi hư hỏng không do bên B gây ra."
+        ]),
+        ("ĐIỀU 2: QUYỀN VÀ NGHĨA VỤ BÊN B", [
+            "• Thanh toán tiền thuê, điện nước đúng hạn (trước ngày 05 hàng tháng).",
+            "• Giữ gìn tài sản, vệ sinh, không tự ý sửa chữa.",
+            "• Tuân thủ nội quy: không ồn ào, không nuôi thú, không hút thuốc."
+        ]),
+        ("ĐIỀU 3: CHẤM DỨT HỢP ĐỒNG", [
+            "• Báo trước 30 ngày nếu muốn kết thúc sớm.",
+            "• Bên B kết thúc sớm: mất tiền cọc.",
+            "• Bên A kết thúc sớm: hoàn lại cọc và bồi thường."
+        ]),
+        ("ĐIỀU 4: ĐIỀU KHOẢN CHUNG", [
+            "• Hợp đồng có hiệu lực từ ngày ký.",
+            "• Lập thành 02 bản có giá trị pháp lý ngang nhau, mỗi bên giữ 01 bản."
+        ])
+    ]
+
+    for title, lines in terms:
+        elements.append(Paragraph(title, styles['ContractSubTitle']))
+        for line in lines:
+            elements.append(Paragraph(line, styles['ContractNormal']))
+        elements.append(Spacer(1, 8))
+
+    elements.append(Spacer(1, 40))
+
+    # Chữ ký 2 bên trái phải
+    sig_data = [
+        ["BÊN A (Chủ nhà)", "BÊN B (Người thuê)"],
+        ["(Ký và ghi rõ họ tên)", "(Ký và ghi rõ họ tên)"],
+        ["", ""],
+        ["", ""],
+        ["NGUYỄN VĂN A", contract_data.get('tenant_name', '')]
+    ]
+    sig_table = Table(sig_data, colWidths=[doc.width*0.5, doc.width*0.5])
+    sig_table.setStyle(TableStyle([
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,-1), 'Inter'),
+        ('FONTSIZE', (0,0), (-1,0), 12),
+        ('FONTNAME', (0,0), (-1,0), 'Inter-Bold'),
+        ('FONTSIZE', (0,1), (-1,1), 10.5),
+        ('FONTSIZE', (0,4), (-1,4), 12),
+        ('ITALIC', (0,1), (-1,1), True),
+        ('PADDING', (0,0), (-1,-1), 12),
     ]))
-    
-    elements.append(signature_table)
-    
-    # Build the PDF
+    elements.append(sig_table)
+
     doc.build(elements)
     return output_path
-
-def number_to_words(number):
-    """Convert number to Vietnamese words"""
-    units = ["", "một", "hai", "ba", "bốn", "năm", "sáu", "bảy", "tám", "chín"]
-    tens = ["", "mười", "hai mươi", "ba mươi", "bốn mươi", "năm mươi", 
-            "sáu mươi", "bảy mươi", "tám mươi", "chín mươi"]
-    hundreds = ["", "một trăm", "hai trăm", "ba trăm", "bốn trăm", 
-                "năm trăm", "sáu trăm", "bảy trăm", "tám trăm", "chín trăm"]
-    
-    if number == 0:
-        return "không"
-    
-    def convert_less_than_thousand(n):
-        if n == 0:
-            return ""
-        
-        result = ""
-        hundred = n // 100
-        remainder = n % 100
-        
-        if hundred > 0:
-            result += hundreds[hundred] + " "
-        
-        if remainder > 0:
-            if remainder < 10:
-                result += "lẻ " + units[remainder]
-            elif 10 <= remainder < 20:
-                if remainder == 10:
-                    result += "mười"
-                else:
-                    result += "mười " + units[remainder % 10]
-            else:
-                ten = remainder // 10
-                unit = remainder % 10
-                result += tens[ten]
-                if unit > 0:
-                    if unit == 1 and ten >= 2:
-                        result += " mốt"
-                    elif unit == 4 and ten >= 2:
-                        result += " tư"
-                    elif unit == 5 and ten >= 2:
-                        result += " lăm"
-                    elif unit == 5 and ten < 2:
-                        result += " năm"
-                    else:
-                        result += " " + units[unit]
-        
-        return result.strip()
-    
-    result = ""
-    billion = number // 1000000000
-    remainder = number % 1000000000
-    
-    if billion > 0:
-        result += convert_less_than_thousand(billion) + " tỷ "
-    
-    million = remainder // 1000000
-    remainder = remainder % 1000000
-    
-    if million > 0:
-        result += convert_less_than_thousand(million) + " triệu "
-    
-    thousand = remainder // 1000
-    remainder = remainder % 1000
-    
-    if thousand > 0:
-        result += convert_less_than_thousand(thousand) + " nghìn "
-    
-    if remainder > 0:
-        result += convert_less_than_thousand(remainder)
-    
-    # Remove extra spaces
-    result = ' '.join(result.split())
-    
-    # Capitalize first letter
-    if result:
-        result = result[0].upper() + result[1:]
-    
-    return result
