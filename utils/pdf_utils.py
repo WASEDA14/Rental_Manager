@@ -176,6 +176,14 @@ def create_bill_pdf(bill_data, output_path):
     #     ('PADDING', (0,0), (-1,-1), 12),
     # ]))
     # elements.append(sig_table)
+    elements.append(Paragraph(
+        "<b>Phương thức thanh toán:</b> Tiền mặt hoặc chuyển khoản vào ngày 05 hàng tháng<br/><br/>"
+        "<b>Ngân hàng:</b> Vietcombank<br/>"
+        "<b>Chi nhánh:</b> Đường Kim Cương<br/>"
+        "<b>STK:</b> 0000000001<br/>"
+        "<b>Chủ TK:</b> NGUYỄN VĂN A",
+        styles['Normal']
+    ))
 
     doc.build(elements)
     return output_path
