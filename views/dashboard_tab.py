@@ -263,7 +263,7 @@ class DashboardView(ctk.CTkFrame):
                 if height > 0:
                     ax.text(
                         bar.get_x() + bar.get_width() / 2,
-                        height + 0.2,  # Giảm khoảng cách text để vừa trong scale 10
+                        height + 0.2,
                         str(height),
                         ha='center', va='bottom',
                         fontweight='bold', fontsize=20, color='#1e293b'
