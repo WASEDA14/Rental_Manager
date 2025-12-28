@@ -152,7 +152,7 @@ class contractTab(ctk.CTkFrame):
 
         self._create_label(form_inner, "Tiền cọc", 1, 2)
         entry_deposit = self._create_entry(form_inner, 1, 3, self.deposit_var, width=180)
-        entry_deposit.bind("<KeyRelease>", lambda e: format_money(self, e))
+        entry_deposit.bind("<KeyRelease>", format_money)
 
         self._create_label(form_inner, "Ngày cọc", 1, 4)
         DateEntry(
@@ -193,10 +193,12 @@ class contractTab(ctk.CTkFrame):
 
         # Row 3
         self._create_label(form_inner, "Điện đầu (kWh)", 3, 0)
-        self._create_entry(form_inner, 3, 1, self.elec_start_var, width=180)
+        entry_elec = self._create_entry(form_inner, 3, 1, self.elec_start_var, width=180)
+        entry_elec.bind("<KeyRelease>", format_money)
 
         self._create_label(form_inner, "Nước đầu (m³)", 3, 2)
-        self._create_entry(form_inner, 3, 3, self.water_start_var, width=180)
+        entry_water = self._create_entry(form_inner, 3, 3, self.water_start_var, width=180)
+        entry_water.bind("<KeyRelease>", format_money)
 
         # Row 4 - Ghi chú
         self._create_label(form_inner, "Ghi chú", 4, 0)
