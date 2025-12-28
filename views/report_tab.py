@@ -16,7 +16,6 @@ class ReportTab(ctk.CTkFrame):
         super().__init__(master, fg_color="#f8fafc")
         self.user_id = user_id
         self.chart_frames = []
-
         self._create_ui()
         self.refresh_data()
 
@@ -30,17 +29,14 @@ class ReportTab(ctk.CTkFrame):
         self._create_charts()
 
     def _create_ui(self):
-        # Header
         header = ctk.CTkFrame(self, fg_color="transparent")
         header.pack(fill="x", pady=(30, 40), padx=50)
-
         ctk.CTkLabel(
             header,
             text="BÁO CÁO & THỐNG KÊ",
             font=ctk.CTkFont(size=36, weight="bold"),
             text_color="#1e293b"
         ).pack(anchor="w")
-
         ctk.CTkLabel(
             header,
             text="Tổng quan hoạt động hệ thống",
@@ -48,7 +44,6 @@ class ReportTab(ctk.CTkFrame):
             text_color="#64748b"
         ).pack(anchor="w", pady=(10, 0))
 
-        # Grid 2x2 cho 4 biểu đồ lớn
         self.charts_grid = ctk.CTkFrame(self, fg_color="transparent")
         self.charts_grid.pack(fill="both", expand=True, padx=40, pady=(0, 40))
         self.charts_grid.grid_rowconfigure((0, 1), weight=1)
@@ -56,13 +51,12 @@ class ReportTab(ctk.CTkFrame):
 
     def _create_charts(self):
         room = get_room_report()
-        tenant = get_tenant_report()
+        tenant = get_tenant_report()  # <--- Định nghĩa biến tenant ở đây
         contract = get_contract_report()
         bill = get_bill_report()
-
-        self._create_bar_room(self.charts_grid, 0, 0, room)          # ĐÃ ĐỔI THÀNH BAR
+        self._create_bar_room(self.charts_grid, 0, 0, room)
         self._create_bar_bill(self.charts_grid, 0, 1, bill)
-        self._create_pie_tenant(self.charts_grid, 1, 0, tenant)
+        self._create_bar_tenant(self.charts_grid, 1, 0, tenant)  # Gọi đúng hàm bar ngang
         self._create_bar_contract(self.charts_grid, 1, 1, contract)
 
     def _create_chart_container(self, parent, row, col, title):
@@ -73,7 +67,7 @@ class ReportTab(ctk.CTkFrame):
             border_width=1,
             border_color="#e2e8f0"
         )
-        container.grid(row=row, column=col, padx=25, pady=25, sticky="nsew")
+        container.grid(row=row, column=col, padx=25, pady=30, sticky="nsew")
 
         title_label = ctk.CTkLabel(
             container,
@@ -81,13 +75,9 @@ class ReportTab(ctk.CTkFrame):
             font=ctk.CTkFont(size=20, weight="bold"),
             text_color="#1e293b"
         )
-        title_label.pack(pady=(30, 20))
+        title_label.pack(pady=(20, 10))
 
-        chart_area = ctk.CTkFrame(container, fg_color="white")
-        chart_area.pack(fill="both", expand=True, padx=30, pady=(0, 30))
-
-        self.chart_frames.append(container)
-        return chart_area
+        return container
 
     def _embed_chart(self, fig, frame):
         fig.tight_layout(pad=4.0)
@@ -96,99 +86,85 @@ class ReportTab(ctk.CTkFrame):
         canvas.get_tk_widget().pack(fill="both", expand=True)
 
     def _no_data_chart(self, ax, message="Chưa có dữ liệu"):
-        ax.text(0.5, 0.5, message, transform=ax.transAxes,
-                fontsize=18, color="#94a3b8", ha="center", va="center", weight="bold")
+        ax.text(0.5, 0.5, message, transform=ax.transAxes, fontsize=18, color="#94a3b8", ha="center", va="center",
+                weight="bold")
         ax.axis('off')
 
-    # === 1. Tình trạng phòng trọ - BAR CHART (cột dọc) ===
     def _create_bar_room(self, parent, row, col, data):
-        frame = self._create_chart_container(parent, row, col, "Tình trạng phòng trọ")
-        fig = Figure(figsize=(8, 6), dpi=100)  # PHÓNG TO
-        ax = fig.add_subplot(111)
+        container = self._create_chart_container(parent, row, col, "Tình trạng phòng trọ")
+        chart_area = ctk.CTkFrame(container, fg_color="white")
+        chart_area.pack(fill="both", expand=True, padx=30, pady=(0, 10))
 
+        fig = Figure(figsize=(8, 6), dpi=100)
+        ax = fig.add_subplot(111)
         labels = ["Đang thuê", "Trống", "Bảo trì"]
         values = [data["occupied"], data["available"], data["maintenance"]]
         colors = ["#3b82f6", "#10b981", "#f59e0b"]
-
         total = sum(values)
         if total == 0:
             self._no_data_chart(ax)
         else:
             bars = ax.bar(labels, values, color=colors, width=0.6, edgecolor="white", linewidth=3)
-
             ax.set_ylim(0, max(values) * 1.4 if max(values) > 0 else 10)
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
             ax.spines['left'].set_color('#e2e8f0')
             ax.spines['bottom'].set_color('#e2e8f0')
             ax.grid(axis='y', linestyle='--', alpha=0.4, color='#e2e8f0')
-
             for bar in bars:
                 height = int(bar.get_height())
                 if height > 0:
-                    ax.text(
-                        bar.get_x() + bar.get_width()/2,
-                        height + max(values)*0.02,
-                        str(height),
-                        ha='center',
-                        va='bottom',
-                        fontweight='bold',
-                        fontsize=20,
-                        color='#1e293b'
-                    )
-
-            ax.tick_params(axis='x', labelsize=14)
+                    ax.text(bar.get_x() + bar.get_width() / 2, height + max(values) * 0.02, str(height), ha='center',
+                            va='bottom', fontweight='bold', fontsize=20, color='#1e293b')
+            ax.tick_params(axis='x', labelsize=10)
             ax.tick_params(axis='y', labelsize=12)
+            ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+            ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%d'))
+        self._embed_chart(fig, chart_area)
 
-        self._embed_chart(fig, frame)
-
-    # === 2. Hóa đơn - Bar ngang (giữ nguyên nhưng phóng to) ===
     def _create_bar_bill(self, parent, row, col, data):
-        frame = self._create_chart_container(parent, row, col, "Tình trạng hóa đơn")
+        container = self._create_chart_container(parent, row, col, "Tình trạng hóa đơn")
+        chart_area = ctk.CTkFrame(container, fg_color="white")
+        chart_area.pack(fill="both", expand=True, padx=30, pady=(0, 10))
+
         fig = Figure(figsize=(8, 6), dpi=100)
         ax = fig.add_subplot(111)
-
         paid = data["paid"]
         unpaid = data["unpaid"]
         total = paid + unpaid
-
         if total == 0:
             self._no_data_chart(ax)
         else:
             categories = ["Đã thanh toán", "Chưa thanh toán"]
             values = [paid, unpaid]
             colors = ["#16a34a", "#ef4444"]
-
             bars = ax.barh(categories, values, color=colors, height=0.6, edgecolor="white", linewidth=3)
-
             ax.set_xlim(0, max(values) * 1.4 if max(values) > 0 else 10)
             ax.invert_yaxis()
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
             ax.spines['left'].set_color('#e2e8f0')
             ax.spines['bottom'].set_color('#e2e8f0')
-
             for bar in bars:
                 width = int(bar.get_width())
                 if width > 0:
-                    ax.text(
-                        width + max(values)*0.02,
-                        bar.get_y() + bar.get_height()/2,
-                        str(width),
-                        va='center',
-                        fontweight='bold',
-                        fontsize=20,
-                        color='#1e293b'
-                    )
-
-            ax.tick_params(axis='y', labelsize=14)
+                    ax.text(width + max(values) * 0.02, bar.get_y() + bar.get_height() / 2, str(width), va='center',
+                            fontweight='bold', fontsize=20, color='#1e293b')
+            ax.tick_params(axis='y', labelsize=10)
             ax.tick_params(axis='x', labelsize=12)
+            ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+            ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%d'))
+        self._embed_chart(fig, chart_area)
 
-        self._embed_chart(fig, frame)
+    # Khách thuê - Bar ngang
+    def _create_bar_tenant(self, parent, row, col, data):
+        container = self._create_chart_container(parent, row, col, "Khách thuê")
+        content_frame = ctk.CTkFrame(container, fg_color="white")
+        content_frame.pack(fill="both", expand=True, padx=30, pady=(0, 40))
 
-    # === 3. Khách thuê - Pie Chart (phóng to) ===
-    def _create_pie_tenant(self, parent, row, col, data):
-        frame = self._create_chart_container(parent, row, col, "Khách thuê")
+        chart_frame = ctk.CTkFrame(content_frame, fg_color="white")
+        chart_frame.pack(fill="both", expand=True)
+
         fig = Figure(figsize=(8, 7), dpi=100)
         ax = fig.add_subplot(111)
 
@@ -199,26 +175,49 @@ class ReportTab(ctk.CTkFrame):
         if total == 0:
             self._no_data_chart(ax)
         else:
+            categories = ["Đang ở", "Tháng này"]
             values = [active, new]
-            labels = ["Đang ở", "Mới tháng này"]
             colors = ["#10b981", "#8b5cf6"]
+            bars = ax.barh(categories, values, color=colors, height=0.5, edgecolor="white", linewidth=3)
+            ax.set_xlim(0, max(values) * 1.4 if max(values) > 0 else 10)
+            ax.invert_yaxis()
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.spines['left'].set_color('#e2e8f0')
+            ax.spines['bottom'].set_color('#e2e8f0')
+            ax.grid(axis='x', linestyle='--', alpha=0.4)
 
-            wedges, texts, autotexts = ax.pie(
-                values,
-                labels=labels,
-                colors=colors,
-                autopct=lambda pct: f"{int(pct/100.*total)}" if pct > 8 else "",
-                startangle=90,
-                wedgeprops=dict(edgecolor='white', linewidth=4),
-                textprops=dict(color="white", weight="bold", fontsize=16)
+            for bar in bars:
+                width = int(bar.get_width())
+                if width > 0:
+                    ax.text(width + max(values) * 0.02, bar.get_y() + bar.get_height() / 2, str(width), va='center',
+                            fontweight='bold', fontsize=16)
+                    ax.tick_params(axis='y', labelsize=10)
+                    ax.tick_params(axis='x', labelsize=12)
+
+        canvas = FigureCanvasTkAgg(fig, master=chart_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
+
+        if new > 0:
+            note_text = f"Khách mới tháng này: {new} người"
+            note_label = ctk.CTkLabel(
+                content_frame,
+                text=note_text,
+                font=("Inter", 12),
+                text_color="#8b5cf6",
+                justify="left"
             )
+            note_label.pack(pady=10, padx=20, anchor="w")
 
-        ax.axis('equal')
-        self._embed_chart(fig, frame)
-
-    # === 4. Hợp đồng - Bar dọc (phóng to) ===
     def _create_bar_contract(self, parent, row, col, data):
-        frame = self._create_chart_container(parent, row, col, "Tình trạng hợp đồng")
+        container = self._create_chart_container(parent, row, col, "Tình trạng hợp đồng")
+        content_frame = ctk.CTkFrame(container, fg_color="white")
+        content_frame.pack(fill="both", expand=True, padx=30, pady=(0, 20))
+
+        chart_frame = ctk.CTkFrame(content_frame, fg_color="white")
+        chart_frame.pack(fill="both", expand=True)
+
         fig = Figure(figsize=(8, 6), dpi=100)
         ax = fig.add_subplot(111)
 
@@ -230,12 +229,10 @@ class ReportTab(ctk.CTkFrame):
         if total == 0:
             self._no_data_chart(ax)
         else:
-            labels = ["Mới tháng này", "Sắp hết hạn", "Đã kết thúc"]
+            labels = ["Tháng này", "Sắp hết hạn", "Đã kết thúc"]
             values = [new, soon, ended]
             colors = ["#8b5cf6", "#f59e0b", "#94a3b8"]
-
             bars = ax.bar(labels, values, color=colors, width=0.6, edgecolor="white", linewidth=3)
-
             ax.set_ylim(0, max(values) * 1.4 if max(values) > 0 else 10)
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
@@ -246,18 +243,22 @@ class ReportTab(ctk.CTkFrame):
             for bar in bars:
                 height = int(bar.get_height())
                 if height > 0:
-                    ax.text(
-                        bar.get_x() + bar.get_width()/2,
-                        height + max(values)*0.02,
-                        str(height),
-                        ha='center',
-                        va='bottom',
-                        fontweight='bold',
-                        fontsize=20,
-                        color='#1e293b'
-                    )
+                    ax.text(bar.get_x() + bar.get_width() / 2, height + max(values) * 0.02, str(height), ha='center',
+                            va='bottom', fontweight='bold', fontsize=20, color='#1e293b')
 
-            ax.tick_params(axis='x', labelsize=13, rotation=15)
+            # Label x-axis
+            ax.tick_params(axis='x', labelsize=10, rotation=0)
             ax.tick_params(axis='y', labelsize=12)
 
-        self._embed_chart(fig, frame)
+            # Sửa y-axis thành số nguyên
+            ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
+            ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%d'))
+            # Tăng bottom margin để label ngang không bị cắt
+            fig.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.35)  # bottom=0.35 đủ cho label ngang
+
+            # Thêm padding dưới
+            fig.tight_layout(pad=3.0)
+
+        canvas = FigureCanvasTkAgg(fig, master=chart_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack(fill="both", expand=True)
