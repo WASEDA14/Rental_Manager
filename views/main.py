@@ -33,33 +33,57 @@ class MainWindow(ctk.CTk):
         self.focus_force()
 
     def reset_to_login_state(self):
-        """Reset cửa sổ về trạng thái login: nhỏ, cố định, giữa màn hình"""
-        self.geometry("480x680")
         self.resizable(False, False)
-        self.state('normal')  # Thoát khỏi zoomed/fullscreen
+        self.state('normal')
 
-        # Căn giữa màn hình
-        self.update_idletasks()
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        x = (screen_width - 480) // 2
-        y = (screen_height - 680) // 2
-        self.geometry(f"480x680+{x}+{y}")
+        width, height = 480, 680
+        x = (self.winfo_screenwidth() - width) // 2
+        y = (self.winfo_screenheight() - height) // 2
+
+        self.geometry(f"{width}x{height}+{x}+{y}")
+
+        self.withdraw()
+        self.update()
+        self.deiconify()
+        self.lift()
+        self.focus_force()
 
     def show_main_app(self):
-        # Xóa login
+        # Xóa login cũ
         for widget in self.winfo_children():
             widget.destroy()
 
-        # Chuyển sang giao diện chính: full màn hình
         self.title("Rental Manager - Hệ thống quản lý nhà trọ")
         self.resizable(True, True)
-        self.state("zoomed")  # Toàn màn hình
+
+        # Ẩn hoàn toàn
+        self.withdraw()
+        self.attributes('-alpha', 0.0)
+
+        # Set maximized
+        self.state('zoomed')
 
         # Tạo dashboard
         self.dashboard = DashboardView(self)
         self.dashboard.pack(fill="both", expand=True)
 
+        # Force update
+        self.update_idletasks()
+        self.update()
+
+        # Delay và hiện lại để tránh hiện tượng giật do load chưa xong
+        self.after(100, self._finish_show_main)
+
+    def _finish_show_main(self):
+        self.attributes('-alpha', 1.0)
+        self.deiconify()
+        self.lift()
+        self.focus_force()
+
+    def deiconify_and_focus(self):
+        self.deiconify()
+        self.lift()
+        self.focus_force()
     def on_login_success(self, user):
         self.current_user = user
         self.show_main_app()
