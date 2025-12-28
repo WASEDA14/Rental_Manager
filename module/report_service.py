@@ -35,14 +35,13 @@ def get_tenant_report():
         this_month = datetime.now().strftime("%Y-%m")
         new_this_month_result = conn.execute(
             """
-               SELECT 
-                COUNT(DISTINCT t.tenant_id) as count,
-                GROUP_CONCAT(DATE(c.start_ymd)) as dates
+           SELECT COUNT(DISTINCT t.tenant_id) as count,
+                   GROUP_CONCAT(DATE(c.start_ymd)) as dates
             FROM tenant t
             JOIN contract c ON t.tenant_id = c.tenant_id
-            WHERE c.contract_status = 'active' 
+            WHERE c.contract_status = 'active'
               AND c.is_deleted = 0
-              AND strftime('%Y-%m', c.start_ymd) = ?
+              AND substr(c.start_ymd, 7, 4) || '-' || substr(c.start_ymd, 4, 2) = ?
             GROUP BY 1=1
           """,
             (this_month,),
