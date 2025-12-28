@@ -162,20 +162,20 @@ def create_bill_pdf(bill_data, output_path):
     elements.append(Spacer(1, 20))
 
     # Chữ ký - 2 bên trái phải
-    sig_data = [
-        ["Người lập biên lai", "Người nộp tiền"],
-        ["(Ký và ghi rõ họ tên)", "(Ký và ghi rõ họ tên)"]
-    ]
-    sig_table = Table(sig_data, colWidths=[doc.width*0.5, doc.width*0.5])
-    sig_table.setStyle(TableStyle([
-        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-        ('FONTNAME', (0,0), (-1,-1), 'Inter'),
-        ('FONTSIZE', (0,0), (-1,-1), 11),
-        ('FONTNAME', (0,0), (-1,0), 'Inter-Bold'),
-        ('ITALIC', (0,1), (-1,1), True),
-        ('PADDING', (0,0), (-1,-1), 12),
-    ]))
-    elements.append(sig_table)
+    # sig_data = [
+    #     ["Người lập biên lai", "Người nộp tiền"],
+    #     ["(Ký và ghi rõ họ tên)", "(Ký và ghi rõ họ tên)"]
+    # ]
+    # sig_table = Table(sig_data, colWidths=[doc.width*0.5, doc.width*0.5])
+    # sig_table.setStyle(TableStyle([
+    #     ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+    #     ('FONTNAME', (0,0), (-1,-1), 'Inter'),
+    #     ('FONTSIZE', (0,0), (-1,-1), 11),
+    #     ('FONTNAME', (0,0), (-1,0), 'Inter-Bold'),
+    #     ('ITALIC', (0,1), (-1,1), True),
+    #     ('PADDING', (0,0), (-1,-1), 12),
+    # ]))
+    # elements.append(sig_table)
 
     doc.build(elements)
     return output_path
