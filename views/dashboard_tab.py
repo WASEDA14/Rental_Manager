@@ -18,8 +18,6 @@ from module.report_service import get_room_report, get_revenue_last_6_months
 
 
 class StatCard(ctk.CTkFrame):
-    """Card thống kê đẹp với viền màu nổi bật"""
-
     def __init__(self, parent, title: str, value: str, color: str):
         super().__init__(
             parent,
@@ -228,12 +226,13 @@ class DashboardView(ctk.CTkFrame):
         except Exception as e:
             print(f"[Dashboard] Lỗi load chart: {e}")
 
-    # === BIỂU ĐỒ PHÒNG TRỌ - BAR CHART (CỘT DỌC) ===
+    # === BIỂU ĐỒ PHÒNG
     def _create_bar_room_chart(self, parent, row, col, data):
         container = ctk.CTkFrame(parent, fg_color="white", corner_radius=20, border_width=1, border_color="#e2e8f0")
         container.grid(row=row, column=col, padx=25, pady=25, sticky="nsew")
 
-        title = ctk.CTkLabel(container, text="Tình trạng phòng trọ", font=ctk.CTkFont(size=20, weight="bold"), text_color="#1e293b")
+        title = ctk.CTkLabel(container, text="Tình trạng phòng trọ", font=ctk.CTkFont(size=20, weight="bold"),
+                             text_color="#1e293b")
         title.pack(pady=(30, 20))
 
         chart_frame = ctk.CTkFrame(container, fg_color="white")
@@ -247,35 +246,34 @@ class DashboardView(ctk.CTkFrame):
         colors = ["#3b82f6", "#10b981", "#f59e0b"]
 
         if sum(values) == 0:
-            ax.text(0.5, 0.5, "Chưa có dữ liệu phòng", transform=ax.transAxes,
-                    fontsize=18, color="#94a3b8", ha="center", va="center", weight="bold")
+            ax.text(0.5, 0.5, "Chưa có dữ liệu phòng", transform=ax.transAxes, fontsize=18, color="#94a3b8",
+                    ha="center", va="center", weight="bold")
             ax.axis('off')
         else:
             bars = ax.bar(labels, values, color=colors, width=0.6, edgecolor="white", linewidth=3)
+            ax.set_ylim(0, 10)
 
-            ax.set_ylim(0, max(values) * 1.4 if max(values) > 0 else 10)
             ax.spines['top'].set_visible(False)
             ax.spines['right'].set_visible(False)
             ax.spines['left'].set_color('#e2e8f0')
             ax.spines['bottom'].set_color('#e2e8f0')
             ax.grid(axis='y', linestyle='--', alpha=0.4, color='#e2e8f0')
-
             for bar in bars:
                 height = int(bar.get_height())
                 if height > 0:
                     ax.text(
-                        bar.get_x() + bar.get_width()/2,
-                        height + max(values)*0.02,
+                        bar.get_x() + bar.get_width() / 2,
+                        height + 0.2,  # Giảm khoảng cách text để vừa trong scale 10
                         str(height),
-                        ha='center',
-                        va='bottom',
-                        fontweight='bold',
-                        fontsize=20,
-                        color='#1e293b'
+                        ha='center', va='bottom',
+                        fontweight='bold', fontsize=20, color='#1e293b'
                     )
 
             ax.tick_params(axis='x', labelsize=14)
             ax.tick_params(axis='y', labelsize=12)
+
+            ax.yaxis.set_major_locator(plt.MultipleLocator(1))
+            ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%d'))
 
         self._embed_chart(fig, chart_frame)
         self.chart_frames.append(container)

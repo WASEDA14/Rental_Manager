@@ -156,7 +156,6 @@ class ReportTab(ctk.CTkFrame):
             ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%d'))
         self._embed_chart(fig, chart_area)
 
-    # Khách thuê - Bar ngang
     def _create_bar_tenant(self, parent, row, col, data):
         container = self._create_chart_container(parent, row, col, "Khách thuê")
         content_frame = ctk.CTkFrame(container, fg_color="white")
@@ -194,6 +193,8 @@ class ReportTab(ctk.CTkFrame):
                             fontweight='bold', fontsize=16)
                     ax.tick_params(axis='y', labelsize=10)
                     ax.tick_params(axis='x', labelsize=12)
+                    ax.xaxis.set_major_locator(plt.MaxNLocator(integer=True))
+                    ax.xaxis.set_major_formatter(plt.FormatStrFormatter('%d'))
 
         canvas = FigureCanvasTkAgg(fig, master=chart_frame)
         canvas.draw()
@@ -246,17 +247,12 @@ class ReportTab(ctk.CTkFrame):
                     ax.text(bar.get_x() + bar.get_width() / 2, height + max(values) * 0.02, str(height), ha='center',
                             va='bottom', fontweight='bold', fontsize=20, color='#1e293b')
 
-            # Label x-axis
             ax.tick_params(axis='x', labelsize=10, rotation=0)
             ax.tick_params(axis='y', labelsize=12)
 
-            # Sửa y-axis thành số nguyên
             ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
             ax.yaxis.set_major_formatter(plt.FormatStrFormatter('%d'))
-            # Tăng bottom margin để label ngang không bị cắt
             fig.subplots_adjust(left=0.15, right=0.95, top=0.9, bottom=0.35)  # bottom=0.35 đủ cho label ngang
-
-            # Thêm padding dưới
             fig.tight_layout(pad=3.0)
 
         canvas = FigureCanvasTkAgg(fig, master=chart_frame)
