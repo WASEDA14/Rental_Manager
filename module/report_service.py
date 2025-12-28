@@ -61,7 +61,8 @@ def get_contract_report():
         new_this_month = conn.execute(
             """
             SELECT COUNT(*) FROM contract 
-            WHERE strftime('%Y/%m/%d', start_ymd) = ? AND contract_status = 'active' AND is_deleted = 0
+            WHERE substr(start_ymd, 7, 4) || '-' || substr(start_ymd, 4, 2) = ? 
+              AND contract_status = 'active' AND is_deleted = 0
         """,
             (this_month,),
         ).fetchone()[0]
@@ -70,10 +71,10 @@ def get_contract_report():
             """
             SELECT COUNT(*) FROM contract 
             WHERE 
-            substr(end_ymd, 7, 4) || '-' || substr(end_ymd, 4, 2) || '-' || substr(end_ymd, 1, 2)
-            BETWEEN date('now') AND date('now', '+30 days')
-            AND contract_status = 'active' 
-            AND is_deleted = 0
+                substr(end_ymd, 7, 4) || '-' || substr(end_ymd, 4, 2) || '-' || substr(end_ymd, 1, 2)
+                BETWEEN date('now') AND date('now', '+30 days')
+              AND contract_status = 'active' 
+              AND is_deleted = 0
         """
         ).fetchone()[0]
 

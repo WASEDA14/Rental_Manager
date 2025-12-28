@@ -84,4 +84,4 @@ CREATE TABLE IF NOT EXISTS user (
 );
 
 INSERT OR IGNORE INTO user (login_id, login_password, user_name, email)
-VALUES ('1', '2', 'Admin', 'admin@gmail.com');
+VALUES ('admin', '123456', 'Admin', 'admin@gmail.com');
