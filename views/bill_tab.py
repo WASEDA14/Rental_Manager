@@ -144,12 +144,12 @@ class billTab(ctk.CTkFrame):
         self.entry_note.grid(columnspan=2, sticky='ew')
 
         # Electricity section
-        elec_frame = ctk.CTkFrame(form_inner, fg_color="#eff6ff", corner_radius=10, border_width=1, border_color="#bfdbfe")
+        elec_frame = ctk.CTkFrame(form_inner, fg_color="#f0fdf4", corner_radius=10, border_width=1, border_color="#bbf7d0")
         elec_frame.grid(row=2, column=0, columnspan=7, pady=10, padx=5, sticky='ew')
         elec_inner = ctk.CTkFrame(elec_frame, fg_color='transparent')
         elec_inner.pack(fill='x', padx=15, pady=12)
 
-        ctk.CTkLabel(elec_inner, text="⚡ ĐIỆN (kWh)", font=("Inter", 13, "bold"), text_color="#1e40af").pack(side='left', padx=(0, 20))
+        ctk.CTkLabel(elec_inner, text="⚡ ĐIỆN (kWh)", font=("Inter", 13, "bold"), text_color="#15803d").pack(side='left', padx=(0, 20))
         ctk.CTkLabel(elec_inner, text="Cũ:", font=("Inter", 12)).pack(side='left', padx=2)
         ctk.CTkEntry(elec_inner, textvariable=self.elec_prev_var, state="readonly", fg_color="#e5e7eb", width=70, height=32, font=("Inter", 12)).pack(side='left', padx=2)
 
@@ -167,12 +167,12 @@ class billTab(ctk.CTkFrame):
         ctk.CTkLabel(elec_inner, textvariable=self.elec_total_var, text_color="#dc2626", font=("Inter", 13, "bold")).pack(side='left', padx=5)
 
         # Water section
-        water_frame = ctk.CTkFrame(form_inner, fg_color="#f0fdf4", corner_radius=10, border_width=1, border_color="#bbf7d0")
+        water_frame = ctk.CTkFrame(form_inner, fg_color="#eff6ff", corner_radius=10, border_width=1, border_color="#bfdbfe")
         water_frame.grid(row=3, column=0, columnspan=7, pady=10, padx=5, sticky='ew')
         water_inner = ctk.CTkFrame(water_frame, fg_color='transparent')
         water_inner.pack(fill='x', padx=15, pady=12)
 
-        ctk.CTkLabel(water_inner, text="💧 NƯỚC (m³)", font=("Inter", 13, "bold"), text_color="#15803d").pack(side='left', padx=(0, 20))
+        ctk.CTkLabel(water_inner, text="💧 NƯỚC (m³)", font=("Inter", 13, "bold"), text_color="#1e40af").pack(side='left', padx=(0, 20))
         ctk.CTkLabel(water_inner, text="Cũ:", font=("Inter", 12)).pack(side='left', padx=2)
         ctk.CTkEntry(water_inner, textvariable=self.water_prev_var, state="readonly", fg_color="#e5e7eb", width=70, height=32, font=("Inter", 12)).pack(side='left', padx=2)
 
@@ -257,16 +257,16 @@ class billTab(ctk.CTkFrame):
 
     def on_recalc(self, event=None):
         try:
-            e_old = float((self.elec_prev_var.get() or "0").replace(".", ""))
-            e_new = float((self.elec_curr_var.get() or "0").replace(".", ""))
-            e_price = float((self.elec_price_var.get() or "0").replace(".", ""))
+            e_old = int(float((self.elec_prev_var.get() or "0").replace(".", "")))
+            e_new =int( float((self.elec_curr_var.get() or "0").replace(".", "")))
+            e_price = int(float((self.elec_price_var.get() or "0").replace(".", "")))
 
-            w_old = float((self.water_prev_var.get() or "0").replace(".", ""))
-            w_new = float((self.water_curr_var.get() or "0").replace(".", ""))
-            w_price = float((self.water_price_var.get() or "0").replace(".", ""))
+            w_old =int( float((self.water_prev_var.get() or "0").replace(".", "")))
+            w_new = int(float((self.water_curr_var.get() or "0").replace(".", "")))
+            w_price =int( float((self.water_price_var.get() or "0").replace(".", "")))
 
-            rent = float((self.room_rent_var.get() or "0").replace(".", ""))
-            other = float((self.other_fee_var.get() or "0").replace(".", ""))
+            rent =int( float((self.room_rent_var.get() or "0").replace(".", "")))
+            other =int( float((self.other_fee_var.get() or "0").replace(".", "")))
 
             e_used = max(0, e_new - e_old)
             w_used = max(0, w_new - w_old)

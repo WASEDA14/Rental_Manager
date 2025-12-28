@@ -21,10 +21,8 @@ SCHEMA_PATH = RESOURCE_PATH / "database" / "schema.sql"
 # =========================
 APP_NAME = "RentalManager"
 
-DATA_DIR = Path(os.getenv("APPDATA")) / APP_NAME
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-
-DB_PATH = DATA_DIR / "rental_manager.db"
+PROJECT_DIR = Path(__file__).parent.parent
+DB_PATH = PROJECT_DIR / "rental_manager.db"
 
 # =========================
 # 3. KẾT NỐI DB
