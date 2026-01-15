@@ -35,7 +35,6 @@ def get_room_by_id(room_id: int):
             (room_id,),
         ).fetchone()
 
-# --- CREATE ---
 def get_available_rooms():
     with get_db() as conn:
         return conn.execute(
@@ -72,7 +71,7 @@ def create_room(data: dict):
                 data["base_rent"],
                 data["electric_unit_price"],
                 data["water_unit_price"],
-                data.get("status", 0),  # Default to available
+                data.get("status", 0),
                 data.get("note", ""),
             ),
         )
@@ -91,9 +90,7 @@ def update_room(room_id: int, data: dict):
         if not all(key in data for key in required_keys):
             raise ValueError("Missing required fields")
 
-        # Check if the room is being set to occupied
-        if data["status"] == 1:  # 1 = occupied
-            # Check if there's already an active contract for this room
+        if data["status"] == 1:
             active_contract = conn.execute(
                 """
                 SELECT 1 FROM contract 
